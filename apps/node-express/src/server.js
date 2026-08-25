@@ -9,6 +9,7 @@ const { seedFlagsFromEnv } = require('./flags');
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
 const profileRoutes = require('./routes/profile');
+const orderRoutes = require('./routes/orders');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,6 +43,7 @@ app.get('/api/session', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/orders', orderRoutes);
 
 const seededFlagCount = seedFlagsFromEnv();
 console.log(`Seeded ${seededFlagCount} flag(s) from environment`);

@@ -19,3 +19,5 @@ spring:
 app:
   cors:
     allowed-origin: ${APP_CORS_ALLOWED_ORIGIN:http://localhost:5173}
+  toss:
+    secret-key: ${TOSS_SECRET_KEY:}
