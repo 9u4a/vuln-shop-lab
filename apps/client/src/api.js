@@ -119,6 +119,13 @@ export function deleteProductAdmin(base, id) {
   return apiRequest(base, `/admin/products/${id}`, { method: 'DELETE' });
 }
 
+export function changePassword(base, currentPassword, newPassword) {
+  return apiRequest(base, '/profile/password', {
+    method: 'PUT',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+}
+
 export async function uploadAvatar(base, file) {
   const formData = new FormData();
   formData.append('avatar', file);

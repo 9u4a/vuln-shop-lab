@@ -38,34 +38,43 @@ export default function Cart() {
   }
 
   return (
-    <div>
-      <h1>Cart</h1>
+    <div className="page">
+      <div className="page-header">
+        <h1>Cart</h1>
+      </div>
       {error && <p className="error">{error}</p>}
-      {pendingNote && <p>{pendingNote}</p>}
-      <ul className="product-grid">
-        {items.map((i) => (
-          <li key={i.productId}>
-            <div>{i.name}</div>
-            <div>
-              ${i.price.toFixed(2)} x
-              <input
-                type="number"
-                min="0"
-                value={i.quantity}
-                onChange={(e) => setQuantity(i.productId, Number(e.target.value))}
-                style={{ width: '3rem', marginLeft: '0.5rem' }}
-              />
-            </div>
-            <button onClick={() => removeItem(i.productId)}>Remove</button>
-          </li>
-        ))}
-      </ul>
-      {items.length === 0 && <p>Cart is empty.</p>}
-      <p>Total: ${total.toFixed(2)}</p>
-      <label>Order webhook URL (optional)
-        <input value={webhookUrl} onChange={(e) => setWebhookUrl(e.target.value)} placeholder="https://..." />
-      </label>
-      <button disabled={items.length === 0} onClick={handleCheckout}>Checkout</button>
+      {pendingNote && <p className="status-ok">{pendingNote}</p>}
+
+      {items.length === 0 ? (
+        <p className="muted">Cart is empty.</p>
+      ) : (
+        <ul className="product-grid">
+          {items.map((i) => (
+            <li key={i.productId}>
+              <div>{i.name}</div>
+              <div className="product-price">${i.price.toFixed(2)}</div>
+              <label>Quantity
+                <input
+                  type="number"
+                  min="0"
+                  value={i.quantity}
+                  onChange={(e) => setQuantity(i.productId, Number(e.target.value))}
+                  style={{ width: '4rem' }}
+                />
+              </label>
+              <button onClick={() => removeItem(i.productId)}>Remove</button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <section className="card">
+        <p><strong>Total: ${total.toFixed(2)}</strong></p>
+        <label>Order webhook URL (optional)
+          <input value={webhookUrl} onChange={(e) => setWebhookUrl(e.target.value)} placeholder="https://..." />
+        </label>
+        <button disabled={items.length === 0} onClick={handleCheckout} className="btn btn-primary">Checkout</button>
+      </section>
     </div>
   );
 }

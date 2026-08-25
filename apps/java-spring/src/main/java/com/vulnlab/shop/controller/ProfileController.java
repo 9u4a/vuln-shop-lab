@@ -5,6 +5,7 @@ import com.vulnlab.shop.repository.UserRepository;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,6 +25,7 @@ public class ProfileController {
     private static final Path UPLOAD_DIR = Paths.get("uploads");
 
     private final UserRepository userRepository;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public ProfileController(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -54,6 +56,27 @@ public class ProfileController {
         userRepository.save(user);
         session.setAttribute("user", user);
         return ResponseEntity.ok(Map.of("profile", user));
+    }
+
+    @PutMapping("/password")
+    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> body, HttpSession session) {
+        User sessionUser = currentUser(session);
+        if (sessionUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required."));
+        }
+        String currentPassword = body.get("currentPassword");
+        String newPassword = body.get("newPassword");
+        if (currentPassword == null || newPassword == null || newPassword.length() < 8) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Current password and a new password (min 8 characters) are required."));
+        }
+        User user = userRepository.findById(sessionUser.getId()).orElseThrow();
+        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Current password is incorrect."));
+        }
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        return ResponseEntity.ok(Map.of("ok", true));
     }
 
     @PostMapping("/avatar")

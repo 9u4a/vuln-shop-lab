@@ -44,43 +44,50 @@ export default function ProductDetail() {
   if (!product) return <p>Loading...</p>;
 
   return (
-    <div>
-      <h1>{product.name}</h1>
-      <p>{product.description}</p>
-      <p>Price: ${Number(product.price).toFixed(2)}</p>
-      <button onClick={() => addItem(product)}>Add to cart</button>
-      <Link to="/products">Back to products</Link>
+    <div className="page">
+      <Link to="/products" className="muted">&larr; Back to products</Link>
+      <div className="page-header">
+        <h1>{product.name}</h1>
+      </div>
 
-      <h2>Reviews</h2>
-      {reviews.length === 0 && <p>No reviews yet.</p>}
-      <ul>
-        {reviews.map((r) => (
-          <li key={r.id}>
-            <strong>{r.username}</strong> ({r.rating}/5): {r.body}
-          </li>
-        ))}
-      </ul>
+      <section className="card">
+        <p>{product.description}</p>
+        <p className="product-price">${Number(product.price).toFixed(2)}</p>
+        <button onClick={() => addItem(product)} className="btn btn-primary">Add to cart</button>
+      </section>
 
-      {user ? (
-        <form onSubmit={handleReviewSubmit}>
-          {error && <p className="error">{error}</p>}
-          <label>Rating
-            <select value={rating} onChange={(e) => setRating(e.target.value)}>
-              {[5, 4, 3, 2, 1].map((n) => (
-                <option key={n} value={n}>{n}</option>
-              ))}
-            </select>
-          </label>
-          <label>Review
-            <textarea value={body} onChange={(e) => setBody(e.target.value)} rows="3" required />
-          </label>
-          <button type="submit">Submit review</button>
-        </form>
-      ) : (
-        <p>
-          <Link to="/login">Log in</Link> to write a review.
-        </p>
-      )}
+      <section className="card">
+        <h2>Reviews</h2>
+        {reviews.length === 0 && <p className="muted">No reviews yet.</p>}
+        <ul>
+          {reviews.map((r) => (
+            <li key={r.id}>
+              <strong>{r.username}</strong> ({r.rating}/5): {r.body}
+            </li>
+          ))}
+        </ul>
+
+        {user ? (
+          <form onSubmit={handleReviewSubmit}>
+            {error && <p className="error">{error}</p>}
+            <label>Rating
+              <select value={rating} onChange={(e) => setRating(e.target.value)}>
+                {[5, 4, 3, 2, 1].map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+            </label>
+            <label>Review
+              <textarea value={body} onChange={(e) => setBody(e.target.value)} rows="3" required />
+            </label>
+            <button type="submit" className="btn btn-primary">Submit review</button>
+          </form>
+        ) : (
+          <p className="muted">
+            <Link to="/login">Log in</Link> to write a review.
+          </p>
+        )}
+      </section>
     </div>
   );
 }

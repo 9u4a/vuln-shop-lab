@@ -58,60 +58,70 @@ export default function Admin() {
   }
 
   return (
-    <div>
-      <h1>Admin</h1>
+    <div className="page">
+      <div className="page-header">
+        <h1>Admin</h1>
+      </div>
       {error && <p className="error">{error}</p>}
 
-      <h2>Users</h2>
-      <ul>
-        {users.map((u) => (
-          <li key={u.id}>
-            {u.username} — {u.role}
-            <select value={u.role} onChange={(e) => handleRoleChange(u.id, e.target.value)}>
-              <option value="user">user</option>
-              <option value="admin">admin</option>
-            </select>
-          </li>
-        ))}
-      </ul>
+      <section className="card">
+        <h2>Users</h2>
+        <ul>
+          {users.map((u) => (
+            <li key={u.id}>
+              {u.username} <span className="badge">{u.role}</span>
+              <select value={u.role} onChange={(e) => handleRoleChange(u.id, e.target.value)}>
+                <option value="user">user</option>
+                <option value="admin">admin</option>
+              </select>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-      <h2>Orders</h2>
-      <ul>
-        {orders.map((o) => (
-          <li key={o.id}>
-            Order #{o.id} — {o.username} — {o.status} — ${Number(o.totalAmount).toFixed(2)}
-          </li>
-        ))}
-      </ul>
+      <section className="card">
+        <h2>Orders</h2>
+        {orders.length === 0 && <p className="muted">No orders yet.</p>}
+        <ul>
+          {orders.map((o) => (
+            <li key={o.id}>
+              Order #{o.id} — {o.username} — <span className="badge">{o.status}</span> — ${Number(o.totalAmount).toFixed(2)}
+            </li>
+          ))}
+        </ul>
+      </section>
 
-      <h2>Products</h2>
-      <ul className="product-grid">
-        {products.map((p) => (
-          <li key={p.id}>
-            <div>{p.name}</div>
-            <div>${Number(p.price).toFixed(2)}</div>
-            <button onClick={() => handleDeleteProduct(p.id)}>Delete</button>
-          </li>
-        ))}
-      </ul>
-      <form onSubmit={handleCreateProduct}>
-        <label>Name
-          <input value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} required />
-        </label>
-        <label>Description
-          <input value={newProduct.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} />
-        </label>
-        <label>Price
-          <input type="number" step="0.01" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })} required />
-        </label>
-        <label>Image URL
-          <input value={newProduct.imageUrl} onChange={(e) => setNewProduct({ ...newProduct, imageUrl: e.target.value })} />
-        </label>
-        <label>Category
-          <input value={newProduct.category} onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })} />
-        </label>
-        <button type="submit">Add product</button>
-      </form>
+      <section className="card">
+        <h2>Products</h2>
+        <ul className="product-grid">
+          {products.map((p) => (
+            <li key={p.id}>
+              <div>{p.name}</div>
+              <div className="product-price">${Number(p.price).toFixed(2)}</div>
+              <button onClick={() => handleDeleteProduct(p.id)}>Delete</button>
+            </li>
+          ))}
+        </ul>
+        <h2>Add product</h2>
+        <form onSubmit={handleCreateProduct}>
+          <label>Name
+            <input value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} required />
+          </label>
+          <label>Description
+            <input value={newProduct.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} />
+          </label>
+          <label>Price
+            <input type="number" step="0.01" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })} required />
+          </label>
+          <label>Image URL
+            <input value={newProduct.imageUrl} onChange={(e) => setNewProduct({ ...newProduct, imageUrl: e.target.value })} />
+          </label>
+          <label>Category
+            <input value={newProduct.category} onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })} />
+          </label>
+          <button type="submit" className="btn btn-primary">Add product</button>
+        </form>
+      </section>
     </div>
   );
 }

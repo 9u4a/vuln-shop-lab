@@ -1,4 +1,4 @@
-import { Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { Routes, Route, Link, NavLink, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { BackendProvider, useBackend } from './BackendContext.jsx';
 import { CartProvider, useCart } from './CartContext.jsx';
@@ -14,6 +14,14 @@ import CheckoutResult from './pages/CheckoutResult.jsx';
 import Orders from './pages/Orders.jsx';
 import OrderDetail from './pages/OrderDetail.jsx';
 import Admin from './pages/Admin.jsx';
+
+function NavItem({ to, children }) {
+  return (
+    <NavLink to={to} className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+      {children}
+    </NavLink>
+  );
+}
 
 function Layout({ children }) {
   const { backend, backends, backendKey, selectBackend } = useBackend();
@@ -34,31 +42,46 @@ function Layout({ children }) {
   }
 
   return (
-    <div>
-      <nav>
-        <Link to="/">Vuln Shop</Link>
-        <Link to="/products">Products</Link>
-        <Link to="/cart">Cart ({items.length})</Link>
-        {user && <Link to="/orders">Orders</Link>}
-        <select value={backendKey} onChange={(e) => selectBackend(e.target.value)}>
-          {Object.entries(backends).map(([key, b]) => (
-            <option key={key} value={key}>{b.label}</option>
-          ))}
-        </select>
-        {user ? (
-          <>
-            {user.role === 'admin' && <Link to="/admin">Admin</Link>}
-            <Link to="/profile">Hi, {user.username}</Link>
-            <button onClick={handleLogout}>Logout</button>
-          </>
-        ) : (
-          <>
-            <Link to="/login">Login</Link>
-            <Link to="/signup">Sign up</Link>
-          </>
-        )}
-      </nav>
-      <main>{children}</main>
+    <div className="app-shell">
+      <header className="topbar">
+        <div className="topbar-inner">
+          <Link to="/" className="brand">Vuln Shop</Link>
+
+          <nav className="main-nav">
+            <NavItem to="/products">Products</NavItem>
+            <NavItem to="/cart">Cart{items.length > 0 && <span className="count-badge">{items.length}</span>}</NavItem>
+            {user && <NavItem to="/orders">My Orders</NavItem>}
+            {user?.role === 'admin' && <NavItem to="/admin">Admin</NavItem>}
+          </nav>
+
+          <div className="topbar-actions">
+            <select
+              className="backend-select"
+              value={backendKey}
+              onChange={(e) => selectBackend(e.target.value)}
+              aria-label="Backend target"
+            >
+              {Object.entries(backends).map(([key, b]) => (
+                <option key={key} value={key}>{b.label}</option>
+              ))}
+            </select>
+
+            {user ? (
+              <div className="account-area">
+                <span className="greeting">Hi, {user.username}</span>
+                <Link to="/profile" className="btn btn-ghost btn-sm">My Page</Link>
+                <button onClick={handleLogout} className="btn btn-ghost btn-sm">Logout</button>
+              </div>
+            ) : (
+              <div className="account-area">
+                <Link to="/login" className="btn btn-ghost btn-sm">Login</Link>
+                <Link to="/signup" className="btn btn-primary btn-sm">Sign up</Link>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+      <main className="content">{children}</main>
     </div>
   );
 }
