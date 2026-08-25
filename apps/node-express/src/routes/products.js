@@ -12,6 +12,11 @@ function toProduct(row) {
     price: row.price,
     imageUrl: row.image_url,
     category: row.category,
+    brand: row.brand,
+    sku: row.sku,
+    stock: row.stock,
+    optionName: row.option_name,
+    optionValues: row.option_values ? row.option_values.split(',') : [],
     createdAt: row.created_at,
   };
 }

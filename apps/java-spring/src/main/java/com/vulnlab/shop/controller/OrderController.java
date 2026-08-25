@@ -100,6 +100,8 @@ public class OrderController {
             oi.setProductId(product.getId());
             oi.setQuantity(quantity);
             oi.setUnitPrice(product.getPrice());
+            Object optionValue = item.get("optionValue");
+            oi.setOptionValue(optionValue == null ? null : String.valueOf(optionValue));
             newItems.add(oi);
         }
 

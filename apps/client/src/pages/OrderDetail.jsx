@@ -31,8 +31,9 @@ export default function OrderDetail() {
         <p><strong>Total: ${Number(data.order.totalAmount).toFixed(2)}</strong></p>
         <ul className="product-grid">
           {data.items.map((i) => (
-            <li key={i.productId}>
+            <li key={`${i.productId}::${i.optionValue || ''}`}>
               <div>{i.productName}</div>
+              {i.optionValue && <div className="muted">Option: {i.optionValue}</div>}
               <div className="muted">{i.quantity} x ${Number(i.unitPrice).toFixed(2)}</div>
             </li>
           ))}
