@@ -7,11 +7,14 @@ const SessionContext = createContext(null);
 function SessionProvider({ children }) {
   const { backend } = useBackend();
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(() => {
+    setLoading(true);
     fetchSession(backend.base)
       .then((data) => setUser(data.user))
-      .catch(() => setUser(null));
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
   }, [backend.base]);
 
   useEffect(() => {
@@ -24,7 +27,7 @@ function SessionProvider({ children }) {
   }
 
   return (
-    <SessionContext.Provider value={{ user, setUser, refresh, logout }}>
+    <SessionContext.Provider value={{ user, setUser, refresh, logout, loading }}>
       {children}
     </SessionContext.Provider>
   );

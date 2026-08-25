@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../db');
 const { requireAdmin, requireSystemAdmin } = require('../middleware/auth');
+const { upload } = require('../uploads');
 
 const router = express.Router();
 
@@ -60,6 +61,16 @@ router.put('/products/:id', requireAdmin, (req, res) => {
     existing.id
   );
   res.json({ ok: true });
+});
+
+router.post('/products/:id/image', requireAdmin, upload.single('image'), (req, res) => {
+  const existing = db.prepare('SELECT id FROM products WHERE id = ?').get(req.params.id);
+  if (!existing) return res.status(404).json({ error: 'Product not found' });
+  if (!req.file) {
+    return res.status(400).json({ error: 'Invalid or missing image file.' });
+  }
+  db.prepare('UPDATE products SET image_url = ? WHERE id = ?').run(req.file.filename, existing.id);
+  res.json({ imageUrl: req.file.filename });
 });
 
 router.delete('/products/:id', requireAdmin, (req, res) => {
