@@ -1,8 +1,8 @@
 import { createContext, useContext, useState } from 'react';
 
 const BACKENDS = {
-  node: { label: 'Node.js / Express', base: '/api/node' },
-  java: { label: 'Java / Spring', base: '/api/java' },
+  node: { label: 'Node.js / Express', base: '/api/node', uploadsBase: '/uploads/node' },
+  java: { label: 'Java / Spring', base: '/api/java', uploadsBase: '/uploads/java' },
 };
 
 const BackendContext = createContext(null);

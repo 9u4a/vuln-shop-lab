@@ -10,6 +10,6 @@ WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 8081
-VOLUME ["/app/data"]
+VOLUME ["/app/data", "/app/uploads"]
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
