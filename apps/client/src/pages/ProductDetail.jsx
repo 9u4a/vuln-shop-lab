@@ -2,15 +2,16 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useBackend } from '../BackendContext.jsx';
 import { useCart } from '../CartContext.jsx';
-import { fetchProduct, fetchReviews, createReview, fetchSession } from '../api.js';
+import { useSession } from '../SessionContext.jsx';
+import { fetchProduct, fetchReviews, createReview } from '../api.js';
 
 export default function ProductDetail() {
   const { backend } = useBackend();
   const { addItem } = useCart();
+  const { user } = useSession();
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [reviews, setReviews] = useState([]);
-  const [user, setUser] = useState(null);
   const [rating, setRating] = useState(5);
   const [body, setBody] = useState('');
   const [error, setError] = useState(null);
@@ -23,9 +24,6 @@ export default function ProductDetail() {
     setProduct(null);
     fetchProduct(backend.base, id).then((data) => setProduct(data.product));
     loadReviews();
-    fetchSession(backend.base)
-      .then((data) => setUser(data.user))
-      .catch(() => setUser(null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backend.base, id]);
 
