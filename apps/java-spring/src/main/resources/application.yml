@@ -1,0 +1,17 @@
+server:
+  port: 8081
+
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/app;AUTO_SERVER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+app:
+  cors:
+    allowed-origin: ${APP_CORS_ALLOWED_ORIGIN:http://localhost:5173}

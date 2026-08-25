@@ -1,0 +1,47 @@
+services:
+  node-express:
+    build: ./apps/node-express
+    container_name: vulnshop-node
+    ports:
+      - "3000:3000"
+    environment:
+      SESSION_SECRET: ${NODE_SESSION_SECRET:-dev-secret-change-me}
+      FLAG_DEMO: ${FLAG_DEMO:-FLAG{demo_setup_ok}}
+    volumes:
+      - node_data:/app/data
+    networks:
+      - vulnshop-net
+
+  java-spring:
+    build: ./apps/java-spring
+    container_name: vulnshop-java
+    ports:
+      - "8081:8081"
+    environment:
+      FLAG_DEMO: ${FLAG_DEMO:-FLAG{demo_setup_ok}}
+    volumes:
+      - java_data:/app/data
+    networks:
+      - vulnshop-net
+
+  client:
+    build: ./apps/client
+    container_name: vulnshop-client
+    ports:
+      - "5173:5173"
+    environment:
+      NODE_BACKEND_URL: http://node-express:3000
+      JAVA_BACKEND_URL: http://java-spring:8081
+    depends_on:
+      - node-express
+      - java-spring
+    networks:
+      - vulnshop-net
+
+networks:
+  vulnshop-net:
+    driver: bridge
+
+volumes:
+  node_data:
+  java_data:

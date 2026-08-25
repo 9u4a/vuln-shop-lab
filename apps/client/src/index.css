@@ -1,0 +1,15 @@
+body { font-family: system-ui, sans-serif; margin: 0; background: #f7f7f8; color: #1a1a1a; }
+nav { display: flex; gap: 1rem; align-items: center; padding: 1rem 2rem; background: #1a1a1a; }
+nav a, nav span { color: #fff; text-decoration: none; }
+nav a:first-child { font-weight: bold; margin-right: auto; }
+main { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+.product-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; }
+.product-grid li { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1rem; }
+form { display: flex; flex-direction: column; gap: 0.75rem; max-width: 320px; }
+label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.9rem; }
+input, button, select { padding: 0.5rem; font-size: 1rem; }
+button { cursor: pointer; }
+.error { color: #b00020; }
+.backend-cards { display: flex; gap: 1rem; margin: 1rem 0; }
+.backend-cards button { padding: 1rem 1.5rem; border: 1px solid #ccc; border-radius: 8px; background: #fff; }
+.backend-cards button.active { border-color: #1a1a1a; font-weight: bold; }
