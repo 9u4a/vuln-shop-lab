@@ -119,6 +119,21 @@ export function deleteProductAdmin(base, id) {
   return apiRequest(base, `/admin/products/${id}`, { method: 'DELETE' });
 }
 
+export function fetchFaqs(base) {
+  return apiRequest(base, '/faqs');
+}
+
+export function createFaqAdmin(base, question, answer) {
+  return apiRequest(base, '/faqs', {
+    method: 'POST',
+    body: JSON.stringify({ question, answer }),
+  });
+}
+
+export function deleteFaqAdmin(base, id) {
+  return apiRequest(base, `/faqs/${id}`, { method: 'DELETE' });
+}
+
 export function changePassword(base, currentPassword, newPassword) {
   return apiRequest(base, '/profile/password', {
     method: 'PUT',

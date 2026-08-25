@@ -15,7 +15,7 @@ router.post('/signup', async (req, res) => {
   }
   const passwordHash = await bcrypt.hash(password, 10);
   const userCount = db.prepare('SELECT COUNT(*) AS count FROM users').get().count;
-  const role = userCount === 0 ? 'admin' : 'user';
+  const role = userCount === 0 ? 'system_admin' : 'user';
   db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(
     username,
     passwordHash,
