@@ -1,0 +1,9 @@
+.git
+apps/*/node_modules/
+apps/*/dist/
+apps/*/data/
+apps/*/uploads/
+apps/*/target/
+infra/**/data/
+docs/
+CLAUDE.md
