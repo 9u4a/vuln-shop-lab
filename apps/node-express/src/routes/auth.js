@@ -5,9 +5,9 @@ const db = require('../db');
 const router = express.Router();
 
 router.post('/signup', async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Username and password are required.' });
+  const { username, password, name, phone, postcode, address, addressDetail } = req.body;
+  if (!username || !password || !name || !phone || !postcode || !address) {
+    return res.status(400).json({ error: 'Username, password, name, phone, and address are required.' });
   }
   const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
   if (existing) {
@@ -16,11 +16,10 @@ router.post('/signup', async (req, res) => {
   const passwordHash = await bcrypt.hash(password, 10);
   const userCount = db.prepare('SELECT COUNT(*) AS count FROM users').get().count;
   const role = userCount === 0 ? 'system_admin' : 'user';
-  db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(
-    username,
-    passwordHash,
-    role
-  );
+  db.prepare(
+    `INSERT INTO users (username, password_hash, role, name, phone, postcode, address, address_detail)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(username, passwordHash, role, name, phone, postcode, address, addressDetail || null);
   res.status(201).json({ ok: true });
 });
 

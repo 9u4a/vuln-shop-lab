@@ -13,6 +13,11 @@ function toProfile(row) {
     role: row.role,
     bio: row.bio,
     avatarUrl: row.avatar_url,
+    name: row.name,
+    phone: row.phone,
+    postcode: row.postcode,
+    address: row.address,
+    addressDetail: row.address_detail,
     createdAt: row.created_at,
   };
 }
