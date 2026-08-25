@@ -22,10 +22,10 @@ export function login(base, username, password) {
   });
 }
 
-export function signup(base, username, password) {
+export function signup(base, payload) {
   return apiRequest(base, '/auth/signup', {
     method: 'POST',
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify(payload),
   });
 }
 
@@ -57,12 +57,11 @@ export function updateProfile(base, bio) {
   });
 }
 
-export function createOrder(base, items, webhookUrl) {
+export function createOrder(base, items) {
   return apiRequest(base, '/orders', {
     method: 'POST',
     body: JSON.stringify({
       items: items.map((i) => ({ productId: i.productId, quantity: i.quantity, optionValue: i.option || undefined })),
-      webhookUrl: webhookUrl || undefined,
     }),
   });
 }
@@ -119,11 +118,16 @@ export function deleteProductAdmin(base, id) {
   return apiRequest(base, `/admin/products/${id}`, { method: 'DELETE' });
 }
 
-export function fetchFaqs(base) {
-  return apiRequest(base, '/faqs');
+export function fetchFaqs(base, { q, page, pageSize } = {}) {
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (page) params.set('page', page);
+  if (pageSize) params.set('pageSize', pageSize);
+  const query = params.toString();
+  return apiRequest(base, `/faqs${query ? `?${query}` : ''}`);
 }
 
-export function createFaqAdmin(base, question, answer) {
+export function createFaq(base, question, answer) {
   return apiRequest(base, '/faqs', {
     method: 'POST',
     body: JSON.stringify({ question, answer }),
@@ -134,8 +138,13 @@ export function deleteFaqAdmin(base, id) {
   return apiRequest(base, `/faqs/${id}`, { method: 'DELETE' });
 }
 
-export function fetchNotices(base) {
-  return apiRequest(base, '/notices');
+export function fetchNotices(base, { q, page, pageSize } = {}) {
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (page) params.set('page', page);
+  if (pageSize) params.set('pageSize', pageSize);
+  const query = params.toString();
+  return apiRequest(base, `/notices${query ? `?${query}` : ''}`);
 }
 
 export function createNoticeAdmin(base, title, body) {

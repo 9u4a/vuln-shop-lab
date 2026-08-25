@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useBackend } from '../../BackendContext.jsx';
-import { fetchFaqs, createFaqAdmin, deleteFaqAdmin } from '../../api.js';
+import { fetchFaqs, createFaq, deleteFaqAdmin } from '../../api.js';
 
 const emptyFaq = { question: '', answer: '' };
 
@@ -12,7 +12,7 @@ export default function AdminFaq() {
 
   function load() {
     setError(null);
-    fetchFaqs(backend.base).then((d) => setFaqs(d.faqs)).catch((e) => setError(e.message));
+    fetchFaqs(backend.base, { pageSize: 50 }).then((d) => setFaqs(d.faqs)).catch((e) => setError(e.message));
   }
 
   useEffect(load, [backend.base]);
@@ -20,7 +20,7 @@ export default function AdminFaq() {
   async function handleCreate(e) {
     e.preventDefault();
     try {
-      await createFaqAdmin(backend.base, newFaq.question, newFaq.answer);
+      await createFaq(backend.base, newFaq.question, newFaq.answer);
       setNewFaq(emptyFaq);
       load();
     } catch (err) {
