@@ -57,12 +57,12 @@ function Layout({ children }) {
           <Link to="/" className="brand">Vuln Shop</Link>
 
           <nav className="main-nav">
-            <NavItem to="/products">Products</NavItem>
-            <NavItem to="/notices">Notices</NavItem>
-            <NavItem to="/cart">Cart{items.length > 0 && <span className="count-badge">{items.length}</span>}</NavItem>
-            {user && <NavItem to="/orders">My Orders</NavItem>}
-            <NavItem to="/faq">FAQ</NavItem>
-            {user && ADMIN_ROLES.includes(user.role) && <NavItem to="/admin">Admin</NavItem>}
+            <NavItem to="/products">상품</NavItem>
+            <NavItem to="/notices">공지사항</NavItem>
+            <NavItem to="/cart">장바구니{items.length > 0 && <span className="count-badge">{items.length}</span>}</NavItem>
+            {user && <NavItem to="/orders">주문 내역</NavItem>}
+            <NavItem to="/faq">자주 묻는 질문</NavItem>
+            {user && ADMIN_ROLES.includes(user.role) && <NavItem to="/admin">관리자</NavItem>}
           </nav>
 
           <div className="topbar-actions">
@@ -79,14 +79,14 @@ function Layout({ children }) {
 
             {user ? (
               <div className="account-area">
-                <span className="greeting">Hi, {user.username}</span>
-                <Link to="/mypage" className="btn btn-ghost btn-sm">My Page</Link>
-                <button onClick={handleLogout} className="btn btn-ghost btn-sm">Logout</button>
+                <span className="greeting">{user.username}님</span>
+                <Link to="/mypage" className="btn btn-ghost btn-sm">마이페이지</Link>
+                <button onClick={handleLogout} className="btn btn-ghost btn-sm">로그아웃</button>
               </div>
             ) : (
               <div className="account-area">
-                <Link to="/login" className="btn btn-ghost btn-sm">Login</Link>
-                <Link to="/signup" className="btn btn-primary btn-sm">Sign up</Link>
+                <Link to="/login" className="btn btn-ghost btn-sm">로그인</Link>
+                <Link to="/signup" className="btn btn-primary btn-sm">회원가입</Link>
               </div>
             )}
           </div>

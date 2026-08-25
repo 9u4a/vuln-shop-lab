@@ -28,9 +28,9 @@ export default function AdminUsers() {
 
   return (
     <section className="card">
-      <h2>Users</h2>
+      <h2>사용자</h2>
       {error && <p className="error">{error}</p>}
-      {!isSystemAdmin && <p className="muted">Only System Admins can change roles.</p>}
+      {!isSystemAdmin && <p className="muted">시스템 관리자만 권한을 변경할 수 있습니다.</p>}
       <ul>
         {users.map((u) => (
           <li key={u.id}>

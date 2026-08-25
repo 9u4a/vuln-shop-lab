@@ -11,17 +11,17 @@ export default function AddressSearchModal({ onSelect, onClose }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Find address</h2>
-          <button type="button" className="modal-close" onClick={onClose} aria-label="Close">&times;</button>
+          <h2>주소 찾기</h2>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="닫기">&times;</button>
         </div>
         <input
           autoFocus
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by street, district..."
+          placeholder="도로명, 지역으로 검색..."
         />
         <ul className="address-results">
-          {results.length === 0 && <li className="muted">No matches.</li>}
+          {results.length === 0 && <li className="muted">검색 결과가 없습니다.</li>}
           {results.map((a) => (
             <li key={a.zonecode}>
               <button type="button" onClick={() => onSelect(a)}>

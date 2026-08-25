@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useBackend } from '../BackendContext.jsx';
 import { useCart } from '../CartContext.jsx';
 import { fetchProducts } from '../api.js';
+import { formatCurrency } from '../format.js';
 
 export default function Products() {
   const { backend } = useBackend();
@@ -30,7 +31,7 @@ export default function Products() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>Products</h1>
+        <h1>상품</h1>
       </div>
 
       <section className="card">
@@ -41,24 +42,24 @@ export default function Products() {
           }}
           style={{ flexDirection: 'row', alignItems: 'flex-end', flexWrap: 'wrap', maxWidth: 'none' }}
         >
-          <label style={{ flex: '1 1 200px' }}>Search
-            <input name="q" defaultValue={q} placeholder="Search products..." />
+          <label style={{ flex: '1 1 200px' }}>검색
+            <input name="q" defaultValue={q} placeholder="상품 검색..." />
           </label>
-          <label style={{ flex: '1 1 160px' }}>Category
+          <label style={{ flex: '1 1 160px' }}>카테고리
             <input
               value={category}
               onChange={(e) => updateParams({ category: e.target.value })}
-              placeholder="e.g. accessories"
+              placeholder="예: accessories"
             />
           </label>
-          <label style={{ flex: '1 1 140px' }}>Sort by
+          <label style={{ flex: '1 1 140px' }}>정렬
             <select value={sort} onChange={(e) => updateParams({ sort: e.target.value })}>
-              <option value="">Default</option>
-              <option value="name">Name</option>
-              <option value="price">Price</option>
+              <option value="">기본</option>
+              <option value="name">이름순</option>
+              <option value="price">가격순</option>
             </select>
           </label>
-          <button type="submit" className="btn btn-primary">Apply</button>
+          <button type="submit" className="btn btn-primary">적용</button>
         </form>
       </section>
 
@@ -74,9 +75,9 @@ export default function Products() {
               />
             )}
             <Link to={`/products/${p.id}`}>{p.name}</Link>
-            <div className="product-price">${Number(p.price).toFixed(2)}</div>
+            <div className="product-price">{formatCurrency(p.price)}</div>
             {sortKeys && <div className="muted">sortKey: {sortKeys[i]}</div>}
-            <button onClick={() => addItem(p)}>Add to cart</button>
+            <button onClick={() => addItem(p)}>장바구니 담기</button>
           </li>
         ))}
       </ul>

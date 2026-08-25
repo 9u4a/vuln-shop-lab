@@ -3,6 +3,7 @@ import { loadTossPayments, ANONYMOUS } from '@tosspayments/tosspayments-sdk';
 import { useCart } from '../CartContext.jsx';
 import { useBackend } from '../BackendContext.jsx';
 import { createOrder } from '../api.js';
+import { formatCurrency } from '../format.js';
 
 const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY;
 
@@ -46,7 +47,7 @@ export default function Cart() {
       const { orderId, tossOrderId, amount } = await createOrder(backend.base, items);
       if (!TOSS_CLIENT_KEY) {
         setPendingNote(
-          `Order #${orderId} created as pending. Set VITE_TOSS_CLIENT_KEY to continue to Toss checkout.`
+          `주문 #${orderId}이(가) 결제 대기 상태로 생성되었습니다. Toss 결제를 계속하려면 VITE_TOSS_CLIENT_KEY를 설정하세요.`
         );
         return;
       }
@@ -74,15 +75,15 @@ export default function Cart() {
     return (
       <div className="page">
         <div className="page-header">
-          <h1>Cart</h1>
+          <h1>장바구니</h1>
         </div>
         {error && <p className="error">{error}</p>}
         <section className="card">
-          <p><strong>Order #{pendingPayment.orderId} — {pendingPayment.amount} KRW</strong></p>
+          <p><strong>주문 #{pendingPayment.orderId} — {formatCurrency(pendingPayment.amount)}</strong></p>
           <div id="payment-method" />
           <div id="agreement" />
-          <button disabled={!widgetsReady} onClick={handlePay} className="btn btn-primary">Pay</button>
-          <button onClick={() => setPendingPayment(null)} className="btn btn-ghost">Cancel</button>
+          <button disabled={!widgetsReady} onClick={handlePay} className="btn btn-primary">결제하기</button>
+          <button onClick={() => setPendingPayment(null)} className="btn btn-ghost">취소</button>
         </section>
       </div>
     );
@@ -91,21 +92,21 @@ export default function Cart() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>Cart</h1>
+        <h1>장바구니</h1>
       </div>
       {error && <p className="error">{error}</p>}
       {pendingNote && <p className="status-ok">{pendingNote}</p>}
 
       {items.length === 0 ? (
-        <p className="muted">Cart is empty.</p>
+        <p className="muted">장바구니가 비어 있습니다.</p>
       ) : (
         <ul className="product-grid">
           {items.map((i) => (
             <li key={`${i.productId}::${i.option || ''}`}>
               <div>{i.name}</div>
-              {i.option && <div className="muted">Option: {i.option}</div>}
-              <div className="product-price">${i.price.toFixed(2)}</div>
-              <label>Quantity
+              {i.option && <div className="muted">옵션: {i.option}</div>}
+              <div className="product-price">{formatCurrency(i.price)}</div>
+              <label>수량
                 <input
                   type="number"
                   min="0"
@@ -114,15 +115,15 @@ export default function Cart() {
                   style={{ width: '4rem' }}
                 />
               </label>
-              <button onClick={() => removeItem(i.productId, i.option)}>Remove</button>
+              <button onClick={() => removeItem(i.productId, i.option)}>삭제</button>
             </li>
           ))}
         </ul>
       )}
 
       <section className="card">
-        <p><strong>Total: ${total.toFixed(2)}</strong></p>
-        <button disabled={items.length === 0} onClick={handleCheckout} className="btn btn-primary">Checkout</button>
+        <p><strong>총액: {formatCurrency(total)}</strong></p>
+        <button disabled={items.length === 0} onClick={handleCheckout} className="btn btn-primary">결제하기</button>
       </section>
     </div>
   );

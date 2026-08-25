@@ -52,7 +52,7 @@ public class OrderController {
     }
 
     private ResponseEntity<?> unauthorized() {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required."));
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그인이 필요합니다."));
     }
 
     @GetMapping
@@ -82,7 +82,7 @@ public class OrderController {
 
         Object rawItems = body.get("items");
         if (!(rawItems instanceof List<?> items) || items.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "At least one item is required."));
+            return ResponseEntity.badRequest().body(Map.of("error", "최소 1개 이상의 상품이 필요합니다."));
         }
 
         BigDecimal total = BigDecimal.ZERO;
@@ -93,7 +93,7 @@ public class OrderController {
             int quantity = Integer.parseInt(String.valueOf(item.get("quantity")));
             Product product = productRepository.findById(productId).orElse(null);
             if (product == null || quantity < 1) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Invalid order item."));
+                return ResponseEntity.badRequest().body(Map.of("error", "유효하지 않은 주문 항목입니다."));
             }
             total = total.add(product.getPrice().multiply(BigDecimal.valueOf(quantity)));
             OrderItem oi = new OrderItem();
@@ -132,13 +132,13 @@ public class OrderController {
         }
         if (tossSecretKey == null || tossSecretKey.isBlank()) {
             return ResponseEntity.status(501)
-                    .body(Map.of("error", "Payment is not configured on this server (TOSS_SECRET_KEY missing)."));
+                    .body(Map.of("error", "이 서버에는 결제가 설정되어 있지 않습니다 (TOSS_SECRET_KEY 누락)."));
         }
 
         String paymentKey = (String) body.get("paymentKey");
         BigDecimal amount = new BigDecimal(String.valueOf(body.get("amount")));
         if (paymentKey == null || amount.compareTo(order.getTotalAmount()) != 0) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Payment verification failed: amount mismatch."));
+            return ResponseEntity.badRequest().body(Map.of("error", "결제 검증에 실패했습니다: 금액이 일치하지 않습니다."));
         }
 
         String authHeader = "Basic " + Base64.getEncoder().encodeToString((tossSecretKey + ":").getBytes());
@@ -157,7 +157,7 @@ public class OrderController {
         if (tossResponse.statusCode() >= 300) {
             order.setStatus("failed");
             orderRepository.save(order);
-            return ResponseEntity.status(502).body(Map.of("error", "Payment confirmation failed.", "detail", tossResponse.body()));
+            return ResponseEntity.status(502).body(Map.of("error", "결제 확인에 실패했습니다.", "detail", tossResponse.body()));
         }
 
         order.setStatus("paid");

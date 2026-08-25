@@ -2,12 +2,12 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { useSession } from '../../SessionContext.jsx';
 
 const TABS = [
-  { to: 'settings', label: 'Settings' },
-  { to: 'users', label: 'Users' },
-  { to: 'orders', label: 'Orders' },
-  { to: 'products', label: 'Products' },
+  { to: 'settings', label: '설정' },
+  { to: 'users', label: '사용자' },
+  { to: 'orders', label: '주문' },
+  { to: 'products', label: '상품' },
   { to: 'faq', label: 'FAQ' },
-  { to: 'notices', label: 'Notices' },
+  { to: 'notices', label: '공지사항' },
 ];
 
 export default function AdminLayout() {
@@ -16,8 +16,8 @@ export default function AdminLayout() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>Admin</h1>
-        <p className="muted">Signed in as <span className="badge">{user?.role}</span></p>
+        <h1>관리자</h1>
+        <p className="muted">로그인 계정: <span className="badge">{user?.role}</span></p>
       </div>
       <nav className="admin-subnav">
         {TABS.map((t) => (
