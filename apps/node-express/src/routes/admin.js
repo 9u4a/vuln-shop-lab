@@ -5,6 +5,17 @@ const { upload } = require('../uploads');
 
 const router = express.Router();
 
+router.get('/stats', requireAdmin, (req, res) => {
+  const count = (table) => db.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get().count;
+  res.json({
+    users: count('users'),
+    orders: count('orders'),
+    products: count('products'),
+    faqs: count('faqs'),
+    notices: count('notices'),
+  });
+});
+
 router.get('/users', requireAdmin, (req, res) => {
   const rows = db.prepare('SELECT id, username, role, bio, avatar_url, created_at FROM users ORDER BY id').all();
   res.json({ users: rows });

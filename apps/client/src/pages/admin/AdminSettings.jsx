@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useBackend } from '../../BackendContext.jsx';
 import { useSession } from '../../SessionContext.jsx';
-import { fetchAdminUsers, fetchAdminOrders, fetchProducts, fetchFaqs, fetchNotices } from '../../api.js';
+import { fetchAdminStats } from '../../api.js';
 
 export default function AdminSettings() {
   const { backend } = useBackend();
@@ -12,22 +12,8 @@ export default function AdminSettings() {
   useEffect(() => {
     setCounts(null);
     setError(null);
-    Promise.all([
-      fetchAdminUsers(backend.base),
-      fetchAdminOrders(backend.base),
-      fetchProducts(backend.base),
-      fetchFaqs(backend.base),
-      fetchNotices(backend.base),
-    ])
-      .then(([users, orders, products, faqs, notices]) => {
-        setCounts({
-          users: users.users.length,
-          orders: orders.orders.length,
-          products: products.products.length,
-          faqs: faqs.faqs.length,
-          notices: notices.notices.length,
-        });
-      })
+    fetchAdminStats(backend.base)
+      .then(setCounts)
       .catch((err) => setError(err.message));
   }, [backend.base]);
 
