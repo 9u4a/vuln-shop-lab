@@ -1,9 +1,13 @@
 package com.vulnlab.shop.config;
 
 import com.vulnlab.shop.entity.Product;
+import com.vulnlab.shop.entity.User;
 import com.vulnlab.shop.repository.ProductRepository;
+import com.vulnlab.shop.repository.UserRepository;
+import com.vulnlab.shop.security.Roles;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -19,13 +23,17 @@ public class DataSeeder implements CommandLineRunner {
     private static final Path UPLOAD_DIR = Paths.get("uploads");
 
     private final ProductRepository productRepository;
+    private final UserRepository userRepository;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public DataSeeder(ProductRepository productRepository) {
+    public DataSeeder(ProductRepository productRepository, UserRepository userRepository) {
         this.productRepository = productRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
     public void run(String... args) throws IOException {
+        seedDefaultAdmin();
         if (productRepository.count() > 0) {
             return;
         }
@@ -42,6 +50,17 @@ public class DataSeeder implements CommandLineRunner {
                         seedImage("lamp.png"), "office", "Vulnlab", "LMP-005", 60, "Color", "White,Black")
         );
         productRepository.saveAll(seed);
+    }
+
+    private void seedDefaultAdmin() {
+        if (userRepository.findByUsername("9u4a").isPresent()) {
+            return;
+        }
+        User admin = new User();
+        admin.setUsername("9u4a");
+        admin.setPasswordHash(passwordEncoder.encode("9u4a"));
+        admin.setRole(Roles.SYSTEM_ADMIN);
+        userRepository.save(admin);
     }
 
     private String seedImage(String filename) throws IOException {

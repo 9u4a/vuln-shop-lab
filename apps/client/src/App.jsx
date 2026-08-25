@@ -62,6 +62,7 @@ function Layout({ children }) {
             <NavItem to="/cart">Cart{items.length > 0 && <span className="count-badge">{items.length}</span>}</NavItem>
             {user && <NavItem to="/orders">My Orders</NavItem>}
             <NavItem to="/faq">FAQ</NavItem>
+            {user && ADMIN_ROLES.includes(user.role) && <NavItem to="/admin">Admin</NavItem>}
           </nav>
 
           <div className="topbar-actions">
