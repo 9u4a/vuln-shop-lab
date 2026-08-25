@@ -78,6 +78,17 @@ export function confirmOrder(base, id, paymentKey, amount) {
   });
 }
 
+export function fetchReviews(base, productId) {
+  return apiRequest(base, `/products/${productId}/reviews`);
+}
+
+export function createReview(base, productId, rating, body) {
+  return apiRequest(base, `/products/${productId}/reviews`, {
+    method: 'POST',
+    body: JSON.stringify({ rating, body }),
+  });
+}
+
 export async function uploadAvatar(base, file) {
   const formData = new FormData();
   formData.append('avatar', file);
