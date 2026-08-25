@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useBackend } from '../BackendContext.jsx';
+import { useCart } from '../CartContext.jsx';
 import { fetchProducts } from '../api.js';
 
 export default function Products() {
   const { backend } = useBackend();
+  const { addItem } = useCart();
   const [searchParams, setSearchParams] = useSearchParams();
   const q = searchParams.get('q') || '';
   const [products, setProducts] = useState([]);
@@ -31,6 +33,7 @@ export default function Products() {
           <li key={p.id}>
             <Link to={`/products/${p.id}`}>{p.name}</Link>
             <div>${Number(p.price).toFixed(2)}</div>
+            <button onClick={() => addItem(p)}>Add to cart</button>
           </li>
         ))}
       </ul>
