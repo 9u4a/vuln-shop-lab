@@ -41,3 +41,29 @@ export function fetchProducts(base, q) {
 export function fetchProduct(base, id) {
   return apiRequest(base, `/products/${id}`);
 }
+
+export function fetchProfile(base) {
+  return apiRequest(base, '/profile');
+}
+
+export function updateProfile(base, bio) {
+  return apiRequest(base, '/profile', {
+    method: 'PUT',
+    body: JSON.stringify({ bio }),
+  });
+}
+
+export async function uploadAvatar(base, file) {
+  const formData = new FormData();
+  formData.append('avatar', file);
+  const res = await fetch(`${base}/profile/avatar`, {
+    method: 'POST',
+    credentials: 'include',
+    body: formData,
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error(data?.error || `Request failed (${res.status})`);
+  }
+  return data;
+}

@@ -2,13 +2,19 @@ require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
 
 const { seedFlagsFromEnv } = require('./flags');
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
+const profileRoutes = require('./routes/profile');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+const uploadDir = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
 app.use(
   cors({
@@ -27,12 +33,15 @@ app.use(
   })
 );
 
+app.use('/uploads', express.static(uploadDir));
+
 app.get('/api/session', (req, res) => {
   res.json({ user: req.session.user || null });
 });
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/profile', profileRoutes);
 
 const seededFlagCount = seedFlagsFromEnv();
 console.log(`Seeded ${seededFlagCount} flag(s) from environment`);
