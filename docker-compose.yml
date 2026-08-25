@@ -41,6 +41,21 @@ services:
     networks:
       - vulnshop-net
 
+  nginx:
+    build:
+      context: .
+      dockerfile: apps/nginx/Dockerfile
+      args:
+        VITE_TOSS_CLIENT_KEY: ${TOSS_CLIENT_KEY:-}
+    container_name: vulnshop-nginx
+    ports:
+      - "8080:80"
+    depends_on:
+      - node-express
+      - java-spring
+    networks:
+      - vulnshop-net
+
 networks:
   vulnshop-net:
     driver: bridge
