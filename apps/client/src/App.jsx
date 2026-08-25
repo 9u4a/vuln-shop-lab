@@ -1,8 +1,8 @@
 import { Routes, Route, Link, NavLink, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
 import { BackendProvider, useBackend } from './BackendContext.jsx';
 import { CartProvider, useCart } from './CartContext.jsx';
-import { fetchSession, logout as apiLogout } from './api.js';
+import { SessionProvider, useSession } from './SessionContext.jsx';
+import { ToastProvider } from './ToastContext.jsx';
 import Home from './pages/Home.jsx';
 import Login from './pages/Login.jsx';
 import Signup from './pages/Signup.jsx';
@@ -26,18 +26,11 @@ function NavItem({ to, children }) {
 function Layout({ children }) {
   const { backend, backends, backendKey, selectBackend } = useBackend();
   const { items } = useCart();
-  const [user, setUser] = useState(null);
+  const { user, logout } = useSession();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchSession(backend.base)
-      .then((data) => setUser(data.user))
-      .catch(() => setUser(null));
-  }, [backend.base]);
-
   async function handleLogout() {
-    await apiLogout(backend.base);
-    setUser(null);
+    await logout();
     navigate('/');
   }
 
@@ -88,25 +81,29 @@ function Layout({ children }) {
 
 export default function App() {
   return (
-    <BackendProvider>
-      <CartProvider>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/products/:id" element={<ProductDetail />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout/success" element={<CheckoutResult success />} />
-            <Route path="/checkout/fail" element={<CheckoutResult success={false} />} />
-            <Route path="/orders" element={<Orders />} />
-            <Route path="/orders/:id" element={<OrderDetail />} />
-            <Route path="/admin" element={<Admin />} />
-          </Routes>
-        </Layout>
-      </CartProvider>
-    </BackendProvider>
+    <ToastProvider>
+      <BackendProvider>
+        <SessionProvider>
+          <CartProvider>
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/products" element={<Products />} />
+                <Route path="/products/:id" element={<ProductDetail />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/checkout/success" element={<CheckoutResult success />} />
+                <Route path="/checkout/fail" element={<CheckoutResult success={false} />} />
+                <Route path="/orders" element={<Orders />} />
+                <Route path="/orders/:id" element={<OrderDetail />} />
+                <Route path="/admin" element={<Admin />} />
+              </Routes>
+            </Layout>
+          </CartProvider>
+        </SessionProvider>
+      </BackendProvider>
+    </ToastProvider>
   );
 }
