@@ -44,6 +44,19 @@ router.put('/password', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+router.post('/verify-password', requireAuth, async (req, res) => {
+  const { password } = req.body;
+  if (!password) {
+    return res.status(400).json({ error: 'Password is required.' });
+  }
+  const row = db.prepare('SELECT * FROM users WHERE id = ?').get(req.session.user.id);
+  const matches = await bcrypt.compare(password, row.password_hash);
+  if (!matches) {
+    return res.status(401).json({ error: 'Password is incorrect.' });
+  }
+  res.json({ ok: true });
+});
+
 router.post('/avatar', requireAuth, upload.single('avatar'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'Invalid or missing image file.' });

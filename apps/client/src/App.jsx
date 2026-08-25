@@ -10,7 +10,9 @@ import Login from './pages/Login.jsx';
 import Signup from './pages/Signup.jsx';
 import Products from './pages/Products.jsx';
 import ProductDetail from './pages/ProductDetail.jsx';
-import Profile from './pages/Profile.jsx';
+import MyPageLayout from './pages/mypage/MyPageLayout.jsx';
+import MyPageProfile from './pages/mypage/MyPageProfile.jsx';
+import MyPagePassword from './pages/mypage/MyPagePassword.jsx';
 import Cart from './pages/Cart.jsx';
 import CheckoutResult from './pages/CheckoutResult.jsx';
 import Orders from './pages/Orders.jsx';
@@ -56,11 +58,10 @@ function Layout({ children }) {
 
           <nav className="main-nav">
             <NavItem to="/products">Products</NavItem>
-            <NavItem to="/faq">FAQ</NavItem>
             <NavItem to="/notices">Notices</NavItem>
             <NavItem to="/cart">Cart{items.length > 0 && <span className="count-badge">{items.length}</span>}</NavItem>
             {user && <NavItem to="/orders">My Orders</NavItem>}
-            {user && ADMIN_ROLES.includes(user.role) && <NavItem to="/admin">Admin</NavItem>}
+            <NavItem to="/faq">FAQ</NavItem>
           </nav>
 
           <div className="topbar-actions">
@@ -78,7 +79,7 @@ function Layout({ children }) {
             {user ? (
               <div className="account-area">
                 <span className="greeting">Hi, {user.username}</span>
-                <Link to="/profile" className="btn btn-ghost btn-sm">My Page</Link>
+                <Link to="/mypage" className="btn btn-ghost btn-sm">My Page</Link>
                 <button onClick={handleLogout} className="btn btn-ghost btn-sm">Logout</button>
               </div>
             ) : (
@@ -114,7 +115,10 @@ export default function App() {
                 <Route path="/checkout/success" element={<CheckoutResult success />} />
                 <Route path="/checkout/fail" element={<CheckoutResult success={false} />} />
 
-                <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
+                <Route path="/mypage" element={<RequireAuth><MyPageLayout /></RequireAuth>}>
+                  <Route index element={<MyPageProfile />} />
+                  <Route path="password" element={<MyPagePassword />} />
+                </Route>
                 <Route path="/orders" element={<RequireAuth><Orders /></RequireAuth>} />
                 <Route path="/orders/:id" element={<RequireAuth><OrderDetail /></RequireAuth>} />
 

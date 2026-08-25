@@ -61,7 +61,7 @@ export function createOrder(base, items, webhookUrl) {
   return apiRequest(base, '/orders', {
     method: 'POST',
     body: JSON.stringify({
-      items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+      items: items.map((i) => ({ productId: i.productId, quantity: i.quantity, optionValue: i.option || undefined })),
       webhookUrl: webhookUrl || undefined,
     }),
   });
@@ -168,6 +168,13 @@ export function changePassword(base, currentPassword, newPassword) {
   return apiRequest(base, '/profile/password', {
     method: 'PUT',
     body: JSON.stringify({ currentPassword, newPassword }),
+  });
+}
+
+export function verifyPassword(base, password) {
+  return apiRequest(base, '/profile/verify-password', {
+    method: 'POST',
+    body: JSON.stringify({ password }),
   });
 }
 
