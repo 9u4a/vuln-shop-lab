@@ -18,7 +18,7 @@ npm start
 
 ```
 docker build -t vulnshop-node .
-docker run -p 3000:3000 -e FLAG_DEMO="FLAG{demo_setup_ok}" vulnshop-node
+docker run -p 3000:3000 vulnshop-node
 ```
 
 전체(client 포함)를 함께 띄우려면 저장소 루트의 `docker compose up --build`를 사용하세요.
@@ -34,8 +34,4 @@ docker run -p 3000:3000 -e FLAG_DEMO="FLAG{demo_setup_ok}" vulnshop-node
 - `GET /api/products?q=` — 목록/검색
 - `GET /api/products/:id` — 상세
 
-## 플래그
-
-시작 시 `FLAG_` 접두사가 붙은 환경변수를 읽어 `flags` 테이블에 시드합니다(`src/flags.js`). 콘솔에 `Seeded N flag(s) from environment`가 찍히면 정상 동작한 것입니다.
-
-아직 의도적인 취약점은 심지 않은 상태입니다. 취약점은 `docs/vulnerabilities/`(프로젝트 루트)에 명세가 추가되는 대로 이 코드에 반영됩니다.
+취약점은 `docs/vulnerabilities/`(프로젝트 루트)에 명세가 추가되는 대로 이 코드에 반영됩니다. 익스플로잇 성공 여부는 별도 플래그가 아니라, 해당 취약점 문서에 기록된 재현 절차로 확인합니다(예: 실제 민감 데이터 추출 여부).
