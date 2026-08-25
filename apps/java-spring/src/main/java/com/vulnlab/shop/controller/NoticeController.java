@@ -28,10 +28,10 @@ public class NoticeController {
     private ResponseEntity<?> requireAdmin(HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required."));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그인이 필요합니다."));
         }
         if (!Roles.isAdminOrAbove(user.getRole())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Admin access required."));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "관리자 권한이 필요합니다."));
         }
         return null;
     }
@@ -60,7 +60,7 @@ public class NoticeController {
         String title = body.getOrDefault("title", "").trim();
         String text = body.getOrDefault("body", "").trim();
         if (title.isEmpty() || text.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "title and body are required."));
+            return ResponseEntity.badRequest().body(Map.of("error", "제목과 내용은 필수입니다."));
         }
         Notice notice = new Notice();
         notice.setTitle(title);

@@ -36,10 +36,10 @@ public class AdminController {
     private ResponseEntity<?> requireAdmin(HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required."));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그인이 필요합니다."));
         }
         if (!Roles.isAdminOrAbove(user.getRole())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Admin access required."));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "관리자 권한이 필요합니다."));
         }
         return null;
     }
@@ -47,10 +47,10 @@ public class AdminController {
     private ResponseEntity<?> requireSystemAdmin(HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required."));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그인이 필요합니다."));
         }
         if (!Roles.isSystemAdmin(user.getRole())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "System admin access required."));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "시스템 관리자 권한이 필요합니다."));
         }
         return null;
     }
@@ -68,7 +68,7 @@ public class AdminController {
         if (denied != null) return denied;
         String role = body.get("role");
         if (!Roles.USER.equals(role) && !Roles.ADMIN.equals(role) && !Roles.SYSTEM_ADMIN.equals(role)) {
-            return ResponseEntity.badRequest().body(Map.of("error", "role must be \"user\", \"admin\", or \"system_admin\"."));
+            return ResponseEntity.badRequest().body(Map.of("error", "권한은 \"user\", \"admin\", \"system_admin\" 중 하나여야 합니다."));
         }
         User target = userRepository.findById(id).orElse(null);
         if (target == null) return ResponseEntity.notFound().build();
@@ -100,7 +100,7 @@ public class AdminController {
         String name = (String) body.get("name");
         Object priceRaw = body.get("price");
         if (name == null || name.isBlank() || priceRaw == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "name and price are required."));
+            return ResponseEntity.badRequest().body(Map.of("error", "이름과 가격은 필수입니다."));
         }
         Product product = new Product();
         product.setName(name);
@@ -153,7 +153,7 @@ public class AdminController {
         Product product = productRepository.findById(id).orElse(null);
         if (product == null) return ResponseEntity.notFound().build();
         if (!Uploads.isAllowed(file)) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Invalid or missing image file."));
+            return ResponseEntity.badRequest().body(Map.of("error", "이미지 파일이 없거나 형식이 올바르지 않습니다."));
         }
         String filename = Uploads.store(file);
         product.setImageUrl(filename);

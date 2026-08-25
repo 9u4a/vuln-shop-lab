@@ -39,25 +39,25 @@ export default function AdminNotices() {
 
   return (
     <section className="card">
-      <h2>Notices</h2>
+      <h2>공지사항</h2>
       {error && <p className="error">{error}</p>}
       <ul>
         {notices.map((n) => (
           <li key={n.id}>
             <strong>{n.title}</strong> — {n.body}
-            <button onClick={() => handleDelete(n.id)}>Delete</button>
+            <button onClick={() => handleDelete(n.id)}>삭제</button>
           </li>
         ))}
       </ul>
-      <h2>Add notice</h2>
+      <h2>공지사항 추가</h2>
       <form onSubmit={handleCreate}>
-        <label>Title
+        <label>제목
           <input value={newNotice.title} onChange={(e) => setNewNotice({ ...newNotice, title: e.target.value })} required />
         </label>
-        <label>Body
+        <label>내용
           <textarea value={newNotice.body} onChange={(e) => setNewNotice({ ...newNotice, body: e.target.value })} rows="3" required />
         </label>
-        <button type="submit" className="btn btn-primary">Add notice</button>
+        <button type="submit" className="btn btn-primary">공지사항 추가</button>
       </form>
     </section>
   );

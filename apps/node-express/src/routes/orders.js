@@ -43,7 +43,7 @@ router.get('/', requireAuth, (req, res) => {
 router.get('/:id', requireAuth, (req, res) => {
   const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
   if (!order || order.user_id !== req.session.user.id) {
-    return res.status(404).json({ error: 'Order not found' });
+    return res.status(404).json({ error: '주문을 찾을 수 없습니다.' });
   }
   const items = db
     .prepare(
@@ -67,7 +67,7 @@ router.get('/:id', requireAuth, (req, res) => {
 router.post('/', requireAuth, (req, res) => {
   const { items, webhookUrl } = req.body;
   if (!Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({ error: 'At least one item is required.' });
+    return res.status(400).json({ error: '최소 1개 이상의 상품이 필요합니다.' });
   }
 
   let total = 0;
@@ -76,7 +76,7 @@ router.post('/', requireAuth, (req, res) => {
     const product = db.prepare('SELECT * FROM products WHERE id = ?').get(item.productId);
     const quantity = Number(item.quantity);
     if (!product || !Number.isInteger(quantity) || quantity < 1) {
-      return res.status(400).json({ error: 'Invalid order item.' });
+      return res.status(400).json({ error: '유효하지 않은 주문 항목입니다.' });
     }
     total += product.price * quantity;
     resolved.push({ product, quantity, optionValue: item.optionValue || null });
@@ -103,15 +103,15 @@ router.post('/', requireAuth, (req, res) => {
 router.post('/:id/confirm', requireAuth, async (req, res) => {
   const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
   if (!order || order.user_id !== req.session.user.id) {
-    return res.status(404).json({ error: 'Order not found' });
+    return res.status(404).json({ error: '주문을 찾을 수 없습니다.' });
   }
   if (!TOSS_SECRET_KEY) {
-    return res.status(501).json({ error: 'Payment is not configured on this server (TOSS_SECRET_KEY missing).' });
+    return res.status(501).json({ error: '이 서버에는 결제가 설정되어 있지 않습니다 (TOSS_SECRET_KEY 누락).' });
   }
 
   const { paymentKey, amount } = req.body;
   if (!paymentKey || Number(amount) !== order.total_amount) {
-    return res.status(400).json({ error: 'Payment verification failed: amount mismatch.' });
+    return res.status(400).json({ error: '결제 검증에 실패했습니다: 금액이 일치하지 않습니다.' });
   }
 
   const authHeader = `Basic ${Buffer.from(`${TOSS_SECRET_KEY}:`).toString('base64')}`;
@@ -124,7 +124,7 @@ router.post('/:id/confirm', requireAuth, async (req, res) => {
 
   if (!tossRes.ok) {
     db.prepare("UPDATE orders SET status = 'failed' WHERE id = ?").run(order.id);
-    return res.status(502).json({ error: tossData.message || 'Payment confirmation failed.' });
+    return res.status(502).json({ error: tossData.message || '결제 확인에 실패했습니다.' });
   }
 
   db.prepare("UPDATE orders SET status = 'paid', toss_payment_key = ? WHERE id = ?").run(paymentKey, order.id);

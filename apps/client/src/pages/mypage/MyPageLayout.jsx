@@ -1,16 +1,16 @@
 import { NavLink, Outlet } from 'react-router-dom';
 
 const TABS = [
-  { to: '', label: 'Profile', end: true },
-  { to: 'password', label: 'Change Password' },
+  { to: '', label: '프로필', end: true },
+  { to: 'password', label: '비밀번호 변경' },
 ];
 
 export default function MyPageLayout() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>My Page</h1>
-        <p className="muted">Manage your account, profile info, and password.</p>
+        <h1>마이페이지</h1>
+        <p className="muted">계정, 프로필 정보, 비밀번호를 관리하세요.</p>
       </div>
       <nav className="admin-subnav">
         {TABS.map((t) => (

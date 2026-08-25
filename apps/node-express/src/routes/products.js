@@ -37,14 +37,14 @@ router.get('/', (req, res) => {
   try {
     products = db.prepare(sql).all();
   } catch (err) {
-    return res.status(400).json({ error: 'Invalid query.' });
+    return res.status(400).json({ error: '잘못된 요청입니다.' });
   }
   res.json({ products: products.map(toProduct) });
 });
 
 router.get('/:id', (req, res) => {
   const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
-  if (!product) return res.status(404).json({ error: 'Product not found' });
+  if (!product) return res.status(404).json({ error: '상품을 찾을 수 없습니다.' });
   res.json({ product: toProduct(product) });
 });
 
@@ -69,12 +69,12 @@ router.get('/:id/reviews', (req, res) => {
 
 router.post('/:id/reviews', requireAuth, (req, res) => {
   const product = db.prepare('SELECT id FROM products WHERE id = ?').get(req.params.id);
-  if (!product) return res.status(404).json({ error: 'Product not found' });
+  if (!product) return res.status(404).json({ error: '상품을 찾을 수 없습니다.' });
 
   const rating = Number(req.body.rating);
   const body = (req.body.body || '').trim();
   if (!Number.isInteger(rating) || rating < 1 || rating > 5 || !body) {
-    return res.status(400).json({ error: 'Rating (1-5) and non-empty body are required.' });
+    return res.status(400).json({ error: '평점(1~5)과 내용을 입력해주세요.' });
   }
 
   const result = db

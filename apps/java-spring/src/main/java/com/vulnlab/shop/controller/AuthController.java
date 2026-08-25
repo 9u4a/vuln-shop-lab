@@ -32,10 +32,10 @@ public class AuthController {
         if (isBlank(username) || isBlank(password) || isBlank(name) || isBlank(phone)
                 || isBlank(postcode) || isBlank(address)) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Username, password, name, phone, and address are required."));
+                    .body(Map.of("error", "아이디, 비밀번호, 이름, 전화번호, 주소는 필수입니다."));
         }
         if (authService.usernameTaken(username)) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Username already taken."));
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "이미 사용 중인 아이디입니다."));
         }
         authService.signup(username, password, name, phone, postcode, address, addressDetail);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("ok", true));
@@ -52,7 +52,7 @@ public class AuthController {
         Optional<User> user = authService.login(username, password);
         if (user.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Invalid username or password."));
+                    .body(Map.of("error", "아이디 또는 비밀번호가 올바르지 않습니다."));
         }
         session.setAttribute("user", user.get());
         return ResponseEntity.ok(Map.of("user", user.get()));

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useBackend } from '../../BackendContext.jsx';
 import { fetchAdminOrders } from '../../api.js';
+import { formatCurrency } from '../../format.js';
 
 export default function AdminOrders() {
   const { backend } = useBackend();
@@ -14,13 +15,13 @@ export default function AdminOrders() {
 
   return (
     <section className="card">
-      <h2>Orders</h2>
+      <h2>주문</h2>
       {error && <p className="error">{error}</p>}
-      {orders.length === 0 && <p className="muted">No orders yet.</p>}
+      {orders.length === 0 && <p className="muted">아직 주문이 없습니다.</p>}
       <ul>
         {orders.map((o) => (
           <li key={o.id}>
-            Order #{o.id} — {o.username} — <span className="badge">{o.status}</span> — ${Number(o.totalAmount).toFixed(2)}
+            주문 #{o.id} — {o.username} — <span className="badge">{o.status}</span> — {formatCurrency(o.totalAmount)}
           </li>
         ))}
       </ul>

@@ -28,7 +28,7 @@ public class FaqController {
     private ResponseEntity<?> requireAuth(HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required."));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그인이 필요합니다."));
         }
         return null;
     }
@@ -36,10 +36,10 @@ public class FaqController {
     private ResponseEntity<?> requireAdmin(HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required."));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그인이 필요합니다."));
         }
         if (!Roles.isAdminOrAbove(user.getRole())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Admin access required."));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "관리자 권한이 필요합니다."));
         }
         return null;
     }
@@ -68,7 +68,7 @@ public class FaqController {
         String question = body.getOrDefault("question", "").trim();
         String answer = body.getOrDefault("answer", "").trim();
         if (question.isEmpty() || answer.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "question and answer are required."));
+            return ResponseEntity.badRequest().body(Map.of("error", "질문과 답변은 필수입니다."));
         }
         User user = (User) session.getAttribute("user");
         Faq faq = new Faq();
