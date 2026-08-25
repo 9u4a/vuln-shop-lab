@@ -4,6 +4,18 @@ const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
+function toProduct(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    price: row.price,
+    imageUrl: row.image_url,
+    category: row.category,
+    createdAt: row.created_at,
+  };
+}
+
 router.get('/', (req, res) => {
   const { q, category, sort } = req.query;
 
@@ -22,13 +34,13 @@ router.get('/', (req, res) => {
   } catch (err) {
     return res.status(400).json({ error: 'Invalid query.' });
   }
-  res.json({ products });
+  res.json({ products: products.map(toProduct) });
 });
 
 router.get('/:id', (req, res) => {
   const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
   if (!product) return res.status(404).json({ error: 'Product not found' });
-  res.json({ product });
+  res.json({ product: toProduct(product) });
 });
 
 router.get('/:id/reviews', (req, res) => {
