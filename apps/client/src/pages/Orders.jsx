@@ -17,15 +17,17 @@ export default function Orders() {
   if (error) return <p className="error">{error}</p>;
 
   return (
-    <div>
-      <h1>My Orders</h1>
-      {orders.length === 0 && <p>No orders yet.</p>}
+    <div className="page">
+      <div className="page-header">
+        <h1>My Orders</h1>
+      </div>
+      {orders.length === 0 && <p className="muted">No orders yet.</p>}
       <ul className="product-grid">
         {orders.map((o) => (
           <li key={o.id}>
             <Link to={`/orders/${o.id}`}>Order #{o.id}</Link>
-            <div>Status: {o.status}</div>
-            <div>${Number(o.totalAmount).toFixed(2)}</div>
+            <span className="badge">{o.status}</span>
+            <div className="product-price">${Number(o.totalAmount).toFixed(2)}</div>
           </li>
         ))}
       </ul>

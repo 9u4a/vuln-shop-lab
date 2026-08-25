@@ -33,20 +33,26 @@ export default function CheckoutResult({ success }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [success]);
 
-  if (status === 'confirming') return <p>Confirming payment...</p>;
-  if (status === 'failed') {
+  if (status === 'confirming') {
     return (
-      <div>
-        <h1>Payment failed</h1>
-        <Link to="/cart">Back to cart</Link>
+      <div className="page">
+        <p className="muted">Confirming payment...</p>
       </div>
     );
   }
-  if (status === 'error') return <p className="error">{error}</p>;
+  if (status === 'failed') {
+    return (
+      <div className="page">
+        <div className="page-header"><h1>Payment failed</h1></div>
+        <Link to="/cart" className="btn btn-ghost">Back to cart</Link>
+      </div>
+    );
+  }
+  if (status === 'error') return <div className="page"><p className="error">{error}</p></div>;
   return (
-    <div>
-      <h1>Payment complete</h1>
-      <Link to="/orders">View my orders</Link>
+    <div className="page">
+      <div className="page-header"><h1>Payment complete</h1></div>
+      <Link to="/orders" className="btn btn-primary">View my orders</Link>
     </div>
   );
 }
