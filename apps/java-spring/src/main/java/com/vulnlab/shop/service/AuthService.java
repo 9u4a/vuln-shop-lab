@@ -2,6 +2,7 @@ package com.vulnlab.shop.service;
 
 import com.vulnlab.shop.entity.User;
 import com.vulnlab.shop.repository.UserRepository;
+import com.vulnlab.shop.security.Roles;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +26,7 @@ public class AuthService {
         User user = new User();
         user.setUsername(username);
         user.setPasswordHash(passwordEncoder.encode(rawPassword));
-        user.setRole(userRepository.count() == 0 ? "admin" : "user");
+        user.setRole(userRepository.count() == 0 ? Roles.SYSTEM_ADMIN : Roles.USER);
         return userRepository.save(user);
     }
 
