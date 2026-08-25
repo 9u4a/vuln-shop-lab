@@ -5,6 +5,7 @@ import com.vulnlab.shop.entity.User;
 import com.vulnlab.shop.repository.OrderRepository;
 import com.vulnlab.shop.repository.ProductRepository;
 import com.vulnlab.shop.repository.UserRepository;
+import com.vulnlab.shop.security.Roles;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,8 +35,19 @@ public class AdminController {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required."));
         }
-        if (!"admin".equals(user.getRole())) {
+        if (!Roles.isAdminOrAbove(user.getRole())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Admin access required."));
+        }
+        return null;
+    }
+
+    private ResponseEntity<?> requireSystemAdmin(HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required."));
+        }
+        if (!Roles.isSystemAdmin(user.getRole())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "System admin access required."));
         }
         return null;
     }
@@ -49,11 +61,11 @@ public class AdminController {
 
     @PutMapping("/users/{id}/role")
     public ResponseEntity<?> updateRole(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
-        ResponseEntity<?> denied = requireAdmin(session);
+        ResponseEntity<?> denied = requireSystemAdmin(session);
         if (denied != null) return denied;
         String role = body.get("role");
-        if (!"user".equals(role) && !"admin".equals(role)) {
-            return ResponseEntity.badRequest().body(Map.of("error", "role must be \"user\" or \"admin\"."));
+        if (!Roles.USER.equals(role) && !Roles.ADMIN.equals(role) && !Roles.SYSTEM_ADMIN.equals(role)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "role must be \"user\", \"admin\", or \"system_admin\"."));
         }
         User target = userRepository.findById(id).orElse(null);
         if (target == null) return ResponseEntity.notFound().build();

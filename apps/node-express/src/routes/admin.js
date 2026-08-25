@@ -1,6 +1,6 @@
 const express = require('express');
 const db = require('../db');
-const { requireAdmin } = require('../middleware/auth');
+const { requireAdmin, requireSystemAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -9,10 +9,10 @@ router.get('/users', requireAdmin, (req, res) => {
   res.json({ users: rows });
 });
 
-router.put('/users/:id/role', requireAdmin, (req, res) => {
+router.put('/users/:id/role', requireSystemAdmin, (req, res) => {
   const { role } = req.body;
-  if (!['user', 'admin'].includes(role)) {
-    return res.status(400).json({ error: 'role must be "user" or "admin".' });
+  if (!['user', 'admin', 'system_admin'].includes(role)) {
+    return res.status(400).json({ error: 'role must be "user", "admin", or "system_admin".' });
   }
   const result = db.prepare('UPDATE users SET role = ? WHERE id = ?').run(role, req.params.id);
   if (result.changes === 0) return res.status(404).json({ error: 'User not found' });
