@@ -53,6 +53,31 @@ export function updateProfile(base, bio) {
   });
 }
 
+export function createOrder(base, items, webhookUrl) {
+  return apiRequest(base, '/orders', {
+    method: 'POST',
+    body: JSON.stringify({
+      items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+      webhookUrl: webhookUrl || undefined,
+    }),
+  });
+}
+
+export function fetchOrders(base) {
+  return apiRequest(base, '/orders');
+}
+
+export function fetchOrder(base, id) {
+  return apiRequest(base, `/orders/${id}`);
+}
+
+export function confirmOrder(base, id, paymentKey, amount) {
+  return apiRequest(base, `/orders/${id}/confirm`, {
+    method: 'POST',
+    body: JSON.stringify({ paymentKey, amount }),
+  });
+}
+
 export async function uploadAvatar(base, file) {
   const formData = new FormData();
   formData.append('avatar', file);

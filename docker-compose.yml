@@ -7,6 +7,7 @@ services:
     environment:
       SESSION_SECRET: ${NODE_SESSION_SECRET:-dev-secret-change-me}
       FLAG_DEMO: ${FLAG_DEMO:-FLAG{demo_setup_ok}}
+      TOSS_SECRET_KEY: ${TOSS_SECRET_KEY:-}
     volumes:
       - node_data:/app/data
       - node_uploads:/app/uploads
@@ -20,6 +21,7 @@ services:
       - "8081:8081"
     environment:
       FLAG_DEMO: ${FLAG_DEMO:-FLAG{demo_setup_ok}}
+      TOSS_SECRET_KEY: ${TOSS_SECRET_KEY:-}
     volumes:
       - java_data:/app/data
       - java_uploads:/app/uploads
@@ -34,6 +36,7 @@ services:
     environment:
       NODE_BACKEND_URL: http://node-express:3000
       JAVA_BACKEND_URL: http://java-spring:8081
+      VITE_TOSS_CLIENT_KEY: ${TOSS_CLIENT_KEY:-}
     depends_on:
       - node-express
       - java-spring
