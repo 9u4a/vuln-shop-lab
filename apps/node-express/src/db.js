@@ -55,12 +55,6 @@ db.exec(`
     quantity INTEGER NOT NULL,
     unit_price REAL NOT NULL
   );
-
-  CREATE TABLE IF NOT EXISTS flags (
-    vuln_id TEXT PRIMARY KEY,
-    flag_value TEXT NOT NULL,
-    captured_at TEXT
-  );
 `);
 
 for (const stmt of [

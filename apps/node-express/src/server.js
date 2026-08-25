@@ -5,7 +5,6 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 
-const { seedFlagsFromEnv } = require('./flags');
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
 const profileRoutes = require('./routes/profile');
@@ -46,9 +45,6 @@ app.use('/api/products', productRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
-
-const seededFlagCount = seedFlagsFromEnv();
-console.log(`Seeded ${seededFlagCount} flag(s) from environment`);
 
 app.listen(PORT, () => {
   console.log(`node-express vulnerable shop API running on http://localhost:${PORT}`);
