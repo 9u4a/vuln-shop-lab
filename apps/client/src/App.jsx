@@ -13,6 +13,7 @@ import Cart from './pages/Cart.jsx';
 import CheckoutResult from './pages/CheckoutResult.jsx';
 import Orders from './pages/Orders.jsx';
 import OrderDetail from './pages/OrderDetail.jsx';
+import Admin from './pages/Admin.jsx';
 
 function Layout({ children }) {
   const { backend, backends, backendKey, selectBackend } = useBackend();
@@ -46,6 +47,7 @@ function Layout({ children }) {
         </select>
         {user ? (
           <>
+            {user.role === 'admin' && <Link to="/admin">Admin</Link>}
             <Link to="/profile">Hi, {user.username}</Link>
             <button onClick={handleLogout}>Logout</button>
           </>
@@ -78,6 +80,7 @@ export default function App() {
             <Route path="/checkout/fail" element={<CheckoutResult success={false} />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/orders/:id" element={<OrderDetail />} />
+            <Route path="/admin" element={<Admin />} />
           </Routes>
         </Layout>
       </CartProvider>

@@ -89,6 +89,32 @@ export function createReview(base, productId, rating, body) {
   });
 }
 
+export function fetchAdminUsers(base) {
+  return apiRequest(base, '/admin/users');
+}
+
+export function updateUserRole(base, userId, role) {
+  return apiRequest(base, `/admin/users/${userId}/role`, {
+    method: 'PUT',
+    body: JSON.stringify({ role }),
+  });
+}
+
+export function fetchAdminOrders(base) {
+  return apiRequest(base, '/admin/orders');
+}
+
+export function createProductAdmin(base, product) {
+  return apiRequest(base, '/admin/products', {
+    method: 'POST',
+    body: JSON.stringify(product),
+  });
+}
+
+export function deleteProductAdmin(base, id) {
+  return apiRequest(base, `/admin/products/${id}`, { method: 'DELETE' });
+}
+
 export async function uploadAvatar(base, file) {
   const formData = new FormData();
   formData.append('avatar', file);

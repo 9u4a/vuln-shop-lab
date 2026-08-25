@@ -14,10 +14,12 @@ router.post('/signup', async (req, res) => {
     return res.status(409).json({ error: 'Username already taken.' });
   }
   const passwordHash = await bcrypt.hash(password, 10);
+  const userCount = db.prepare('SELECT COUNT(*) AS count FROM users').get().count;
+  const role = userCount === 0 ? 'admin' : 'user';
   db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(
     username,
     passwordHash,
-    'user'
+    role
   );
   res.status(201).json({ ok: true });
 });
