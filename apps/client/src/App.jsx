@@ -7,6 +7,7 @@ import Login from './pages/Login.jsx';
 import Signup from './pages/Signup.jsx';
 import Products from './pages/Products.jsx';
 import ProductDetail from './pages/ProductDetail.jsx';
+import Profile from './pages/Profile.jsx';
 
 function Layout({ children }) {
   const { backend, backends, backendKey, selectBackend } = useBackend();
@@ -37,7 +38,7 @@ function Layout({ children }) {
         </select>
         {user ? (
           <>
-            <span>Hi, {user.username}</span>
+            <Link to="/profile">Hi, {user.username}</Link>
             <button onClick={handleLogout}>Logout</button>
           </>
         ) : (
@@ -62,6 +63,7 @@ export default function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/products" element={<Products />} />
           <Route path="/products/:id" element={<ProductDetail />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </Layout>
     </BackendProvider>

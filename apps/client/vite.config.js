@@ -20,6 +20,16 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/java/, '/api'),
       },
+      '/uploads/node': {
+        target: nodeTarget,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/uploads\/node/, '/uploads'),
+      },
+      '/uploads/java': {
+        target: javaTarget,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/uploads\/java/, '/uploads'),
+      },
     },
   },
 });
