@@ -14,6 +14,9 @@ import CheckoutResult from './pages/CheckoutResult.jsx';
 import Orders from './pages/Orders.jsx';
 import OrderDetail from './pages/OrderDetail.jsx';
 import Admin from './pages/Admin.jsx';
+import Faq from './pages/Faq.jsx';
+
+const ADMIN_ROLES = new Set(['admin', 'system_admin']);
 
 function NavItem({ to, children }) {
   return (
@@ -42,9 +45,10 @@ function Layout({ children }) {
 
           <nav className="main-nav">
             <NavItem to="/products">Products</NavItem>
+            <NavItem to="/faq">FAQ</NavItem>
             <NavItem to="/cart">Cart{items.length > 0 && <span className="count-badge">{items.length}</span>}</NavItem>
             {user && <NavItem to="/orders">My Orders</NavItem>}
-            {user?.role === 'admin' && <NavItem to="/admin">Admin</NavItem>}
+            {user && ADMIN_ROLES.has(user.role) && <NavItem to="/admin">Admin</NavItem>}
           </nav>
 
           <div className="topbar-actions">
@@ -92,6 +96,7 @@ export default function App() {
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/products/:id" element={<ProductDetail />} />
+                <Route path="/faq" element={<Faq />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout/success" element={<CheckoutResult success />} />
