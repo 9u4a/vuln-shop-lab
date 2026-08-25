@@ -1,0 +1,8 @@
+.env
+apps/*/node_modules/
+apps/*/dist/
+apps/*/data/
+apps/*/target/
+infra/**/data/
+docs/
+CLAUDE.md
