@@ -134,6 +134,36 @@ export function deleteFaqAdmin(base, id) {
   return apiRequest(base, `/faqs/${id}`, { method: 'DELETE' });
 }
 
+export function fetchNotices(base) {
+  return apiRequest(base, '/notices');
+}
+
+export function createNoticeAdmin(base, title, body) {
+  return apiRequest(base, '/notices', {
+    method: 'POST',
+    body: JSON.stringify({ title, body }),
+  });
+}
+
+export function deleteNoticeAdmin(base, id) {
+  return apiRequest(base, `/notices/${id}`, { method: 'DELETE' });
+}
+
+export async function uploadProductImageAdmin(base, productId, file) {
+  const formData = new FormData();
+  formData.append('image', file);
+  const res = await fetch(`${base}/admin/products/${productId}/image`, {
+    method: 'POST',
+    credentials: 'include',
+    body: formData,
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error(data?.error || `Request failed (${res.status})`);
+  }
+  return data;
+}
+
 export function changePassword(base, currentPassword, newPassword) {
   return apiRequest(base, '/profile/password', {
     method: 'PUT',

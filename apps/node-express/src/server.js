@@ -11,6 +11,7 @@ const profileRoutes = require('./routes/profile');
 const orderRoutes = require('./routes/orders');
 const adminRoutes = require('./routes/admin');
 const faqRoutes = require('./routes/faqs');
+const noticeRoutes = require('./routes/notices');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -47,6 +48,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/faqs', faqRoutes);
+app.use('/api/notices', noticeRoutes);
 
 app.listen(PORT, () => {
   console.log(`node-express vulnerable shop API running on http://localhost:${PORT}`);
