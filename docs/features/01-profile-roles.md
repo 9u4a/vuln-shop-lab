@@ -26,6 +26,7 @@ Node uses a guarded `ALTER TABLE ... ADD COLUMN` (wrapped in try/catch, since `s
 - File upload validation (extension whitelist + size cap) is intentionally correct here — this is feature work, not the vulnerability-injection phase. Any file-upload vulnerability (e.g. path traversal, extension bypass) will be introduced later as a tracked, documented change per `docs/vulnerabilities/` once we reach that phase.
 - Avatars are stored by random UUID filename, not the user-supplied name, to avoid accidental collisions/overwrites in this phase.
 - `role` was already on `users` but nothing checked it; `requireAdmin` exists now so the upcoming admin-panel branch has a ready-made guard instead of inventing access control ad hoc per route.
+- `multer` is pinned to `1.4.5-lts.1` deliberately (not the patched 2.x line) — this app intentionally carries known-CVE dependency versions as one of the planned vulnerability categories (vulnerable dependencies / SCA target). It'll get a proper `docs/vulnerabilities/VULN-xxx` entry once the deliberate vulnerability-injection phase starts; for now it's just pinned and left alone rather than "fixed."
 
 ## Verified
 
