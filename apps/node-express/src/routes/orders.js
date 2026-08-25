@@ -59,6 +59,7 @@ router.get('/:id', requireAuth, (req, res) => {
       productName: i.product_name,
       quantity: i.quantity,
       unitPrice: i.unit_price,
+      optionValue: i.option_value,
     })),
   });
 });
@@ -78,7 +79,7 @@ router.post('/', requireAuth, (req, res) => {
       return res.status(400).json({ error: 'Invalid order item.' });
     }
     total += product.price * quantity;
-    resolved.push({ product, quantity });
+    resolved.push({ product, quantity, optionValue: item.optionValue || null });
   }
 
   const tossOrderId = `order_${crypto.randomUUID()}`;
@@ -90,10 +91,10 @@ router.post('/', requireAuth, (req, res) => {
   const orderId = result.lastInsertRowid;
 
   const insertItem = db.prepare(
-    'INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?)'
+    'INSERT INTO order_items (order_id, product_id, quantity, unit_price, option_value) VALUES (?, ?, ?, ?, ?)'
   );
-  for (const { product, quantity } of resolved) {
-    insertItem.run(orderId, product.id, quantity, product.price);
+  for (const { product, quantity, optionValue } of resolved) {
+    insertItem.run(orderId, product.id, quantity, product.price, optionValue);
   }
 
   res.status(201).json({ orderId, tossOrderId, amount: total });

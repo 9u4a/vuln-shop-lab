@@ -50,19 +50,20 @@ export default function Cart() {
       ) : (
         <ul className="product-grid">
           {items.map((i) => (
-            <li key={i.productId}>
+            <li key={`${i.productId}::${i.option || ''}`}>
               <div>{i.name}</div>
+              {i.option && <div className="muted">Option: {i.option}</div>}
               <div className="product-price">${i.price.toFixed(2)}</div>
               <label>Quantity
                 <input
                   type="number"
                   min="0"
                   value={i.quantity}
-                  onChange={(e) => setQuantity(i.productId, Number(e.target.value))}
+                  onChange={(e) => setQuantity(i.productId, i.option, Number(e.target.value))}
                   style={{ width: '4rem' }}
                 />
               </label>
-              <button onClick={() => removeItem(i.productId)}>Remove</button>
+              <button onClick={() => removeItem(i.productId, i.option)}>Remove</button>
             </li>
           ))}
         </ul>
