@@ -92,6 +92,10 @@ export function createReview(base, productId, rating, body) {
   });
 }
 
+export function fetchAdminStats(base) {
+  return apiRequest(base, '/admin/stats');
+}
+
 export function fetchAdminUsers(base) {
   return apiRequest(base, '/admin/users');
 }
