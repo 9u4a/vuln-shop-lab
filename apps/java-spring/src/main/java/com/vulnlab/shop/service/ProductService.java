@@ -15,11 +15,19 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
-    public List<Product> list(String query) {
-        if (query == null || query.isBlank()) {
-            return productRepository.findAll();
+    public List<Product> list(String query, String category) {
+        boolean hasQuery = query != null && !query.isBlank();
+        boolean hasCategory = category != null && !category.isBlank();
+        if (hasQuery && hasCategory) {
+            return productRepository.findByNameContainingIgnoreCaseAndCategory(query, category);
         }
-        return productRepository.findByNameContainingIgnoreCase(query);
+        if (hasQuery) {
+            return productRepository.findByNameContainingIgnoreCase(query);
+        }
+        if (hasCategory) {
+            return productRepository.findByCategory(category);
+        }
+        return productRepository.findAll();
     }
 
     public Product findById(Long id) {

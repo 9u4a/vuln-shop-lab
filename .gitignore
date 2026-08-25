@@ -5,7 +5,6 @@ apps/*/data/
 apps/*/uploads/
 apps/*/target/
 infra/**/data/
-docs/vulnerabilities/
 docs/findings/
 docs/detection/
 CLAUDE.md
