@@ -7,11 +7,11 @@ export default function Home() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>Welcome to Vuln Shop</h1>
-        <p className="muted">A deliberately vulnerable e-commerce demo for security training.</p>
+        <h1>Vuln Shop에 오신 것을 환영합니다</h1>
+        <p className="muted">보안 학습을 위한 의도적으로 취약한 이커머스 데모입니다.</p>
       </div>
       <section className="card">
-        <h2>Pick a backend</h2>
+        <h2>백엔드 선택</h2>
         <div className="backend-cards">
           {Object.entries(backends).map(([key, b]) => (
             <button
@@ -23,8 +23,8 @@ export default function Home() {
             </button>
           ))}
         </div>
-        <p className="muted">Currently targeting: <strong>{backends[backendKey].label}</strong></p>
-        <Link to="/products" className="btn btn-primary">Browse products</Link>
+        <p className="muted">현재 대상: <strong>{backends[backendKey].label}</strong></p>
+        <Link to="/products" className="btn btn-primary">상품 둘러보기</Link>
       </section>
     </div>
   );

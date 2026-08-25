@@ -137,11 +137,11 @@ if (productCount === 0) {
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   );
   const seed = [
-    ['Mechanical Keyboard', 'Hot-swappable mechanical keyboard.', 89.99, seedImage('keyboard.png'), 'accessories', 'Vulnlab', 'KEY-001', 42, 'Switch', 'Red,Blue,Brown'],
-    ['Wireless Mouse', 'Ergonomic wireless mouse.', 29.99, seedImage('mouse.png'), 'accessories', 'Vulnlab', 'MOU-002', 87, 'Color', 'Black,White'],
-    ['4K Monitor', '27-inch 4K IPS monitor.', 349.99, seedImage('monitor.png'), 'displays', 'Vulnlab', 'MON-003', 15, 'Stand', 'Standard,Adjustable'],
-    ['USB-C Hub', '7-in-1 USB-C hub.', 24.99, seedImage('hub.png'), 'accessories', 'Vulnlab', 'HUB-004', 130, 'Color', 'Space Gray,Silver'],
-    ['Desk Lamp', 'LED desk lamp with USB charging.', 19.99, seedImage('lamp.png'), 'office', 'Vulnlab', 'LMP-005', 60, 'Color', 'White,Black'],
+    ['기계식 키보드', '핫스왑 지원 기계식 키보드.', 89000, seedImage('keyboard.png'), 'accessories', 'Vulnlab', 'KEY-001', 42, '스위치', 'Red,Blue,Brown'],
+    ['무선 마우스', '인체공학 무선 마우스.', 29000, seedImage('mouse.png'), 'accessories', 'Vulnlab', 'MOU-002', 87, '색상', 'Black,White'],
+    ['4K 모니터', '27인치 4K IPS 모니터.', 349000, seedImage('monitor.png'), 'displays', 'Vulnlab', 'MON-003', 15, '스탠드', 'Standard,Adjustable'],
+    ['USB-C 허브', '7-in-1 USB-C 허브.', 24000, seedImage('hub.png'), 'accessories', 'Vulnlab', 'HUB-004', 130, '색상', 'Space Gray,Silver'],
+    ['LED 스탠드', 'USB 충전 지원 LED 스탠드.', 19000, seedImage('lamp.png'), 'office', 'Vulnlab', 'LMP-005', 60, '색상', 'White,Black'],
   ];
   for (const row of seed) insert.run(...row);
 }

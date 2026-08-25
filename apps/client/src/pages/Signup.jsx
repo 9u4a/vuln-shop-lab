@@ -44,40 +44,40 @@ export default function Signup() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>Sign up</h1>
+        <h1>회원가입</h1>
       </div>
       <section className="card">
         {error && <p className="error">{error}</p>}
         <form onSubmit={handleSubmit}>
-          <label>Username
+          <label>아이디
             <input value={form.username} onChange={update('username')} required />
           </label>
-          <label>Password
+          <label>비밀번호
             <input type="password" value={form.password} onChange={update('password')} required />
           </label>
-          <label>Name
+          <label>이름
             <input value={form.name} onChange={update('name')} required />
           </label>
-          <label>Phone
+          <label>전화번호
             <input value={form.phone} onChange={update('phone')} placeholder="010-1234-5678" required />
           </label>
-          <label>Postcode
+          <label>우편번호
             <div className="address-row">
-              <input value={form.postcode} readOnly placeholder="Search to fill" required />
+              <input value={form.postcode} readOnly placeholder="주소 검색으로 입력" required />
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowAddressModal(true)}>
-                Search address
+                주소 검색
               </button>
             </div>
           </label>
-          <label>Address
-            <input value={form.address} readOnly placeholder="Search to fill" required />
+          <label>주소
+            <input value={form.address} readOnly placeholder="주소 검색으로 입력" required />
           </label>
-          <label>Address detail
-            <input value={form.addressDetail} onChange={update('addressDetail')} placeholder="Unit, floor, etc. (optional)" />
+          <label>상세주소
+            <input value={form.addressDetail} onChange={update('addressDetail')} placeholder="동, 호 등 (선택)" />
           </label>
-          <button type="submit" className="btn btn-primary">Create account</button>
+          <button type="submit" className="btn btn-primary">계정 생성</button>
         </form>
-        <p className="muted">Already have an account? <Link to="/login">Log in</Link></p>
+        <p className="muted">이미 계정이 있으신가요? <Link to="/login">로그인</Link></p>
       </section>
       {showAddressModal && (
         <AddressSearchModal onSelect={handleAddressSelect} onClose={() => setShowAddressModal(false)} />

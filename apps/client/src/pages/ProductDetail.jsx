@@ -4,6 +4,7 @@ import { useBackend } from '../BackendContext.jsx';
 import { useCart } from '../CartContext.jsx';
 import { useSession } from '../SessionContext.jsx';
 import { fetchProduct, fetchReviews, createReview } from '../api.js';
+import { formatCurrency } from '../format.js';
 
 export default function ProductDetail() {
   const { backend } = useBackend();
@@ -53,16 +54,16 @@ export default function ProductDetail() {
 
   function handleAddToCart() {
     addItem(product, quantity, selectedOption || null);
-    setAddedNote(`Added ${quantity} to cart.`);
+    setAddedNote(`${quantity}개를 장바구니에 담았습니다.`);
   }
 
-  if (!product) return <p>Loading...</p>;
+  if (!product) return <p>불러오는 중...</p>;
 
   const hasOptions = product.optionValues && product.optionValues.length > 0;
 
   return (
     <div className="page">
-      <Link to="/products" className="muted">&larr; Back to products</Link>
+      <Link to="/products" className="muted">&larr; 상품 목록으로</Link>
       <div className="page-header">
         <h1>{product.name}</h1>
       </div>
@@ -77,22 +78,22 @@ export default function ProductDetail() {
           />
         )}
         <p>{product.description}</p>
-        <p className="product-price">${Number(product.price).toFixed(2)}</p>
+        <p className="product-price">{formatCurrency(product.price)}</p>
 
         <table className="specs-table">
           <tbody>
-            {product.brand && <tr><th>Brand</th><td>{product.brand}</td></tr>}
-            {product.sku && <tr><th>SKU</th><td>{product.sku}</td></tr>}
-            {product.category && <tr><th>Category</th><td>{product.category}</td></tr>}
+            {product.brand && <tr><th>브랜드</th><td>{product.brand}</td></tr>}
+            {product.sku && <tr><th>상품코드</th><td>{product.sku}</td></tr>}
+            {product.category && <tr><th>카테고리</th><td>{product.category}</td></tr>}
             <tr>
-              <th>Stock</th>
-              <td>{product.stock > 0 ? `${product.stock} available` : 'Out of stock'}</td>
+              <th>재고</th>
+              <td>{product.stock > 0 ? `${product.stock}개 남음` : '품절'}</td>
             </tr>
           </tbody>
         </table>
 
         {hasOptions && (
-          <label>{product.optionName || 'Option'}
+          <label>{product.optionName || '옵션'}
             <select value={selectedOption} onChange={(e) => setSelectedOption(e.target.value)}>
               {product.optionValues.map((v) => (
                 <option key={v} value={v}>{v}</option>
@@ -101,7 +102,7 @@ export default function ProductDetail() {
           </label>
         )}
 
-        <label>Quantity
+        <label>수량
           <input
             type="number"
             min="1"
@@ -112,12 +113,12 @@ export default function ProductDetail() {
         </label>
 
         {addedNote && <p className="status-ok">{addedNote}</p>}
-        <button onClick={handleAddToCart} className="btn btn-primary">Add to cart</button>
+        <button onClick={handleAddToCart} className="btn btn-primary">장바구니 담기</button>
       </section>
 
       <section className="card">
-        <h2>Reviews</h2>
-        {reviews.length === 0 && <p className="muted">No reviews yet.</p>}
+        <h2>리뷰</h2>
+        {reviews.length === 0 && <p className="muted">아직 리뷰가 없습니다.</p>}
         <ul>
           {reviews.map((r) => (
             <li key={r.id}>
@@ -129,21 +130,21 @@ export default function ProductDetail() {
         {user ? (
           <form onSubmit={handleReviewSubmit}>
             {error && <p className="error">{error}</p>}
-            <label>Rating
+            <label>평점
               <select value={rating} onChange={(e) => setRating(e.target.value)}>
                 {[5, 4, 3, 2, 1].map((n) => (
                   <option key={n} value={n}>{n}</option>
                 ))}
               </select>
             </label>
-            <label>Review
+            <label>리뷰 내용
               <textarea value={body} onChange={(e) => setBody(e.target.value)} rows="3" required />
             </label>
-            <button type="submit" className="btn btn-primary">Submit review</button>
+            <button type="submit" className="btn btn-primary">리뷰 등록</button>
           </form>
         ) : (
           <p className="muted">
-            <Link to="/login">Log in</Link> to write a review.
+            <Link to="/login">로그인</Link> 후 리뷰를 작성할 수 있습니다.
           </p>
         )}
       </section>

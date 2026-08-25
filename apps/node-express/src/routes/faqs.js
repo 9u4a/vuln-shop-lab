@@ -40,7 +40,7 @@ router.post('/', requireAuth, (req, res) => {
   const question = (req.body.question || '').trim();
   const answer = (req.body.answer || '').trim();
   if (!question || !answer) {
-    return res.status(400).json({ error: 'question and answer are required.' });
+    return res.status(400).json({ error: '질문과 답변은 필수입니다.' });
   }
   const result = db
     .prepare('INSERT INTO faqs (question, answer, user_id) VALUES (?, ?, ?)')
@@ -56,7 +56,7 @@ router.post('/', requireAuth, (req, res) => {
 
 router.put('/:id', requireAdmin, (req, res) => {
   const existing = db.prepare('SELECT * FROM faqs WHERE id = ?').get(req.params.id);
-  if (!existing) return res.status(404).json({ error: 'FAQ not found' });
+  if (!existing) return res.status(404).json({ error: 'FAQ를 찾을 수 없습니다.' });
   const question = req.body.question != null ? req.body.question.trim() : existing.question;
   const answer = req.body.answer != null ? req.body.answer.trim() : existing.answer;
   db.prepare('UPDATE faqs SET question = ?, answer = ? WHERE id = ?').run(question, answer, existing.id);
@@ -71,7 +71,7 @@ router.put('/:id', requireAdmin, (req, res) => {
 
 router.delete('/:id', requireAdmin, (req, res) => {
   const result = db.prepare('DELETE FROM faqs WHERE id = ?').run(req.params.id);
-  if (result.changes === 0) return res.status(404).json({ error: 'FAQ not found' });
+  if (result.changes === 0) return res.status(404).json({ error: 'FAQ를 찾을 수 없습니다.' });
   res.json({ ok: true });
 });
 

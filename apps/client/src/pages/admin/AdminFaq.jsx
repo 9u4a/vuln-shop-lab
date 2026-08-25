@@ -45,19 +45,19 @@ export default function AdminFaq() {
         {faqs.map((f) => (
           <li key={f.id}>
             <strong>{f.question}</strong> — {f.answer}
-            <button onClick={() => handleDelete(f.id)}>Delete</button>
+            <button onClick={() => handleDelete(f.id)}>삭제</button>
           </li>
         ))}
       </ul>
-      <h2>Add FAQ</h2>
+      <h2>FAQ 추가</h2>
       <form onSubmit={handleCreate}>
-        <label>Question
+        <label>질문
           <input value={newFaq.question} onChange={(e) => setNewFaq({ ...newFaq, question: e.target.value })} required />
         </label>
-        <label>Answer
+        <label>답변
           <textarea value={newFaq.answer} onChange={(e) => setNewFaq({ ...newFaq, answer: e.target.value })} rows="3" required />
         </label>
-        <button type="submit" className="btn btn-primary">Add FAQ</button>
+        <button type="submit" className="btn btn-primary">FAQ 추가</button>
       </form>
     </section>
   );

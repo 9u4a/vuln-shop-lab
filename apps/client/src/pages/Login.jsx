@@ -30,20 +30,20 @@ export default function Login() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>Log in</h1>
+        <h1>로그인</h1>
       </div>
       <section className="card">
         {error && <p className="error">{error}</p>}
         <form onSubmit={handleSubmit}>
-          <label>Username
+          <label>아이디
             <input value={username} onChange={(e) => setUsername(e.target.value)} required />
           </label>
-          <label>Password
+          <label>비밀번호
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </label>
-          <button type="submit" className="btn btn-primary">Log in</button>
+          <button type="submit" className="btn btn-primary">로그인</button>
         </form>
-        <p className="muted">No account yet? <Link to="/signup">Sign up</Link></p>
+        <p className="muted">계정이 없으신가요? <Link to="/signup">회원가입</Link></p>
       </section>
     </div>
   );

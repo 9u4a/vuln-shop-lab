@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackend } from '../BackendContext.jsx';
 import { fetchOrders } from '../api.js';
+import { formatCurrency } from '../format.js';
 
 export default function Orders() {
   const { backend } = useBackend();
@@ -19,15 +20,15 @@ export default function Orders() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>My Orders</h1>
+        <h1>주문 내역</h1>
       </div>
-      {orders.length === 0 && <p className="muted">No orders yet.</p>}
+      {orders.length === 0 && <p className="muted">아직 주문이 없습니다.</p>}
       <ul className="product-grid">
         {orders.map((o) => (
           <li key={o.id}>
-            <Link to={`/orders/${o.id}`}>Order #{o.id}</Link>
+            <Link to={`/orders/${o.id}`}>주문 #{o.id}</Link>
             <span className="badge">{o.status}</span>
-            <div className="product-price">${Number(o.totalAmount).toFixed(2)}</div>
+            <div className="product-price">{formatCurrency(o.totalAmount)}</div>
           </li>
         ))}
       </ul>

@@ -6,7 +6,7 @@ async function apiRequest(base, path, options = {}) {
   });
   const data = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new Error(data?.error || `Request failed (${res.status})`);
+    throw new Error(data?.error || `요청에 실패했습니다 (${res.status})`);
   }
   return data;
 }
@@ -168,7 +168,7 @@ export async function uploadProductImageAdmin(base, productId, file) {
   });
   const data = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new Error(data?.error || `Request failed (${res.status})`);
+    throw new Error(data?.error || `요청에 실패했습니다 (${res.status})`);
   }
   return data;
 }
@@ -197,7 +197,7 @@ export async function uploadAvatar(base, file) {
   });
   const data = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new Error(data?.error || `Request failed (${res.status})`);
+    throw new Error(data?.error || `요청에 실패했습니다 (${res.status})`);
   }
   return data;
 }
