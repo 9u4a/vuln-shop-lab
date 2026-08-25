@@ -28,37 +28,46 @@ export default function Products() {
   }
 
   return (
-    <div>
-      <h1>Products</h1>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          updateParams({ q: e.target.q.value });
-        }}
-      >
-        <input name="q" defaultValue={q} placeholder="Search products..." />
-        <button type="submit">Search</button>
-      </form>
-      <label>Category
-        <input
-          value={category}
-          onChange={(e) => updateParams({ category: e.target.value })}
-          placeholder="e.g. accessories"
-        />
-      </label>
-      <label>Sort by
-        <select value={sort} onChange={(e) => updateParams({ sort: e.target.value })}>
-          <option value="">Default</option>
-          <option value="name">Name</option>
-          <option value="price">Price</option>
-        </select>
-      </label>
+    <div className="page">
+      <div className="page-header">
+        <h1>Products</h1>
+      </div>
+
+      <section className="card">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            updateParams({ q: e.target.q.value });
+          }}
+          style={{ flexDirection: 'row', alignItems: 'flex-end', flexWrap: 'wrap', maxWidth: 'none' }}
+        >
+          <label style={{ flex: '1 1 200px' }}>Search
+            <input name="q" defaultValue={q} placeholder="Search products..." />
+          </label>
+          <label style={{ flex: '1 1 160px' }}>Category
+            <input
+              value={category}
+              onChange={(e) => updateParams({ category: e.target.value })}
+              placeholder="e.g. accessories"
+            />
+          </label>
+          <label style={{ flex: '1 1 140px' }}>Sort by
+            <select value={sort} onChange={(e) => updateParams({ sort: e.target.value })}>
+              <option value="">Default</option>
+              <option value="name">Name</option>
+              <option value="price">Price</option>
+            </select>
+          </label>
+          <button type="submit" className="btn btn-primary">Apply</button>
+        </form>
+      </section>
+
       <ul className="product-grid">
         {products.map((p, i) => (
           <li key={p.id}>
             <Link to={`/products/${p.id}`}>{p.name}</Link>
-            <div>${Number(p.price).toFixed(2)}</div>
-            {sortKeys && <div>sortKey: {sortKeys[i]}</div>}
+            <div className="product-price">${Number(p.price).toFixed(2)}</div>
+            {sortKeys && <div className="muted">sortKey: {sortKeys[i]}</div>}
             <button onClick={() => addItem(p)}>Add to cart</button>
           </li>
         ))}

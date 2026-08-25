@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
 const multer = require('multer');
+const bcrypt = require('bcryptjs');
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
 
@@ -44,6 +45,21 @@ router.put('/', requireAuth, (req, res) => {
   db.prepare('UPDATE users SET bio = ? WHERE id = ?').run(bio ?? null, req.session.user.id);
   const row = db.prepare('SELECT * FROM users WHERE id = ?').get(req.session.user.id);
   res.json({ profile: toProfile(row) });
+});
+
+router.put('/password', requireAuth, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword || newPassword.length < 8) {
+    return res.status(400).json({ error: 'Current password and a new password (min 8 characters) are required.' });
+  }
+  const row = db.prepare('SELECT * FROM users WHERE id = ?').get(req.session.user.id);
+  const matches = await bcrypt.compare(currentPassword, row.password_hash);
+  if (!matches) {
+    return res.status(401).json({ error: 'Current password is incorrect.' });
+  }
+  const newHash = await bcrypt.hash(newPassword, 10);
+  db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(newHash, row.id);
+  res.json({ ok: true });
 });
 
 router.post('/avatar', requireAuth, upload.single('avatar'), (req, res) => {
