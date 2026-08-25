@@ -33,20 +33,20 @@ export default function Notices() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>Notices</h1>
+        <h1>공지사항</h1>
       </div>
 
       <form className="search-row" onSubmit={handleSearchSubmit}>
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search notices..."
+          placeholder="공지사항 검색..."
         />
-        <button type="submit" className="btn btn-primary btn-sm">Search</button>
+        <button type="submit" className="btn btn-primary btn-sm">검색</button>
       </form>
 
       {error && <p className="error">{error}</p>}
-      {notices.length === 0 && !error && <p className="muted">No notices yet.</p>}
+      {notices.length === 0 && !error && <p className="muted">아직 공지사항이 없습니다.</p>}
       {notices.map((n) => (
         <section className="card" key={n.id}>
           <h2>{n.title}</h2>

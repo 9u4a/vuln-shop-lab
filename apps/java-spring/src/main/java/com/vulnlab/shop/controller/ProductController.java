@@ -99,7 +99,7 @@ public class ProductController {
     public ResponseEntity<?> createReview(@PathVariable Long id, @RequestBody Map<String, Object> body, HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required."));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그인이 필요합니다."));
         }
         Product product = productService.findById(id);
         if (product == null) {
@@ -109,7 +109,7 @@ public class ProductController {
         int rating = Integer.parseInt(String.valueOf(body.getOrDefault("rating", 0)));
         String text = String.valueOf(body.getOrDefault("body", "")).trim();
         if (rating < 1 || rating > 5 || text.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Rating (1-5) and non-empty body are required."));
+            return ResponseEntity.badRequest().body(Map.of("error", "평점(1~5)과 내용을 입력해주세요."));
         }
 
         Review review = new Review();

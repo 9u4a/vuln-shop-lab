@@ -33,12 +33,12 @@ export default function MyPagePassword() {
     setChangeError(null);
     setStatus(null);
     if (newPassword !== confirmPassword) {
-      setChangeError('New passwords do not match.');
+      setChangeError('새 비밀번호가 일치하지 않습니다.');
       return;
     }
     try {
       await changePassword(backend.base, currentPassword, newPassword);
-      setStatus('Password changed successfully.');
+      setStatus('비밀번호가 성공적으로 변경되었습니다.');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
@@ -49,11 +49,11 @@ export default function MyPagePassword() {
   if (!unlocked) {
     return (
       <section className="card">
-        <h2>Verify your identity</h2>
-        <p className="muted">For your security, please re-enter your current password to continue.</p>
+        <h2>본인 확인</h2>
+        <p className="muted">보안을 위해 계속하려면 현재 비밀번호를 다시 입력해주세요.</p>
         {verifyError && <p className="error">{verifyError}</p>}
         <form onSubmit={handleVerify}>
-          <label>Current password
+          <label>현재 비밀번호
             <input
               type="password"
               value={currentPassword}
@@ -62,7 +62,7 @@ export default function MyPagePassword() {
             />
           </label>
           <button type="submit" className="btn btn-primary" disabled={verifying}>
-            {verifying ? 'Verifying...' : 'Continue'}
+            {verifying ? '확인 중...' : '계속'}
           </button>
         </form>
       </section>
@@ -71,11 +71,11 @@ export default function MyPagePassword() {
 
   return (
     <section className="card">
-      <h2>Change password</h2>
+      <h2>비밀번호 변경</h2>
       {status && <p className="status-ok">{status}</p>}
       {changeError && <p className="error">{changeError}</p>}
       <form onSubmit={handleChange}>
-        <label>New password
+        <label>새 비밀번호
           <input
             type="password"
             value={newPassword}
@@ -83,7 +83,7 @@ export default function MyPagePassword() {
             required
           />
         </label>
-        <label>Confirm new password
+        <label>새 비밀번호 확인
           <input
             type="password"
             value={confirmPassword}
@@ -91,7 +91,7 @@ export default function MyPagePassword() {
             required
           />
         </label>
-        <button type="submit" className="btn btn-primary">Update password</button>
+        <button type="submit" className="btn btn-primary">비밀번호 변경</button>
       </form>
     </section>
   );
