@@ -17,6 +17,12 @@ public class Faq {
     @Column(nullable = false, length = 2000)
     private String answer;
 
+    @Column(name = "user_id")
+    private Long userId;
+
+    @Column(name = "author_username")
+    private String authorUsername;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -28,6 +34,12 @@ public class Faq {
 
     public String getAnswer() { return answer; }
     public void setAnswer(String answer) { this.answer = answer; }
+
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
+
+    public String getAuthorUsername() { return authorUsername; }
+    public void setAuthorUsername(String authorUsername) { this.authorUsername = authorUsername; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

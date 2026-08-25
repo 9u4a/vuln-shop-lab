@@ -16,6 +16,11 @@ db.exec(`
     role TEXT NOT NULL DEFAULT 'user',
     bio TEXT,
     avatar_url TEXT,
+    name TEXT,
+    phone TEXT,
+    postcode TEXT,
+    address TEXT,
+    address_detail TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
@@ -67,6 +72,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     question TEXT NOT NULL,
     answer TEXT NOT NULL,
+    user_id INTEGER REFERENCES users(id),
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
@@ -81,6 +87,11 @@ db.exec(`
 for (const stmt of [
   'ALTER TABLE users ADD COLUMN bio TEXT',
   'ALTER TABLE users ADD COLUMN avatar_url TEXT',
+  'ALTER TABLE users ADD COLUMN name TEXT',
+  'ALTER TABLE users ADD COLUMN phone TEXT',
+  'ALTER TABLE users ADD COLUMN postcode TEXT',
+  'ALTER TABLE users ADD COLUMN address TEXT',
+  'ALTER TABLE users ADD COLUMN address_detail TEXT',
   'ALTER TABLE products ADD COLUMN category TEXT',
   'ALTER TABLE products ADD COLUMN brand TEXT',
   'ALTER TABLE products ADD COLUMN sku TEXT',
@@ -88,6 +99,7 @@ for (const stmt of [
   'ALTER TABLE products ADD COLUMN option_name TEXT',
   'ALTER TABLE products ADD COLUMN option_values TEXT',
   'ALTER TABLE order_items ADD COLUMN option_value TEXT',
+  'ALTER TABLE faqs ADD COLUMN user_id INTEGER REFERENCES users(id)',
 ]) {
   try {
     db.exec(stmt);

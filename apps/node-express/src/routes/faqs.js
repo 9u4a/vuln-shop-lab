@@ -1,6 +1,6 @@
 const express = require('express');
 const db = require('../db');
-const { requireAdmin } = require('../middleware/auth');
+const { requireAuth, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -9,23 +9,48 @@ function toFaq(row) {
     id: row.id,
     question: row.question,
     answer: row.answer,
+    authorUsername: row.author_username || null,
     createdAt: row.created_at,
   };
 }
 
 router.get('/', (req, res) => {
-  const rows = db.prepare('SELECT * FROM faqs ORDER BY id').all();
-  res.json({ faqs: rows.map(toFaq) });
+  const q = (req.query.q || '').trim();
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
+  const offset = (page - 1) * pageSize;
+
+  const where = q ? 'WHERE f.question LIKE ? OR f.answer LIKE ?' : '';
+  const params = q ? [`%${q}%`, `%${q}%`] : [];
+
+  const total = db.prepare(`SELECT COUNT(*) AS count FROM faqs f ${where}`).get(...params).count;
+  const rows = db
+    .prepare(
+      `SELECT f.*, u.username AS author_username FROM faqs f
+       LEFT JOIN users u ON u.id = f.user_id
+       ${where}
+       ORDER BY f.id LIMIT ? OFFSET ?`
+    )
+    .all(...params, pageSize, offset);
+
+  res.json({ faqs: rows.map(toFaq), total, page, pageSize });
 });
 
-router.post('/', requireAdmin, (req, res) => {
+router.post('/', requireAuth, (req, res) => {
   const question = (req.body.question || '').trim();
   const answer = (req.body.answer || '').trim();
   if (!question || !answer) {
     return res.status(400).json({ error: 'question and answer are required.' });
   }
-  const result = db.prepare('INSERT INTO faqs (question, answer) VALUES (?, ?)').run(question, answer);
-  const row = db.prepare('SELECT * FROM faqs WHERE id = ?').get(result.lastInsertRowid);
+  const result = db
+    .prepare('INSERT INTO faqs (question, answer, user_id) VALUES (?, ?, ?)')
+    .run(question, answer, req.session.user.id);
+  const row = db
+    .prepare(
+      `SELECT f.*, u.username AS author_username FROM faqs f
+       LEFT JOIN users u ON u.id = f.user_id WHERE f.id = ?`
+    )
+    .get(result.lastInsertRowid);
   res.status(201).json({ faq: toFaq(row) });
 });
 
@@ -35,7 +60,12 @@ router.put('/:id', requireAdmin, (req, res) => {
   const question = req.body.question != null ? req.body.question.trim() : existing.question;
   const answer = req.body.answer != null ? req.body.answer.trim() : existing.answer;
   db.prepare('UPDATE faqs SET question = ?, answer = ? WHERE id = ?').run(question, answer, existing.id);
-  const row = db.prepare('SELECT * FROM faqs WHERE id = ?').get(existing.id);
+  const row = db
+    .prepare(
+      `SELECT f.*, u.username AS author_username FROM faqs f
+       LEFT JOIN users u ON u.id = f.user_id WHERE f.id = ?`
+    )
+    .get(existing.id);
   res.json({ faq: toFaq(row) });
 });
 

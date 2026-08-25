@@ -14,8 +14,20 @@ function toNotice(row) {
 }
 
 router.get('/', (req, res) => {
-  const rows = db.prepare('SELECT * FROM notices ORDER BY id DESC').all();
-  res.json({ notices: rows.map(toNotice) });
+  const q = (req.query.q || '').trim();
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
+  const offset = (page - 1) * pageSize;
+
+  const where = q ? 'WHERE title LIKE ? OR body LIKE ?' : '';
+  const params = q ? [`%${q}%`, `%${q}%`] : [];
+
+  const total = db.prepare(`SELECT COUNT(*) AS count FROM notices ${where}`).get(...params).count;
+  const rows = db
+    .prepare(`SELECT * FROM notices ${where} ORDER BY id DESC LIMIT ? OFFSET ?`)
+    .all(...params, pageSize, offset);
+
+  res.json({ notices: rows.map(toNotice), total, page, pageSize });
 });
 
 router.post('/', requireAdmin, (req, res) => {

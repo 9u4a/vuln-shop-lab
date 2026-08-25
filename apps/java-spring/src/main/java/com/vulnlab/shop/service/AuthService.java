@@ -22,11 +22,17 @@ public class AuthService {
         return userRepository.findByUsername(username).isPresent();
     }
 
-    public User signup(String username, String rawPassword) {
+    public User signup(String username, String rawPassword, String name, String phone,
+                        String postcode, String address, String addressDetail) {
         User user = new User();
         user.setUsername(username);
         user.setPasswordHash(passwordEncoder.encode(rawPassword));
         user.setRole(userRepository.count() == 0 ? Roles.SYSTEM_ADMIN : Roles.USER);
+        user.setName(name);
+        user.setPhone(phone);
+        user.setPostcode(postcode);
+        user.setAddress(address);
+        user.setAddressDetail(addressDetail);
         return userRepository.save(user);
     }
 

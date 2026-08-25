@@ -12,7 +12,7 @@ export default function AdminNotices() {
 
   function load() {
     setError(null);
-    fetchNotices(backend.base).then((d) => setNotices(d.notices)).catch((e) => setError(e.message));
+    fetchNotices(backend.base, { pageSize: 50 }).then((d) => setNotices(d.notices)).catch((e) => setError(e.message));
   }
 
   useEffect(load, [backend.base]);
