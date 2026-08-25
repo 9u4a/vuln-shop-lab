@@ -7,6 +7,7 @@ services:
     environment:
       SESSION_SECRET: ${NODE_SESSION_SECRET:-dev-secret-change-me}
       FLAG_DEMO: ${FLAG_DEMO:-FLAG{demo_setup_ok}}
+      FLAG_VULN_001: ${FLAG_VULN_001:-}
       TOSS_SECRET_KEY: ${TOSS_SECRET_KEY:-}
     volumes:
       - node_data:/app/data
@@ -21,6 +22,7 @@ services:
       - "8081:8081"
     environment:
       FLAG_DEMO: ${FLAG_DEMO:-FLAG{demo_setup_ok}}
+      FLAG_VULN_002: ${FLAG_VULN_002:-}
       TOSS_SECRET_KEY: ${TOSS_SECRET_KEY:-}
     volumes:
       - java_data:/app/data

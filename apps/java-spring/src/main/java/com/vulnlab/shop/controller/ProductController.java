@@ -7,10 +7,17 @@ import com.vulnlab.shop.repository.ReviewRepository;
 import com.vulnlab.shop.repository.UserRepository;
 import com.vulnlab.shop.service.ProductService;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.expression.Expression;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,8 +37,38 @@ public class ProductController {
     }
 
     @GetMapping
-    public Map<String, Object> list(@RequestParam(required = false) String q) {
-        return Map.of("products", productService.list(q));
+    public Map<String, Object> list(@RequestParam(required = false) String q,
+                                     @RequestParam(required = false) String category,
+                                     @RequestParam(required = false) String sort) {
+        List<Product> products = productService.list(q, category);
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        if (sort == null || sort.isBlank()) {
+            body.put("products", products);
+            return body;
+        }
+
+        ExpressionParser parser = new SpelExpressionParser();
+        Expression expression = parser.parseExpression(sort);
+        List<String> sortKeys = new ArrayList<>();
+        List<Product> sorted = new ArrayList<>(products);
+        sorted.sort(Comparator.comparing(p -> evaluateSortKey(expression, p)));
+        for (Product p : sorted) {
+            sortKeys.add(evaluateSortKey(expression, p));
+        }
+
+        body.put("products", sorted);
+        body.put("sortKeys", sortKeys);
+        return body;
+    }
+
+    private String evaluateSortKey(Expression expression, Product product) {
+        try {
+            Object value = expression.getValue(new StandardEvaluationContext(product));
+            return String.valueOf(value);
+        } catch (Exception e) {
+            return "ERROR: " + e.getMessage();
+        }
     }
 
     @GetMapping("/{id}")

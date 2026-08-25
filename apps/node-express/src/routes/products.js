@@ -5,12 +5,22 @@ const { requireAuth } = require('../middleware/auth');
 const router = express.Router();
 
 router.get('/', (req, res) => {
-  const { q } = req.query;
-  let products;
+  const { q, category, sort } = req.query;
+
+  let sql = 'SELECT * FROM products WHERE 1=1';
   if (q) {
-    products = db.prepare('SELECT * FROM products WHERE name LIKE ? ORDER BY id').all(`%${q}%`);
-  } else {
-    products = db.prepare('SELECT * FROM products ORDER BY id').all();
+    sql += ` AND name LIKE '%${q}%'`;
+  }
+  if (category) {
+    sql += ` AND category = '${category}'`;
+  }
+  sql += ` ORDER BY ${sort || 'id'}`;
+
+  let products;
+  try {
+    products = db.prepare(sql).all();
+  } catch (err) {
+    return res.status(400).json({ error: 'Invalid query.' });
   }
   res.json({ products });
 });
