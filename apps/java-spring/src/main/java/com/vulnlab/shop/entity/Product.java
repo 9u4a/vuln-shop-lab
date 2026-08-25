@@ -1,8 +1,13 @@
 package com.vulnlab.shop.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
+import org.hibernate.annotations.ColumnDefault;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 @Entity
 @Table(name = "products")
@@ -26,6 +31,20 @@ public class Product {
 
     private String category;
 
+    private String brand;
+
+    private String sku;
+
+    @Column(nullable = false)
+    @ColumnDefault("100")
+    private int stock = 100;
+
+    @Column(name = "option_name")
+    private String optionName;
+
+    @Column(name = "option_values")
+    private String optionValues;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -46,6 +65,29 @@ public class Product {
 
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+
+    public String getBrand() { return brand; }
+    public void setBrand(String brand) { this.brand = brand; }
+
+    public String getSku() { return sku; }
+    public void setSku(String sku) { this.sku = sku; }
+
+    public int getStock() { return stock; }
+    public void setStock(int stock) { this.stock = stock; }
+
+    public String getOptionName() { return optionName; }
+    public void setOptionName(String optionName) { this.optionName = optionName; }
+
+    @JsonIgnore
+    public String getOptionValues() { return optionValues; }
+    public void setOptionValues(String optionValues) { this.optionValues = optionValues; }
+
+    @JsonProperty("optionValues")
+    public List<String> getOptionValuesList() {
+        return (optionValues == null || optionValues.isBlank())
+                ? List.of()
+                : Arrays.asList(optionValues.split(","));
+    }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

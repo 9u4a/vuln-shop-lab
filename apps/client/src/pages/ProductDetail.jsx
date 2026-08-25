@@ -16,13 +16,25 @@ export default function ProductDetail() {
   const [body, setBody] = useState('');
   const [error, setError] = useState(null);
 
+  const [quantity, setQuantity] = useState(1);
+  const [selectedOption, setSelectedOption] = useState('');
+  const [addedNote, setAddedNote] = useState(null);
+
   function loadReviews() {
     fetchReviews(backend.base, id).then((data) => setReviews(data.reviews));
   }
 
   useEffect(() => {
     setProduct(null);
-    fetchProduct(backend.base, id).then((data) => setProduct(data.product));
+    setQuantity(1);
+    setSelectedOption('');
+    setAddedNote(null);
+    fetchProduct(backend.base, id).then((data) => {
+      setProduct(data.product);
+      if (data.product.optionValues && data.product.optionValues.length > 0) {
+        setSelectedOption(data.product.optionValues[0]);
+      }
+    });
     loadReviews();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backend.base, id]);
@@ -39,7 +51,14 @@ export default function ProductDetail() {
     }
   }
 
+  function handleAddToCart() {
+    addItem(product, quantity, selectedOption || null);
+    setAddedNote(`Added ${quantity} to cart.`);
+  }
+
   if (!product) return <p>Loading...</p>;
+
+  const hasOptions = product.optionValues && product.optionValues.length > 0;
 
   return (
     <div className="page">
@@ -59,7 +78,41 @@ export default function ProductDetail() {
         )}
         <p>{product.description}</p>
         <p className="product-price">${Number(product.price).toFixed(2)}</p>
-        <button onClick={() => addItem(product)} className="btn btn-primary">Add to cart</button>
+
+        <table className="specs-table">
+          <tbody>
+            {product.brand && <tr><th>Brand</th><td>{product.brand}</td></tr>}
+            {product.sku && <tr><th>SKU</th><td>{product.sku}</td></tr>}
+            {product.category && <tr><th>Category</th><td>{product.category}</td></tr>}
+            <tr>
+              <th>Stock</th>
+              <td>{product.stock > 0 ? `${product.stock} available` : 'Out of stock'}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        {hasOptions && (
+          <label>{product.optionName || 'Option'}
+            <select value={selectedOption} onChange={(e) => setSelectedOption(e.target.value)}>
+              {product.optionValues.map((v) => (
+                <option key={v} value={v}>{v}</option>
+              ))}
+            </select>
+          </label>
+        )}
+
+        <label>Quantity
+          <input
+            type="number"
+            min="1"
+            value={quantity}
+            onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))}
+            style={{ width: '5rem' }}
+          />
+        </label>
+
+        {addedNote && <p className="status-ok">{addedNote}</p>}
+        <button onClick={handleAddToCart} className="btn btn-primary">Add to cart</button>
       </section>
 
       <section className="card">

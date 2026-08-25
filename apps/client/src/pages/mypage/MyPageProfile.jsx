@@ -1,18 +1,13 @@
 import { useEffect, useState } from 'react';
-import { useBackend } from '../BackendContext.jsx';
-import { fetchProfile, updateProfile, uploadAvatar, changePassword } from '../api.js';
+import { useBackend } from '../../BackendContext.jsx';
+import { fetchProfile, updateProfile, uploadAvatar } from '../../api.js';
 
-export default function Profile() {
+export default function MyPageProfile() {
   const { backend } = useBackend();
   const [profile, setProfile] = useState(null);
   const [bio, setBio] = useState('');
   const [error, setError] = useState(null);
   const [status, setStatus] = useState(null);
-
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [passwordError, setPasswordError] = useState(null);
-  const [passwordStatus, setPasswordStatus] = useState(null);
 
   useEffect(() => {
     setProfile(null);
@@ -52,32 +47,13 @@ export default function Profile() {
     }
   }
 
-  async function handlePasswordSubmit(e) {
-    e.preventDefault();
-    setPasswordError(null);
-    setPasswordStatus(null);
-    try {
-      await changePassword(backend.base, currentPassword, newPassword);
-      setCurrentPassword('');
-      setNewPassword('');
-      setPasswordStatus('Password changed.');
-    } catch (err) {
-      setPasswordError(err.message);
-    }
-  }
-
   if (error) return <p className="error">{error}</p>;
   if (!profile) return <p>Loading...</p>;
 
   const avatarSrc = profile.avatarUrl ? `${backend.uploadsBase}/${profile.avatarUrl}` : null;
 
   return (
-    <div className="page">
-      <div className="page-header">
-        <h1>My Page</h1>
-        <p className="muted">Manage your account, profile info, and password.</p>
-      </div>
-
+    <div>
       <section className="card">
         <h2>Account</h2>
         <div className="profile-summary">
@@ -104,32 +80,6 @@ export default function Profile() {
             <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows="4" placeholder="Tell other shoppers about yourself..." />
           </label>
           <button type="submit" className="btn btn-primary">Save changes</button>
-        </form>
-      </section>
-
-      <section className="card">
-        <h2>Change password</h2>
-        {passwordStatus && <p className="status-ok">{passwordStatus}</p>}
-        {passwordError && <p className="error">{passwordError}</p>}
-        <form onSubmit={handlePasswordSubmit}>
-          <label>Current password
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              required
-            />
-          </label>
-          <label>New password
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              minLength={8}
-              required
-            />
-          </label>
-          <button type="submit" className="btn btn-primary">Update password</button>
         </form>
       </section>
     </div>

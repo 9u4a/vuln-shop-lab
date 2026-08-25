@@ -108,8 +108,21 @@ public class AdminController {
         product.setPrice(new BigDecimal(String.valueOf(priceRaw)));
         product.setImageUrl((String) body.get("imageUrl"));
         product.setCategory((String) body.get("category"));
+        product.setBrand((String) body.get("brand"));
+        product.setSku((String) body.get("sku"));
+        if (body.get("stock") != null) product.setStock(Integer.parseInt(String.valueOf(body.get("stock"))));
+        product.setOptionName((String) body.get("optionName"));
+        product.setOptionValues(joinOptionValues(body.get("optionValues")));
         productRepository.save(product);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("id", product.getId()));
+    }
+
+    @SuppressWarnings("unchecked")
+    private String joinOptionValues(Object raw) {
+        if (raw instanceof List<?> list) {
+            return String.join(",", list.stream().map(String::valueOf).toList());
+        }
+        return raw == null ? null : String.valueOf(raw);
     }
 
     @PutMapping("/products/{id}")
@@ -123,6 +136,11 @@ public class AdminController {
         if (body.get("price") != null) product.setPrice(new BigDecimal(String.valueOf(body.get("price"))));
         if (body.get("imageUrl") != null) product.setImageUrl((String) body.get("imageUrl"));
         if (body.get("category") != null) product.setCategory((String) body.get("category"));
+        if (body.get("brand") != null) product.setBrand((String) body.get("brand"));
+        if (body.get("sku") != null) product.setSku((String) body.get("sku"));
+        if (body.get("stock") != null) product.setStock(Integer.parseInt(String.valueOf(body.get("stock"))));
+        if (body.get("optionName") != null) product.setOptionName((String) body.get("optionName"));
+        if (body.get("optionValues") != null) product.setOptionValues(joinOptionValues(body.get("optionValues")));
         productRepository.save(product);
         return ResponseEntity.ok(Map.of("ok", true));
     }

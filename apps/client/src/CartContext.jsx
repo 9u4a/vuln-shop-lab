@@ -11,6 +11,10 @@ function readCart(storageKey) {
   }
 }
 
+function lineKey(productId, option) {
+  return `${productId}::${option || ''}`;
+}
+
 function CartProvider({ children }) {
   const { backendKey } = useBackend();
   const storageKey = `cart_${backendKey}`;
@@ -24,34 +28,38 @@ function CartProvider({ children }) {
     localStorage.setItem(storageKey, JSON.stringify(items));
   }, [items, storageKey]);
 
-  function addItem(product, quantity = 1) {
+  function addItem(product, quantity = 1, option = null) {
+    const key = lineKey(product.id, option);
     setItems((prev) => ({
       ...prev,
-      [product.id]: {
+      [key]: {
         productId: product.id,
         name: product.name,
         price: Number(product.price),
-        quantity: (prev[product.id]?.quantity || 0) + quantity,
+        option: option || null,
+        quantity: (prev[key]?.quantity || 0) + quantity,
       },
     }));
   }
 
-  function setQuantity(productId, quantity) {
+  function setQuantity(productId, option, quantity) {
+    const key = lineKey(productId, option);
     setItems((prev) => {
       const next = { ...prev };
       if (quantity <= 0) {
-        delete next[productId];
+        delete next[key];
       } else {
-        next[productId] = { ...next[productId], quantity };
+        next[key] = { ...next[key], quantity };
       }
       return next;
     });
   }
 
-  function removeItem(productId) {
+  function removeItem(productId, option) {
+    const key = lineKey(productId, option);
     setItems((prev) => {
       const next = { ...prev };
-      delete next[productId];
+      delete next[key];
       return next;
     });
   }

@@ -36,28 +36,51 @@ router.get('/orders', requireAdmin, (req, res) => {
 });
 
 router.post('/products', requireAdmin, (req, res) => {
-  const { name, description, price, imageUrl, category } = req.body;
+  const { name, description, price, imageUrl, category, brand, sku, stock, optionName, optionValues } = req.body;
   if (!name || price == null) {
     return res.status(400).json({ error: 'name and price are required.' });
   }
   const result = db
-    .prepare('INSERT INTO products (name, description, price, image_url, category) VALUES (?, ?, ?, ?, ?)')
-    .run(name, description || null, Number(price), imageUrl || null, category || null);
+    .prepare(
+      `INSERT INTO products
+        (name, description, price, image_url, category, brand, sku, stock, option_name, option_values)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+    .run(
+      name,
+      description || null,
+      Number(price),
+      imageUrl || null,
+      category || null,
+      brand || null,
+      sku || null,
+      stock != null ? Number(stock) : 100,
+      optionName || null,
+      Array.isArray(optionValues) ? optionValues.join(',') : optionValues || null
+    );
   res.status(201).json({ id: result.lastInsertRowid });
 });
 
 router.put('/products/:id', requireAdmin, (req, res) => {
   const existing = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: 'Product not found' });
-  const { name, description, price, imageUrl, category } = req.body;
+  const { name, description, price, imageUrl, category, brand, sku, stock, optionName, optionValues } = req.body;
   db.prepare(
-    'UPDATE products SET name = ?, description = ?, price = ?, image_url = ?, category = ? WHERE id = ?'
+    `UPDATE products SET
+      name = ?, description = ?, price = ?, image_url = ?, category = ?,
+      brand = ?, sku = ?, stock = ?, option_name = ?, option_values = ?
+     WHERE id = ?`
   ).run(
     name ?? existing.name,
     description ?? existing.description,
     price != null ? Number(price) : existing.price,
     imageUrl ?? existing.image_url,
     category ?? existing.category,
+    brand ?? existing.brand,
+    sku ?? existing.sku,
+    stock != null ? Number(stock) : existing.stock,
+    optionName ?? existing.option_name,
+    (Array.isArray(optionValues) ? optionValues.join(',') : optionValues) ?? existing.option_values,
     existing.id
   );
   res.json({ ok: true });

@@ -72,6 +72,23 @@ public class ProfileController {
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
+    @PostMapping("/verify-password")
+    public ResponseEntity<?> verifyPassword(@RequestBody Map<String, String> body, HttpSession session) {
+        User sessionUser = currentUser(session);
+        if (sessionUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required."));
+        }
+        String password = body.get("password");
+        if (password == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Password is required."));
+        }
+        User user = userRepository.findById(sessionUser.getId()).orElseThrow();
+        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Password is incorrect."));
+        }
+        return ResponseEntity.ok(Map.of("ok", true));
+    }
+
     @PostMapping("/avatar")
     public ResponseEntity<?> uploadAvatar(@RequestParam("avatar") MultipartFile file, HttpSession session) throws IOException {
         User sessionUser = currentUser(session);

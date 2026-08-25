@@ -7,7 +7,18 @@ import {
   uploadProductImageAdmin,
 } from '../../api.js';
 
-const emptyProduct = { name: '', description: '', price: '', imageUrl: '', category: '' };
+const emptyProduct = {
+  name: '',
+  description: '',
+  price: '',
+  imageUrl: '',
+  category: '',
+  brand: '',
+  sku: '',
+  stock: '',
+  optionName: '',
+  optionValues: '',
+};
 
 export default function AdminProducts() {
   const { backend } = useBackend();
@@ -26,7 +37,14 @@ export default function AdminProducts() {
   async function handleCreateProduct(e) {
     e.preventDefault();
     try {
-      await createProductAdmin(backend.base, { ...newProduct, price: Number(newProduct.price) });
+      await createProductAdmin(backend.base, {
+        ...newProduct,
+        price: Number(newProduct.price),
+        stock: newProduct.stock === '' ? undefined : Number(newProduct.stock),
+        optionValues: newProduct.optionValues
+          ? newProduct.optionValues.split(',').map((v) => v.trim()).filter(Boolean)
+          : undefined,
+      });
       setNewProduct(emptyProduct);
       load();
     } catch (err) {
@@ -98,6 +116,21 @@ export default function AdminProducts() {
         </label>
         <label>Category
           <input value={newProduct.category} onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })} />
+        </label>
+        <label>Brand
+          <input value={newProduct.brand} onChange={(e) => setNewProduct({ ...newProduct, brand: e.target.value })} />
+        </label>
+        <label>SKU
+          <input value={newProduct.sku} onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })} />
+        </label>
+        <label>Stock
+          <input type="number" min="0" value={newProduct.stock} onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })} />
+        </label>
+        <label>Option name (e.g. Color)
+          <input value={newProduct.optionName} onChange={(e) => setNewProduct({ ...newProduct, optionName: e.target.value })} />
+        </label>
+        <label>Option values (comma-separated)
+          <input value={newProduct.optionValues} onChange={(e) => setNewProduct({ ...newProduct, optionValues: e.target.value })} placeholder="Red, Blue, Black" />
         </label>
         <button type="submit" className="btn btn-primary">Add product</button>
       </form>

@@ -23,6 +23,9 @@ public class OrderItem {
     @Column(name = "unit_price", nullable = false)
     private BigDecimal unitPrice;
 
+    @Column(name = "option_value")
+    private String optionValue;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -37,4 +40,7 @@ public class OrderItem {
 
     public BigDecimal getUnitPrice() { return unitPrice; }
     public void setUnitPrice(BigDecimal unitPrice) { this.unitPrice = unitPrice; }
+
+    public String getOptionValue() { return optionValue; }
+    public void setOptionValue(String optionValue) { this.optionValue = optionValue; }
 }
