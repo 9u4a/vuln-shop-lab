@@ -5,11 +5,14 @@ import com.vulnlab.shop.entity.User;
 import com.vulnlab.shop.repository.FaqRepository;
 import com.vulnlab.shop.security.Roles;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -20,6 +23,14 @@ public class FaqController {
 
     public FaqController(FaqRepository faqRepository) {
         this.faqRepository = faqRepository;
+    }
+
+    private ResponseEntity<?> requireAuth(HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required."));
+        }
+        return null;
     }
 
     private ResponseEntity<?> requireAdmin(HttpSession session) {
@@ -34,24 +45,37 @@ public class FaqController {
     }
 
     @GetMapping
-    public Map<String, Object> list() {
-        List<Faq> faqs = faqRepository.findAll();
-        faqs.sort((a, b) -> a.getId().compareTo(b.getId()));
-        return Map.of("faqs", faqs);
+    public Map<String, Object> list(
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        Pageable pageable = PageRequest.of(Math.max(0, page - 1), Math.min(50, Math.max(1, pageSize)),
+                Sort.by(Sort.Direction.ASC, "id"));
+        Page<Faq> result = (q == null || q.isBlank())
+                ? faqRepository.findAll(pageable)
+                : faqRepository.findByQuestionContainingIgnoreCaseOrAnswerContainingIgnoreCase(q, q, pageable);
+        return Map.of(
+                "faqs", result.getContent(),
+                "total", result.getTotalElements(),
+                "page", page,
+                "pageSize", pageable.getPageSize());
     }
 
     @PostMapping
     public ResponseEntity<?> create(@RequestBody Map<String, String> body, HttpSession session) {
-        ResponseEntity<?> denied = requireAdmin(session);
+        ResponseEntity<?> denied = requireAuth(session);
         if (denied != null) return denied;
         String question = body.getOrDefault("question", "").trim();
         String answer = body.getOrDefault("answer", "").trim();
         if (question.isEmpty() || answer.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "question and answer are required."));
         }
+        User user = (User) session.getAttribute("user");
         Faq faq = new Faq();
         faq.setQuestion(question);
         faq.setAnswer(answer);
+        faq.setUserId(user.getId());
+        faq.setAuthorUsername(user.getUsername());
         faqRepository.save(faq);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("faq", faq));
     }

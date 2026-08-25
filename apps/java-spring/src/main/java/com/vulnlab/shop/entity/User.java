@@ -27,6 +27,17 @@ public class User {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
+    private String name;
+
+    private String phone;
+
+    private String postcode;
+
+    private String address;
+
+    @Column(name = "address_detail")
+    private String addressDetail;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -48,6 +59,21 @@ public class User {
 
     public String getAvatarUrl() { return avatarUrl; }
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public String getPostcode() { return postcode; }
+    public void setPostcode(String postcode) { this.postcode = postcode; }
+
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+
+    public String getAddressDetail() { return addressDetail; }
+    public void setAddressDetail(String addressDetail) { this.addressDetail = addressDetail; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
