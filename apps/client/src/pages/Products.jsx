@@ -65,6 +65,14 @@ export default function Products() {
       <ul className="product-grid">
         {products.map((p, i) => (
           <li key={p.id}>
+            {p.imageUrl && (
+              <img
+                className="product-thumb"
+                src={`${backend.uploadsBase}/${p.imageUrl}`}
+                alt={p.name}
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+            )}
             <Link to={`/products/${p.id}`}>{p.name}</Link>
             <div className="product-price">${Number(p.price).toFixed(2)}</div>
             {sortKeys && <div className="muted">sortKey: {sortKeys[i]}</div>}

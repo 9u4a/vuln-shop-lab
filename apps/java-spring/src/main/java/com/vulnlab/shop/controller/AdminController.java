@@ -6,11 +6,14 @@ import com.vulnlab.shop.repository.OrderRepository;
 import com.vulnlab.shop.repository.ProductRepository;
 import com.vulnlab.shop.repository.UserRepository;
 import com.vulnlab.shop.security.Roles;
+import com.vulnlab.shop.storage.Uploads;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -122,6 +125,22 @@ public class AdminController {
         if (body.get("category") != null) product.setCategory((String) body.get("category"));
         productRepository.save(product);
         return ResponseEntity.ok(Map.of("ok", true));
+    }
+
+    @PostMapping("/products/{id}/image")
+    public ResponseEntity<?> uploadProductImage(@PathVariable Long id, @RequestParam("image") MultipartFile file,
+                                                 HttpSession session) throws IOException {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        Product product = productRepository.findById(id).orElse(null);
+        if (product == null) return ResponseEntity.notFound().build();
+        if (!Uploads.isAllowed(file)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid or missing image file."));
+        }
+        String filename = Uploads.store(file);
+        product.setImageUrl(filename);
+        productRepository.save(product);
+        return ResponseEntity.ok(Map.of("imageUrl", filename));
     }
 
     @DeleteMapping("/products/{id}")

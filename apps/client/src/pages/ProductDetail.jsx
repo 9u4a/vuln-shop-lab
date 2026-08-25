@@ -49,6 +49,14 @@ export default function ProductDetail() {
       </div>
 
       <section className="card">
+        {product.imageUrl && (
+          <img
+            className="product-detail-image"
+            src={`${backend.uploadsBase}/${product.imageUrl}`}
+            alt={product.name}
+            onError={(e) => { e.target.style.display = 'none'; }}
+          />
+        )}
         <p>{product.description}</p>
         <p className="product-price">${Number(product.price).toFixed(2)}</p>
         <button onClick={() => addItem(product)} className="btn btn-primary">Add to cart</button>
