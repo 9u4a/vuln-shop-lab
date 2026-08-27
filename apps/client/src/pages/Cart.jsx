@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { loadTossPayments, ANONYMOUS } from '@tosspayments/tosspayments-sdk';
 import { useCart } from '../CartContext.jsx';
 import { useBackend } from '../BackendContext.jsx';
 import { createOrder, importCartBackup } from '../api.js';
 import { formatCurrency } from '../format.js';
+import EmptyState from '../components/EmptyState.jsx';
 
 const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY;
 
@@ -88,15 +90,17 @@ export default function Cart() {
     return (
       <div className="page">
         <div className="page-header">
-          <h1>장바구니</h1>
+          <h1>결제</h1>
         </div>
         {error && <p className="error">{error}</p>}
         <section className="card">
-          <p><strong>주문 #{pendingPayment.orderId} — {formatCurrency(pendingPayment.amount)}</strong></p>
+          <p><strong>주문 #{pendingPayment.orderId} · {formatCurrency(pendingPayment.amount)}</strong></p>
           <div id="payment-method" />
           <div id="agreement" />
-          <button disabled={!widgetsReady} onClick={handlePay} className="btn btn-primary">결제하기</button>
-          <button onClick={() => setPendingPayment(null)} className="btn btn-ghost">취소</button>
+          <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+            <button disabled={!widgetsReady} onClick={handlePay} className="btn btn-primary">결제하기</button>
+            <button onClick={() => setPendingPayment(null)} className="btn btn-ghost">취소</button>
+          </div>
         </section>
       </div>
     );
@@ -111,36 +115,61 @@ export default function Cart() {
       {pendingNote && <p className="status-ok">{pendingNote}</p>}
 
       {items.length === 0 ? (
-        <p className="muted">장바구니가 비어 있습니다.</p>
+        <EmptyState
+          emoji="🛒"
+          title="장바구니가 비어 있어요"
+          description="마음에 드는 상품을 담아보세요."
+          action={<Link to="/products" className="btn btn-primary">상품 둘러보기</Link>}
+        />
       ) : (
-        <ul className="product-grid">
-          {items.map((i) => (
-            <li key={`${i.productId}::${i.option || ''}`}>
-              <div>{i.name}</div>
-              {i.option && <div className="muted">옵션: {i.option}</div>}
-              <div className="product-price">{formatCurrency(i.price)}</div>
-              <label>수량
-                <input
-                  type="number"
-                  min="0"
-                  value={i.quantity}
-                  onChange={(e) => setQuantity(i.productId, i.option, Number(e.target.value))}
-                  style={{ width: '4rem' }}
-                />
-              </label>
-              <button onClick={() => removeItem(i.productId, i.option)}>삭제</button>
-            </li>
-          ))}
-        </ul>
+        <div className="two-col two-col--cart">
+          <ul className="line-list">
+            {items.map((i) => (
+              <li key={`${i.productId}::${i.option || ''}`} className="line-item">
+                <div className="line-item__main">
+                  <span className="line-item__name">{i.name}</span>
+                  {i.option && <span className="line-item__meta">옵션: {i.option}</span>}
+                  <span className="line-item__meta tnum">{formatCurrency(i.price)}</span>
+                </div>
+                <div className="qty-stepper">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity(i.productId, i.option, i.quantity - 1)}
+                    aria-label="수량 감소"
+                  >–</button>
+                  <input
+                    type="number"
+                    min="0"
+                    value={i.quantity}
+                    onChange={(e) => setQuantity(i.productId, i.option, Number(e.target.value))}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setQuantity(i.productId, i.option, i.quantity + 1)}
+                    aria-label="수량 증가"
+                  >+</button>
+                </div>
+                <span className="line-item__price tnum">{formatCurrency(i.price * i.quantity)}</span>
+                <div className="line-item__actions">
+                  <button onClick={() => removeItem(i.productId, i.option)}>삭제</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <div className="summary-box">
+            <div className="summary-box__row"><span>상품금액</span><span className="tnum">{formatCurrency(total)}</span></div>
+            <div className="summary-box__row"><span>배송비</span><span>무료</span></div>
+            <div className="summary-box__row summary-box__row--total"><span>결제 예상금액</span><span className="tnum">{formatCurrency(total)}</span></div>
+            <button disabled={items.length === 0} onClick={handleCheckout} className="btn btn-primary btn-block btn-lg">
+              결제하기
+            </button>
+          </div>
+        </div>
       )}
 
-      <section className="card">
-        <p><strong>총액: {formatCurrency(total)}</strong></p>
-        <button disabled={items.length === 0} onClick={handleCheckout} className="btn btn-primary">결제하기</button>
-      </section>
-
       {backendKey === 'java' && (
-        <section className="card">
+        <section className="card" style={{ marginTop: 'var(--space-10)' }}>
           <h2>장바구니 백업 가져오기</h2>
           <form onSubmit={handleImportBackup}>
             <label>백업 JSON
