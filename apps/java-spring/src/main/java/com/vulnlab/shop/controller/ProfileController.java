@@ -1,5 +1,6 @@
 package com.vulnlab.shop.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vulnlab.shop.entity.User;
 import com.vulnlab.shop.repository.UserRepository;
 import com.vulnlab.shop.storage.Uploads;
@@ -19,6 +20,7 @@ public class ProfileController {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ProfileController(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -39,13 +41,13 @@ public class ProfileController {
     }
 
     @PutMapping
-    public ResponseEntity<?> update(@RequestBody Map<String, String> body, HttpSession session) {
+    public ResponseEntity<?> update(@RequestBody Map<String, Object> body, HttpSession session) throws Exception {
         User sessionUser = currentUser(session);
         if (sessionUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그인이 필요합니다."));
         }
         User user = userRepository.findById(sessionUser.getId()).orElseThrow();
-        user.setBio(body.get("bio"));
+        objectMapper.updateValue(user, body);
         userRepository.save(user);
         session.setAttribute("user", user);
         return ResponseEntity.ok(Map.of("profile", user));

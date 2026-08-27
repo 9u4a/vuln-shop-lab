@@ -13,11 +13,13 @@ export default defineConfig({
       '/api/node': {
         target: nodeTarget,
         changeOrigin: true,
+        headers: { 'X-Forwarded-Proto': 'https' },
         rewrite: (path) => path.replace(/^\/api\/node/, '/api'),
       },
       '/api/java': {
         target: javaTarget,
         changeOrigin: true,
+        headers: { 'X-Forwarded-Proto': 'https' },
         rewrite: (path) => path.replace(/^\/api\/java/, '/api'),
       },
       '/uploads/node': {

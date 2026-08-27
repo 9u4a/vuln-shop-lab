@@ -28,9 +28,14 @@ router.get('/', requireAuth, (req, res) => {
 });
 
 router.put('/', requireAuth, (req, res) => {
-  const { bio } = req.body;
-  db.prepare('UPDATE users SET bio = ? WHERE id = ?').run(bio ?? null, req.session.user.id);
+  const cols = Object.keys(req.body).filter((k) => /^[a-z_]+$/.test(k) && k !== 'id');
+  if (cols.length > 0) {
+    const assignments = cols.map((c) => `${c} = ?`).join(', ');
+    const values = cols.map((c) => req.body[c] ?? null);
+    db.prepare(`UPDATE users SET ${assignments} WHERE id = ?`).run(...values, req.session.user.id);
+  }
   const row = db.prepare('SELECT * FROM users WHERE id = ?').get(req.session.user.id);
+  req.session.user = { id: row.id, username: row.username, role: row.role };
   res.json({ profile: toProfile(row) });
 });
 

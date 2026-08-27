@@ -23,8 +23,8 @@
 | [VULN-010](VULN-010-command-injection-receipt.md) | 영수증 생성 OS 커맨드 인젝션 | node | A03 Injection (OS Command) | Critical | 구현됨 |
 | [VULN-011](VULN-011-path-traversal-receipt-download.md) | 영수증 다운로드 경로 순회 | both | A01 Broken Access Control | High | 구현됨 |
 | [VULN-012](VULN-012-insecure-deserialization-cart-import.md) | 장바구니 임포트 Jackson 역직렬화 | java | A08 Data Integrity Failures | Critical | 구현됨 |
-| VULN-013 | 프로필 업데이트 대량 할당 → 권한 상승 | both | A01 Broken Access Control | Critical | 계획됨 |
-| VULN-014 | CSRF — 토큰 부재 + `SameSite=None` 쿠키 | both | A01 Broken Access Control | High | 계획됨 |
+| [VULN-013](VULN-013-mass-assignment-profile-privesc.md) | 프로필 업데이트 대량 할당 → 권한 상승 | both | A01 Broken Access Control | Critical | 구현됨 |
+| [VULN-014](VULN-014-csrf-no-token-samesite-none.md) | CSRF — 토큰 부재 + `SameSite=None` 쿠키 | both | A01 Broken Access Control | High | 구현됨 |
 | VULN-015 | 주문 수량 음수/0 → 결제액 조작 | both | A04 Insecure Design | High | 계획됨 |
 | VULN-016 | 인쇄용 영수증 HTML 반사형 XSS | both | A03 Injection (XSS) | High | 계획됨 |
 | VULN-017 | 상품 검색 결과 헤딩 DOM 기반 XSS | client | A03 Injection (XSS) | Medium | 계획됨 |
