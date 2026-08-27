@@ -34,6 +34,10 @@ export default function Products() {
         <h1>상품</h1>
       </div>
 
+      {q && (
+        <p className="muted" dangerouslySetInnerHTML={{ __html: `'${q}' 검색 결과` }} />
+      )}
+
       <section className="card">
         <form
           onSubmit={(e) => {

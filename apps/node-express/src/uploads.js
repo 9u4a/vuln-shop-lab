@@ -3,7 +3,6 @@ const crypto = require('crypto');
 const multer = require('multer');
 
 const uploadDir = path.join(__dirname, '..', 'uploads');
-const ALLOWED_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp']);
 
 const upload = multer({
   storage: multer.diskStorage({
@@ -14,7 +13,7 @@ const upload = multer({
   }),
   limits: { fileSize: 2 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    cb(null, ALLOWED_EXT.has(path.extname(file.originalname).toLowerCase()));
+    cb(null, (file.mimetype || '').startsWith('image/'));
   },
 });
 

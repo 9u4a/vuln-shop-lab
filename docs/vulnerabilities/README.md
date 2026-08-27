@@ -26,9 +26,9 @@
 | [VULN-013](VULN-013-mass-assignment-profile-privesc.md) | 프로필 업데이트 대량 할당 → 권한 상승 | both | A01 Broken Access Control | Critical | 구현됨 |
 | [VULN-014](VULN-014-csrf-no-token-samesite-none.md) | CSRF — 토큰 부재 + `SameSite=None` 쿠키 | both | A01 Broken Access Control | High | 구현됨 |
 | [VULN-015](VULN-015-order-quantity-business-logic.md) | 주문 수량 음수/0 → 결제액 조작 | both | A04 Insecure Design | High | 구현됨 |
-| VULN-016 | 인쇄용 영수증 HTML 반사형 XSS | both | A03 Injection (XSS) | High | 계획됨 |
-| VULN-017 | 상품 검색 결과 헤딩 DOM 기반 XSS | client | A03 Injection (XSS) | Medium | 계획됨 |
-| VULN-018 | 파일 업로드 Content-Type 신뢰 → 앱 오리진 저장형 XSS | both | A05 Misconfiguration | High | 계획됨 |
+| [VULN-016](VULN-016-reflected-xss-receipt-print.md) | 인쇄용 영수증 HTML 반사형 XSS | both | A03 Injection (XSS) | High | 구현됨 |
+| [VULN-017](VULN-017-dom-xss-product-search-heading.md) | 상품 검색 결과 헤딩 DOM 기반 XSS | client | A03 Injection (XSS) | Medium | 구현됨 |
+| [VULN-018](VULN-018-unrestricted-file-upload-content-type.md) | 파일 업로드 Content-Type 신뢰 → 앱 오리진 저장형 XSS | both | A05 Misconfiguration | High | 구현됨 |
 | VULN-019 | Java 영수증 생성 OS 커맨드 인젝션 (010의 java 짝) | java | A03 Injection (OS Command) | Critical | 계획됨 |
 | VULN-020 | XML 상품 임포트 XXE | java | A05 Misconfiguration | High | 계획됨 |
 | VULN-021 | 취약 의존성 `commons-text:1.9` (CVE-2022-42889 Text4Shell) | java | A06 Vulnerable Components | Critical | 계획됨 |

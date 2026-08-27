@@ -76,6 +76,15 @@ export default function OrderDetail() {
           </label>
           <button type="submit" className="btn btn-primary">영수증 생성</button>
         </form>
+        <p>
+          <a
+            href={`${backend.base}/orders/${id}/receipt/print?note=${encodeURIComponent(note)}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            인쇄용 보기
+          </a>
+        </p>
         <form onSubmit={handleDownloadReceipt}>
           <label>파일명
             <input value={filename} onChange={(e) => setFilename(e.target.value)} />

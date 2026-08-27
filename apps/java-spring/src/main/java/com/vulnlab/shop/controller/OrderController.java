@@ -189,6 +189,27 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("filename", filename));
     }
 
+    @GetMapping(value = "/{id}/receipt/print", produces = MediaType.TEXT_HTML_VALUE)
+    @ResponseBody
+    public ResponseEntity<?> printReceipt(@PathVariable Long id,
+                                          @RequestParam(value = "note", required = false) String note,
+                                          HttpSession session) {
+        User user = currentUser(session);
+        if (user == null) return unauthorized();
+        Order order = orderRepository.findById(id).orElse(null);
+        if (order == null || !order.getUserId().equals(user.getId())) {
+            return ResponseEntity.notFound().build();
+        }
+        String html = "<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><title>영수증</title></head>"
+                + "<body><h1>영수증</h1>"
+                + "<p>주문번호: " + order.getTossOrderId() + "</p>"
+                + "<p>수령인: " + user.getName() + "</p>"
+                + "<p>결제금액: " + order.getTotalAmount().toPlainString() + "</p>"
+                + "<p>메모: " + (note == null ? "" : note) + "</p>"
+                + "</body></html>";
+        return ResponseEntity.ok().contentType(MediaType.TEXT_HTML).body(html);
+    }
+
     @GetMapping("/receipt/{filename}")
     public ResponseEntity<?> downloadReceipt(@PathVariable String filename, HttpSession session) throws Exception {
         User user = currentUser(session);
