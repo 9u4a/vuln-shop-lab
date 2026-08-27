@@ -81,6 +81,32 @@ All routes, route params and query params (`q`, `category`, `sort`, `page`, `pag
 unchanged. Backend switcher still functional (now a header segmented control + drawer toggle).
 All intentional vulnerabilities left intact.
 
+## Follow-up: admin usability + CSS fixes (same branch)
+
+- **CSS fixes** — the broad `button:not(.btn):not(…)` reset out-specified `.chip.active`
+  (selected category chip rendered white-on-white); reset is now `button:not([class])`,
+  and `.segmented` / `.site-header__search` buttons use `:not(.btn)`. Hardened the header
+  search pill so the submit button can't wrap below the input.
+- **Admin user detail** — `GET /api/admin/users/:id` (both stacks) returns the user profile
+  + their orders. `AdminUsers` is now a table; clicking a row expands a detail panel with
+  profile fields and an order list (each links to the order detail).
+- **Admin order detail** — `GET /api/admin/orders/:id` (both stacks) returns the order
+  (with `username`, `tossOrderId`) + line items (with `productName`). `AdminOrders` is a
+  table; row click expands items + total. Deep-linkable via `/admin/orders?open=<id>`.
+- **FAQ / notice editing** — backend `PUT /faqs/:id` and `PUT /notices/:id` already existed
+  on both stacks; added `updateFaqAdmin` / `updateNoticeAdmin` to `api.js` and inline edit
+  forms to `AdminFaq` / `AdminNotices`.
+- **Product image upload** — verified working on both stacks (`POST /admin/products/:id/image`).
+  `AdminProducts` reworked into a table with a clear "이미지 업로드" button per row (hidden
+  file input) and a full add-product form.
+- **Admin UI/UX** — `AdminSettings` overview is now a stat-card grid; new `.admin-table`,
+  `.admin-detail`, `.admin-stat`, `.admin-item-row` styles; all admin pages use consistent
+  cards/tables. `/admin` was token-inherit only in pass 1 — this makes it first-class.
+
+New `api.js`: `fetchAdminUser`, `fetchAdminOrder`, `updateFaqAdmin`, `updateNoticeAdmin`.
+Backend files touched: `apps/node-express/src/routes/admin.js`,
+`apps/java-spring/.../controller/AdminController.java` (added `OrderItemRepository`).
+
 ## Verification
 
 - `apps/client`: `npm run build` clean (Pretendard dynamic subset bundled).
