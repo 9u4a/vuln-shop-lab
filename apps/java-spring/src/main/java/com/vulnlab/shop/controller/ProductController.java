@@ -127,6 +127,47 @@ public class ProductController {
                         "body", text)));
     }
 
+    @PutMapping("/{id}/reviews/{reviewId}")
+    public ResponseEntity<?> updateReview(@PathVariable Long id, @PathVariable Long reviewId,
+                                           @RequestBody Map<String, Object> body, HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그인이 필요합니다."));
+        }
+        Review review = reviewRepository.findById(reviewId).orElse(null);
+        if (review == null || !review.getProductId().equals(id)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        int rating = Integer.parseInt(String.valueOf(body.getOrDefault("rating", 0)));
+        String text = String.valueOf(body.getOrDefault("body", "")).trim();
+        if (rating < 1 || rating > 5 || text.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "평점(1~5)과 내용을 입력해주세요."));
+        }
+
+        review.setRating(rating);
+        review.setBody(text);
+        reviewRepository.save(review);
+
+        return ResponseEntity.ok(Map.of("review", Map.of(
+                "id", review.getId(), "rating", rating, "body", text)));
+    }
+
+    @DeleteMapping("/{id}/reviews/{reviewId}")
+    public ResponseEntity<?> deleteReview(@PathVariable Long id, @PathVariable Long reviewId, HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그인이 필요합니다."));
+        }
+        Review review = reviewRepository.findById(reviewId).orElse(null);
+        if (review == null || !review.getProductId().equals(id)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        reviewRepository.delete(review);
+        return ResponseEntity.noContent().build();
+    }
+
     private String usernameOf(Long userId) {
         return userRepository.findById(userId).map(User::getUsername).orElse("unknown");
     }

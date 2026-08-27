@@ -2,19 +2,32 @@ import { useEffect, useRef, useState } from 'react';
 import { loadTossPayments, ANONYMOUS } from '@tosspayments/tosspayments-sdk';
 import { useCart } from '../CartContext.jsx';
 import { useBackend } from '../BackendContext.jsx';
-import { createOrder } from '../api.js';
+import { createOrder, importCartBackup } from '../api.js';
 import { formatCurrency } from '../format.js';
 
 const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY;
 
 export default function Cart() {
   const { items, total, setQuantity, removeItem } = useCart();
-  const { backend } = useBackend();
+  const { backend, backendKey } = useBackend();
   const [error, setError] = useState(null);
   const [pendingNote, setPendingNote] = useState(null);
   const [pendingPayment, setPendingPayment] = useState(null);
   const [widgetsReady, setWidgetsReady] = useState(false);
   const widgetsRef = useRef(null);
+  const [backupJson, setBackupJson] = useState('');
+  const [backupResult, setBackupResult] = useState(null);
+
+  async function handleImportBackup(e) {
+    e.preventDefault();
+    setError(null);
+    try {
+      const res = await importCartBackup(backend.base, backupJson);
+      setBackupResult(`백업에서 ${res.itemCount}개 항목을 가져왔습니다.`);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
 
   useEffect(() => {
     if (!pendingPayment) return;
@@ -125,6 +138,19 @@ export default function Cart() {
         <p><strong>총액: {formatCurrency(total)}</strong></p>
         <button disabled={items.length === 0} onClick={handleCheckout} className="btn btn-primary">결제하기</button>
       </section>
+
+      {backendKey === 'java' && (
+        <section className="card">
+          <h2>장바구니 백업 가져오기</h2>
+          <form onSubmit={handleImportBackup}>
+            <label>백업 JSON
+              <textarea value={backupJson} onChange={(e) => setBackupJson(e.target.value)} rows="3" />
+            </label>
+            <button type="submit" className="btn btn-primary">가져오기</button>
+          </form>
+          {backupResult && <p className="status-ok">{backupResult}</p>}
+        </section>
+      )}
     </div>
   );
 }
