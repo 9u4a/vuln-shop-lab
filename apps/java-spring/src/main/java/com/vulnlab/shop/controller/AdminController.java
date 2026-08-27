@@ -2,6 +2,8 @@ package com.vulnlab.shop.controller;
 
 import com.vulnlab.shop.entity.Product;
 import com.vulnlab.shop.entity.User;
+import com.vulnlab.shop.repository.FaqRepository;
+import com.vulnlab.shop.repository.NoticeRepository;
 import com.vulnlab.shop.repository.OrderRepository;
 import com.vulnlab.shop.repository.ProductRepository;
 import com.vulnlab.shop.repository.UserRepository;
@@ -25,12 +27,17 @@ public class AdminController {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
+    private final FaqRepository faqRepository;
+    private final NoticeRepository noticeRepository;
 
     public AdminController(UserRepository userRepository, ProductRepository productRepository,
-                            OrderRepository orderRepository) {
+                            OrderRepository orderRepository, FaqRepository faqRepository,
+                            NoticeRepository noticeRepository) {
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
+        this.faqRepository = faqRepository;
+        this.noticeRepository = noticeRepository;
     }
 
     private ResponseEntity<?> requireAdmin(HttpSession session) {
@@ -53,6 +60,18 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "시스템 관리자 권한이 필요합니다."));
         }
         return null;
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<?> stats(HttpSession session) {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        return ResponseEntity.ok(Map.of(
+                "users", userRepository.count(),
+                "orders", orderRepository.count(),
+                "products", productRepository.count(),
+                "faqs", faqRepository.count(),
+                "notices", noticeRepository.count()));
     }
 
     @GetMapping("/users")
