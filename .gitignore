@@ -3,6 +3,7 @@ apps/*/node_modules/
 apps/*/dist/
 apps/*/data/
 apps/*/uploads/
+apps/*/receipts/
 apps/*/target/
 infra/**/data/
 docs/findings/
