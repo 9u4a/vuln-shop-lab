@@ -126,10 +126,11 @@ img { max-width: 100%; }
   max-width: var(--container);
   margin: 0 auto;
   min-height: var(--header-h);
-  padding: 0 var(--space-6);
+  padding: var(--space-2) var(--space-6);
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: var(--space-6);
+  gap: var(--space-5);
 }
 .site-header__brand {
   font-weight: 800;
@@ -141,7 +142,7 @@ img { max-width: 100%; }
 }
 .site-header__brand:hover { text-decoration: none; }
 
-.site-nav { display: flex; align-items: center; gap: var(--space-5); }
+.site-nav { display: flex; align-items: center; gap: var(--space-5); flex: 0 1 auto; min-width: 0; overflow: hidden; }
 .site-nav__link {
   color: var(--color-text-muted);
   font-size: 0.9rem;
@@ -154,10 +155,12 @@ img { max-width: 100%; }
 .site-nav__link.active { color: var(--color-ink); font-weight: 700; }
 
 .site-header__search {
-  flex: 1;
-  max-width: 420px;
+  flex: 1 1 160px;
+  min-width: 0;
+  max-width: 360px;
   margin-left: auto;
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   gap: var(--space-2);
   background: var(--color-subtle);
@@ -170,23 +173,25 @@ img { max-width: 100%; }
   background: var(--color-surface);
 }
 .site-header__search input {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
   border: none;
   background: transparent;
   padding: 0.5rem 0;
   font-size: 0.9rem;
 }
 .site-header__search input:focus { outline: none; }
-.site-header__search button {
+.site-header__search button:not(.btn) {
   border: none;
   background: transparent;
   padding: 0;
-  font-size: 1rem;
-  cursor: pointer;
+  font-size: 1.05rem;
+  flex: none;
   color: var(--color-text-muted);
   line-height: 1;
 }
-.site-header__search button:hover { background: transparent; color: var(--color-ink); }
+.site-header__search button:not(.btn):hover { color: var(--color-ink); }
 
 .site-header__actions { display: flex; align-items: center; gap: var(--space-3); }
 .icon-link {
@@ -235,18 +240,17 @@ img { max-width: 100%; }
   padding: 2px;
   background: var(--color-surface);
 }
-.segmented button {
+.segmented button:not(.btn) {
   border: none;
   background: transparent;
   padding: 0.28rem 0.7rem;
   font-size: 0.76rem;
   font-weight: 600;
   border-radius: var(--radius-pill);
-  cursor: pointer;
   color: var(--color-text-muted);
   white-space: nowrap;
 }
-.segmented button:hover { background: transparent; color: var(--color-ink); }
+.segmented button:not(.btn):hover { color: var(--color-ink); }
 .segmented button.active { background: var(--color-ink); color: #fff; }
 
 .site-header__util {
@@ -416,19 +420,20 @@ img { max-width: 100%; }
 .btn-lg { padding: 0.9rem 1.6rem; font-size: 0.98rem; }
 .btn-block { width: 100%; }
 
-button:not(.btn):not(.segmented button):not(.drawer__close):not(.modal-close):not(.site-header__search button):not(.hamburger):not(.qty-stepper button) {
+button { font-family: inherit; cursor: pointer; }
+
+/* Quiet default skin — only bare <button> elements with no styling class.
+   Component buttons (.chip, .segmented, .qty-stepper, …) carry a class and
+   opt out automatically. */
+button:not([class]) {
   border-radius: var(--radius);
   border: 1px solid var(--color-line-strong);
   background: var(--color-surface);
   padding: 0.5rem 0.9rem;
   font-size: 0.85rem;
-  font-family: inherit;
-  cursor: pointer;
   transition: background-color 0.15s ease;
 }
-button:not(.btn):not(.segmented button):not(.drawer__close):not(.modal-close):not(.site-header__search button):not(.hamburger):not(.qty-stepper button):hover {
-  background: var(--color-subtle);
-}
+button:not([class]):hover { background: var(--color-subtle); }
 
 /* ------------------------------------------------------------------ */
 /* Forms                                                              */
