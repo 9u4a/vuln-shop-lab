@@ -6,6 +6,7 @@ export default function MyPageProfile() {
   const { backend } = useBackend();
   const [profile, setProfile] = useState(null);
   const [bio, setBio] = useState('');
+  const [contact, setContact] = useState({ name: '', phone: '', postcode: '', address: '' });
   const [error, setError] = useState(null);
   const [status, setStatus] = useState(null);
 
@@ -16,6 +17,12 @@ export default function MyPageProfile() {
       .then((data) => {
         setProfile(data.profile);
         setBio(data.profile.bio || '');
+        setContact({
+          name: data.profile.name || '',
+          phone: data.profile.phone || '',
+          postcode: data.profile.postcode || '',
+          address: data.profile.address || '',
+        });
       })
       .catch((err) => setError(err.message));
   }, [backend.base]);
@@ -25,9 +32,22 @@ export default function MyPageProfile() {
     setError(null);
     setStatus(null);
     try {
-      const data = await updateProfile(backend.base, bio);
+      const data = await updateProfile(backend.base, { bio });
       setProfile(data.profile);
       setStatus('자기소개가 업데이트되었습니다.');
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleContactSubmit(e) {
+    e.preventDefault();
+    setError(null);
+    setStatus(null);
+    try {
+      const data = await updateProfile(backend.base, contact);
+      setProfile(data.profile);
+      setStatus('배송 정보가 업데이트되었습니다.');
     } catch (err) {
       setError(err.message);
     }
@@ -73,22 +93,22 @@ export default function MyPageProfile() {
       </section>
 
       <section className="card">
-        <h2>가입 정보</h2>
-        <table className="specs-table">
-          <tbody>
-            {profile.name && <tr><th>이름</th><td>{profile.name}</td></tr>}
-            {profile.phone && <tr><th>전화번호</th><td>{profile.phone}</td></tr>}
-            {profile.address && (
-              <tr>
-                <th>주소</th>
-                <td>
-                  {profile.postcode && `(${profile.postcode}) `}
-                  {profile.address} {profile.addressDetail}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        <h2>배송 정보</h2>
+        <form onSubmit={handleContactSubmit}>
+          <label>이름
+            <input value={contact.name} onChange={(e) => setContact((c) => ({ ...c, name: e.target.value }))} />
+          </label>
+          <label>전화번호
+            <input value={contact.phone} onChange={(e) => setContact((c) => ({ ...c, phone: e.target.value }))} />
+          </label>
+          <label>우편번호
+            <input value={contact.postcode} onChange={(e) => setContact((c) => ({ ...c, postcode: e.target.value }))} />
+          </label>
+          <label>주소
+            <input value={contact.address} onChange={(e) => setContact((c) => ({ ...c, address: e.target.value }))} />
+          </label>
+          <button type="submit" className="btn btn-primary">배송 정보 저장</button>
+        </form>
       </section>
 
       <section className="card">

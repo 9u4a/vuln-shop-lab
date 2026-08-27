@@ -50,10 +50,10 @@ export function fetchProfile(base) {
   return apiRequest(base, '/profile');
 }
 
-export function updateProfile(base, bio) {
+export function updateProfile(base, patch) {
   return apiRequest(base, '/profile', {
     method: 'PUT',
-    body: JSON.stringify({ bio }),
+    body: JSON.stringify(patch),
   });
 }
 
