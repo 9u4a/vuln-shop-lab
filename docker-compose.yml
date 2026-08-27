@@ -7,9 +7,20 @@ services:
     environment:
       SESSION_SECRET: ${NODE_SESSION_SECRET:-dev-secret-change-me}
       TOSS_SECRET_KEY: ${TOSS_SECRET_KEY:-}
+      MONGO_URL: mongodb://mongo:27017
+    depends_on:
+      - mongo
     volumes:
       - node_data:/app/data
       - node_uploads:/app/uploads
+    networks:
+      - vulnshop-net
+
+  mongo:
+    image: mongo:7
+    container_name: vulnshop-mongo
+    volumes:
+      - mongo_data:/data/db
     networks:
       - vulnshop-net
 
@@ -65,3 +76,4 @@ volumes:
   node_uploads:
   java_data:
   java_uploads:
+  mongo_data:
