@@ -25,7 +25,7 @@
 | [VULN-012](VULN-012-insecure-deserialization-cart-import.md) | 장바구니 임포트 Jackson 역직렬화 | java | A08 Data Integrity Failures | Critical | 구현됨 |
 | [VULN-013](VULN-013-mass-assignment-profile-privesc.md) | 프로필 업데이트 대량 할당 → 권한 상승 | both | A01 Broken Access Control | Critical | 구현됨 |
 | [VULN-014](VULN-014-csrf-no-token-samesite-none.md) | CSRF — 토큰 부재 + `SameSite=None` 쿠키 | both | A01 Broken Access Control | High | 구현됨 |
-| VULN-015 | 주문 수량 음수/0 → 결제액 조작 | both | A04 Insecure Design | High | 계획됨 |
+| [VULN-015](VULN-015-order-quantity-business-logic.md) | 주문 수량 음수/0 → 결제액 조작 | both | A04 Insecure Design | High | 구현됨 |
 | VULN-016 | 인쇄용 영수증 HTML 반사형 XSS | both | A03 Injection (XSS) | High | 계획됨 |
 | VULN-017 | 상품 검색 결과 헤딩 DOM 기반 XSS | client | A03 Injection (XSS) | Medium | 계획됨 |
 | VULN-018 | 파일 업로드 Content-Type 신뢰 → 앱 오리진 저장형 XSS | both | A05 Misconfiguration | High | 계획됨 |
