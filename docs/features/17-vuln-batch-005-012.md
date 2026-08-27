@@ -7,8 +7,9 @@ in `docs/vulnerabilities/`. Diagnosis (Burp) and remediation are later phases.
 
 ## Scope
 
-Eight vulnerabilities, chosen to round out the OWASP Top 10 coverage the first batch
-(VULN-001–004) left open — injection variants, access control, misconfig, deserialization.
+Eight vulnerabilities, chosen to round out the OWASP Top 10 coverage the earlier
+findings (VULN-001, 002, 004 — 003 was withdrawn) left open — injection variants,
+access control, misconfig, deserialization.
 
 | ID | Vuln | Stack | New endpoint / surface |
 |----|------|-------|------------------------|
