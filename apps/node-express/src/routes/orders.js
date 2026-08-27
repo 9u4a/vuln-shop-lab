@@ -162,6 +162,25 @@ router.post('/:id/receipt', requireAuth, (req, res) => {
   });
 });
 
+router.get('/:id/receipt/print', requireAuth, (req, res) => {
+  const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
+  if (!order || order.user_id !== req.session.user.id) {
+    return res.status(404).json({ error: '주문을 찾을 수 없습니다.' });
+  }
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.session.user.id);
+  const note = req.query.note || '';
+  res.type('html').send(
+    `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>영수증</title></head>
+<body>
+<h1>영수증</h1>
+<p>주문번호: ${order.toss_order_id}</p>
+<p>수령인: ${user.name}</p>
+<p>결제금액: ${order.total_amount}</p>
+<p>메모: ${note}</p>
+</body></html>`
+  );
+});
+
 router.get('/receipt/:filename', requireAuth, (req, res) => {
   const filePath = path.join(receiptsDir, req.params.filename);
   fs.readFile(filePath, 'utf8', (err, content) => {

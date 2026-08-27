@@ -6,18 +6,17 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Set;
 import java.util.UUID;
 
 public final class Uploads {
 
-    private static final Set<String> ALLOWED_EXT = Set.of("png", "jpg", "jpeg", "gif", "webp");
     private static final Path UPLOAD_DIR = Paths.get("uploads");
 
     private Uploads() {}
 
     public static boolean isAllowed(MultipartFile file) {
-        return !file.isEmpty() && ALLOWED_EXT.contains(extensionOf(file));
+        String contentType = file.getContentType();
+        return !file.isEmpty() && contentType != null && contentType.startsWith("image/");
     }
 
     public static String store(MultipartFile file) throws IOException {
