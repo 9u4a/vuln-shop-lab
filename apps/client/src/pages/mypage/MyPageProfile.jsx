@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useBackend } from '../../BackendContext.jsx';
-import { fetchProfile, updateProfile, uploadAvatar } from '../../api.js';
+import { fetchProfile, updateProfile, uploadAvatar, fetchActivity } from '../../api.js';
 
 export default function MyPageProfile() {
-  const { backend } = useBackend();
+  const { backend, backendKey } = useBackend();
   const [profile, setProfile] = useState(null);
   const [bio, setBio] = useState('');
   const [contact, setContact] = useState({ name: '', phone: '', postcode: '', address: '' });
+  const [activity, setActivity] = useState([]);
   const [error, setError] = useState(null);
   const [status, setStatus] = useState(null);
 
@@ -26,6 +27,16 @@ export default function MyPageProfile() {
       })
       .catch((err) => setError(err.message));
   }, [backend.base]);
+
+  useEffect(() => {
+    if (backendKey !== 'node') {
+      setActivity([]);
+      return;
+    }
+    fetchActivity(backend.base)
+      .then((data) => setActivity(data.activity || []))
+      .catch(() => setActivity([]));
+  }, [backend.base, backendKey]);
 
   async function handleBioSubmit(e) {
     e.preventDefault();
@@ -110,6 +121,19 @@ export default function MyPageProfile() {
           <button type="submit" className="btn btn-primary">배송 정보 저장</button>
         </form>
       </section>
+
+      {backendKey === 'node' && activity.length > 0 && (
+        <section className="card">
+          <h2>최근 활동</h2>
+          <ul>
+            {activity.map((a, i) => (
+              <li key={i}>
+                <span className="muted">{a.at}</span> · {a.action} — {a.detail}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="card">
         <h2>프로필 정보</h2>
