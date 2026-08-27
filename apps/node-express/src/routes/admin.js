@@ -21,6 +21,40 @@ router.get('/users', requireAdmin, (req, res) => {
   res.json({ users: rows });
 });
 
+router.get('/users/:id', requireAdmin, (req, res) => {
+  const u = db
+    .prepare(
+      `SELECT id, username, role, bio, avatar_url, name, phone, postcode, address, address_detail, created_at
+       FROM users WHERE id = ?`
+    )
+    .get(req.params.id);
+  if (!u) return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
+  const orders = db
+    .prepare('SELECT id, status, total_amount, created_at FROM orders WHERE user_id = ? ORDER BY id DESC')
+    .all(u.id);
+  res.json({
+    user: {
+      id: u.id,
+      username: u.username,
+      role: u.role,
+      bio: u.bio,
+      avatarUrl: u.avatar_url,
+      name: u.name,
+      phone: u.phone,
+      postcode: u.postcode,
+      address: u.address,
+      addressDetail: u.address_detail,
+      createdAt: u.created_at,
+    },
+    orders: orders.map((o) => ({
+      id: o.id,
+      status: o.status,
+      totalAmount: o.total_amount,
+      createdAt: o.created_at,
+    })),
+  });
+});
+
 router.put('/users/:id/role', requireSystemAdmin, (req, res) => {
   const { role } = req.body;
   if (!['user', 'admin', 'system_admin'].includes(role)) {
@@ -42,6 +76,37 @@ router.get('/orders', requireAdmin, (req, res) => {
       status: o.status,
       totalAmount: o.total_amount,
       createdAt: o.created_at,
+    })),
+  });
+});
+
+router.get('/orders/:id', requireAdmin, (req, res) => {
+  const order = db
+    .prepare('SELECT o.*, u.username FROM orders o JOIN users u ON u.id = o.user_id WHERE o.id = ?')
+    .get(req.params.id);
+  if (!order) return res.status(404).json({ error: '주문을 찾을 수 없습니다.' });
+  const items = db
+    .prepare(
+      `SELECT oi.*, p.name AS product_name FROM order_items oi
+       JOIN products p ON p.id = oi.product_id
+       WHERE oi.order_id = ?`
+    )
+    .all(order.id);
+  res.json({
+    order: {
+      id: order.id,
+      username: order.username,
+      status: order.status,
+      totalAmount: order.total_amount,
+      tossOrderId: order.toss_order_id,
+      createdAt: order.created_at,
+    },
+    items: items.map((i) => ({
+      productId: i.product_id,
+      productName: i.product_name,
+      quantity: i.quantity,
+      unitPrice: i.unit_price,
+      optionValue: i.option_value,
     })),
   });
 });
