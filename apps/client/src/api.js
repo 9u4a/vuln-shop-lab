@@ -50,6 +50,11 @@ export function fetchProfile(base) {
   return apiRequest(base, '/profile');
 }
 
+export function fetchActivity(base, username) {
+  const qs = username ? `?username=${encodeURIComponent(username)}` : '';
+  return apiRequest(base, `/activity${qs}`);
+}
+
 export function updateProfile(base, patch) {
   return apiRequest(base, '/profile', {
     method: 'PUT',

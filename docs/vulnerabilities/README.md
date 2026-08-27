@@ -32,27 +32,28 @@
 | [VULN-019](VULN-019-command-injection-receipt-java.md) | Java 영수증 생성 OS 커맨드 인젝션 (010의 java 짝) | java | A03 Injection (OS Command) | Critical | 구현됨 |
 | [VULN-020](VULN-020-xxe-catalog-import.md) | XML 상품 임포트 XXE | java | A05 Misconfiguration | High | 구현됨 |
 | [VULN-021](VULN-021-commons-text-1.9-text4shell.md) | 취약 의존성 `commons-text:1.9` (CVE-2022-42889 Text4Shell) | java | A06 Vulnerable Components | Critical | 구현됨 |
-| VULN-022 | Mongo 기반 검색/활동 기능 NoSQL 인젝션 | node | A03 Injection (NoSQL) | High | 계획됨 |
+| [VULN-022](VULN-022-nosql-injection-activity.md) | Mongo 기반 활동 피드 NoSQL 인젝션 | node | A03 Injection (NoSQL) | High | 구현됨 |
 
 ## OWASP / CLAUDE.md 스코프 커버리지
 
 | 스코프 항목 | 상태 | VULN |
 |-------------|------|------|
 | Injection — SQLi | DONE | 001, 005 |
-| Injection — OS Command | DONE (node) / PLANNED (java) | 010 / 019 |
+| Injection — OS Command | DONE | 010 (node), 019 (java) |
 | Injection — SpEL/OGNL (Spring) | DONE | 002 |
-| Injection — NoSQL (Express) | PLANNED (Mongo 컨테이너 추가) | 022 |
+| Injection — NoSQL (Express) | DONE (Mongo 컨테이너) | 022 |
 | Broken Authentication / Session Management | DONE | 006 |
 | XSS — Stored | DONE | 008, 018 |
-| XSS — Reflected | PLANNED | 016 |
-| XSS — DOM | PLANNED | 017 |
-| IDOR / Broken Access Control | DONE | 009, 011 (+ PLANNED 013, 014) |
-| Security Misconfiguration | DONE | 007 (+ PLANNED 018, 020) |
+| XSS — Reflected | DONE | 016 |
+| XSS — DOM | DONE | 017 |
+| IDOR / Broken Access Control | DONE | 009, 011, 013, 014 |
+| Security Misconfiguration | DONE | 007, 018, 020 |
 | Insecure Deserialization (Java) | DONE | 012 |
-| SSRF | DONE | 004 (XXE OOB로 재확인: 020) |
-| File Upload / Path Traversal | DONE (traversal) / PLANNED (upload) | 011 / 018 |
-| Vulnerable dependencies | PLANNED | 021 |
-| Business logic / Insecure Design | PLANNED | 015 |
-| CSRF | PLANNED | 014 |
+| XXE | DONE | 020 |
+| SSRF | DONE | 004 (020 OOB로 재확인) |
+| File Upload / Path Traversal | DONE | 011 (traversal), 018 (upload) |
+| Vulnerable dependencies | DONE | 021 |
+| Business logic / Insecure Design | DONE | 015 |
+| CSRF | DONE | 014 |
 
-이 배치(013–022) 완료 시 CLAUDE.md 스코프의 모든 클래스가 최소 1개 항목으로 커버된다.
+배치 013–022 완료 — CLAUDE.md 스코프의 모든 클래스가 최소 1개 구현 항목으로 커버된다.
