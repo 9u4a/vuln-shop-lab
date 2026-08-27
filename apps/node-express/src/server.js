@@ -12,6 +12,8 @@ const orderRoutes = require('./routes/orders');
 const adminRoutes = require('./routes/admin');
 const faqRoutes = require('./routes/faqs');
 const noticeRoutes = require('./routes/notices');
+const activityRoutes = require('./routes/activity');
+const { initMongo } = require('./mongo');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -52,6 +54,9 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/faqs', faqRoutes);
 app.use('/api/notices', noticeRoutes);
+app.use('/api/activity', activityRoutes);
+
+initMongo().catch((err) => console.error('mongo init failed:', err.message));
 
 app.listen(PORT, () => {
   console.log(`node-express vulnerable shop API running on http://localhost:${PORT}`);
