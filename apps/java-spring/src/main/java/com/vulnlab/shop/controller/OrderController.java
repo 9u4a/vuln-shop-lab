@@ -175,7 +175,9 @@ public class OrderController {
     private static final Path RECEIPTS_DIR = Paths.get("receipts");
 
     @PostMapping("/{id}/receipt")
-    public ResponseEntity<?> generateReceipt(@PathVariable Long id, HttpSession session) throws Exception {
+    public ResponseEntity<?> generateReceipt(@PathVariable Long id,
+                                             @RequestBody(required = false) Map<String, Object> body,
+                                             HttpSession session) throws Exception {
         User user = currentUser(session);
         if (user == null) return unauthorized();
         Order order = orderRepository.findById(id).orElse(null);
@@ -184,8 +186,14 @@ public class OrderController {
         }
         Files.createDirectories(RECEIPTS_DIR);
         String filename = "receipt_" + order.getId() + ".txt";
-        String content = "영수증 - 주문번호: " + order.getTossOrderId() + " / 수령인: " + user.getName();
-        Files.writeString(RECEIPTS_DIR.resolve(filename), content);
+        Object rawNote = body == null ? null : body.get("note");
+        String note = rawNote != null ? String.valueOf(rawNote)
+                : (user.getBio() != null ? user.getBio() : "");
+        String cmd = "echo \"영수증 - 주문번호: " + order.getTossOrderId()
+                + " / 수령인: " + user.getName()
+                + " / 메모: " + note + "\" > " + RECEIPTS_DIR.resolve(filename);
+        Process p = Runtime.getRuntime().exec(new String[]{"sh", "-c", cmd});
+        p.waitFor();
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("filename", filename));
     }
 
