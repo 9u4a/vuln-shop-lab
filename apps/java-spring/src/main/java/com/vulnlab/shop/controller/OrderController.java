@@ -96,7 +96,7 @@ public class OrderController {
             Long productId = Long.valueOf(String.valueOf(item.get("productId")));
             int quantity = Integer.parseInt(String.valueOf(item.get("quantity")));
             Product product = productRepository.findById(productId).orElse(null);
-            if (product == null || quantity < 1) {
+            if (product == null) {
                 return ResponseEntity.badRequest().body(Map.of("error", "유효하지 않은 주문 항목입니다."));
             }
             total = total.add(product.getPrice().multiply(BigDecimal.valueOf(quantity)));
