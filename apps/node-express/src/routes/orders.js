@@ -81,7 +81,7 @@ router.post('/', requireAuth, (req, res) => {
   for (const item of items) {
     const product = db.prepare('SELECT * FROM products WHERE id = ?').get(item.productId);
     const quantity = Number(item.quantity);
-    if (!product || !Number.isInteger(quantity) || quantity < 1) {
+    if (!product || !Number.isInteger(quantity)) {
       return res.status(400).json({ error: '유효하지 않은 주문 항목입니다.' });
     }
     total += product.price * quantity;
