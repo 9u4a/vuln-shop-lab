@@ -16,6 +16,8 @@ const noticeRoutes = require('./routes/notices');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.set('trust proxy', 1);
+
 const uploadDir = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
@@ -33,6 +35,7 @@ app.use(
     secret: process.env.SESSION_SECRET || 'dev-secret-change-me',
     resave: false,
     saveUninitialized: false,
+    cookie: { sameSite: 'none', secure: true },
   })
 );
 

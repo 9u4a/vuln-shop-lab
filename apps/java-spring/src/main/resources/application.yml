@@ -1,5 +1,11 @@
 server:
   port: 8081
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        same-site: none
+        secure: true
 
 spring:
   datasource:
