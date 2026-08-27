@@ -91,4 +91,26 @@ router.post('/:id/reviews', requireAuth, (req, res) => {
   });
 });
 
+router.put('/:id/reviews/:reviewId', requireAuth, (req, res) => {
+  const review = db.prepare('SELECT * FROM reviews WHERE id = ? AND product_id = ?').get(req.params.reviewId, req.params.id);
+  if (!review) return res.status(404).json({ error: '리뷰를 찾을 수 없습니다.' });
+
+  const rating = Number(req.body.rating);
+  const body = (req.body.body || '').trim();
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5 || !body) {
+    return res.status(400).json({ error: '평점(1~5)과 내용을 입력해주세요.' });
+  }
+
+  db.prepare('UPDATE reviews SET rating = ?, body = ? WHERE id = ?').run(rating, body, review.id);
+  res.json({ review: { id: review.id, rating, body } });
+});
+
+router.delete('/:id/reviews/:reviewId', requireAuth, (req, res) => {
+  const review = db.prepare('SELECT * FROM reviews WHERE id = ? AND product_id = ?').get(req.params.reviewId, req.params.id);
+  if (!review) return res.status(404).json({ error: '리뷰를 찾을 수 없습니다.' });
+
+  db.prepare('DELETE FROM reviews WHERE id = ?').run(review.id);
+  res.status(204).end();
+});
+
 module.exports = router;

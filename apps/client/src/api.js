@@ -81,6 +81,22 @@ export function confirmOrder(base, id, paymentKey, amount) {
   });
 }
 
+export function generateReceipt(base, orderId, note) {
+  return apiRequest(base, `/orders/${orderId}/receipt`, {
+    method: 'POST',
+    body: JSON.stringify({ note }),
+  });
+}
+
+export async function fetchReceipt(base, filename) {
+  const res = await fetch(`${base}/orders/receipt/${filename}`, { credentials: 'include' });
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    throw new Error(data?.error || `요청에 실패했습니다 (${res.status})`);
+  }
+  return res.text();
+}
+
 export function fetchReviews(base, productId) {
   return apiRequest(base, `/products/${productId}/reviews`);
 }
@@ -90,6 +106,17 @@ export function createReview(base, productId, rating, body) {
     method: 'POST',
     body: JSON.stringify({ rating, body }),
   });
+}
+
+export function updateReview(base, productId, reviewId, rating, body) {
+  return apiRequest(base, `/products/${productId}/reviews/${reviewId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ rating, body }),
+  });
+}
+
+export function deleteReview(base, productId, reviewId) {
+  return apiRequest(base, `/products/${productId}/reviews/${reviewId}`, { method: 'DELETE' });
 }
 
 export function fetchAdminStats(base) {
@@ -188,6 +215,13 @@ export function verifyPassword(base, password) {
   return apiRequest(base, '/profile/verify-password', {
     method: 'POST',
     body: JSON.stringify({ password }),
+  });
+}
+
+export function importCartBackup(base, rawJson) {
+  return apiRequest(base, '/cart/import', {
+    method: 'POST',
+    body: rawJson,
   });
 }
 
