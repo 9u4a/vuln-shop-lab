@@ -29,9 +29,9 @@
 | [VULN-016](VULN-016-reflected-xss-receipt-print.md) | 인쇄용 영수증 HTML 반사형 XSS | both | A03 Injection (XSS) | High | 구현됨 |
 | [VULN-017](VULN-017-dom-xss-product-search-heading.md) | 상품 검색 결과 헤딩 DOM 기반 XSS | client | A03 Injection (XSS) | Medium | 구현됨 |
 | [VULN-018](VULN-018-unrestricted-file-upload-content-type.md) | 파일 업로드 Content-Type 신뢰 → 앱 오리진 저장형 XSS | both | A05 Misconfiguration | High | 구현됨 |
-| VULN-019 | Java 영수증 생성 OS 커맨드 인젝션 (010의 java 짝) | java | A03 Injection (OS Command) | Critical | 계획됨 |
-| VULN-020 | XML 상품 임포트 XXE | java | A05 Misconfiguration | High | 계획됨 |
-| VULN-021 | 취약 의존성 `commons-text:1.9` (CVE-2022-42889 Text4Shell) | java | A06 Vulnerable Components | Critical | 계획됨 |
+| [VULN-019](VULN-019-command-injection-receipt-java.md) | Java 영수증 생성 OS 커맨드 인젝션 (010의 java 짝) | java | A03 Injection (OS Command) | Critical | 구현됨 |
+| [VULN-020](VULN-020-xxe-catalog-import.md) | XML 상품 임포트 XXE | java | A05 Misconfiguration | High | 구현됨 |
+| [VULN-021](VULN-021-commons-text-1.9-text4shell.md) | 취약 의존성 `commons-text:1.9` (CVE-2022-42889 Text4Shell) | java | A06 Vulnerable Components | Critical | 구현됨 |
 | VULN-022 | Mongo 기반 검색/활동 기능 NoSQL 인젝션 | node | A03 Injection (NoSQL) | High | 계획됨 |
 
 ## OWASP / CLAUDE.md 스코프 커버리지

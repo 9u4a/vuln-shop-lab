@@ -4,6 +4,7 @@ import com.vulnlab.shop.entity.Faq;
 import com.vulnlab.shop.entity.User;
 import com.vulnlab.shop.repository.FaqRepository;
 import com.vulnlab.shop.security.Roles;
+import com.vulnlab.shop.vuln.TemplateRenderer;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -54,8 +55,19 @@ public class FaqController {
         Page<Faq> result = (q == null || q.isBlank())
                 ? faqRepository.findAll(pageable)
                 : faqRepository.findByQuestionContainingIgnoreCaseOrAnswerContainingIgnoreCase(q, q, pageable);
+        java.util.List<Map<String, Object>> faqs = new java.util.ArrayList<>();
+        for (Faq f : result.getContent()) {
+            java.util.Map<String, Object> m = new java.util.HashMap<>();
+            m.put("id", f.getId());
+            m.put("question", f.getQuestion());
+            m.put("answer", TemplateRenderer.render(f.getAnswer()));
+            m.put("authorUsername", f.getAuthorUsername());
+            m.put("userId", f.getUserId());
+            m.put("createdAt", f.getCreatedAt());
+            faqs.add(m);
+        }
         return Map.of(
-                "faqs", result.getContent(),
+                "faqs", faqs,
                 "total", result.getTotalElements(),
                 "page", page,
                 "pageSize", pageable.getPageSize());
