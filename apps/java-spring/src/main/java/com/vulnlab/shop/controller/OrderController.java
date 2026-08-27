@@ -10,6 +10,7 @@ import com.vulnlab.shop.repository.ProductRepository;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +19,9 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -166,6 +170,35 @@ public class OrderController {
         fireWebhook(order.getWebhookUrl(), order);
 
         return ResponseEntity.ok(Map.of("ok", true, "order", order));
+    }
+
+    private static final Path RECEIPTS_DIR = Paths.get("receipts");
+
+    @PostMapping("/{id}/receipt")
+    public ResponseEntity<?> generateReceipt(@PathVariable Long id, HttpSession session) throws Exception {
+        User user = currentUser(session);
+        if (user == null) return unauthorized();
+        Order order = orderRepository.findById(id).orElse(null);
+        if (order == null || !order.getUserId().equals(user.getId())) {
+            return ResponseEntity.notFound().build();
+        }
+        Files.createDirectories(RECEIPTS_DIR);
+        String filename = "receipt_" + order.getId() + ".txt";
+        String content = "영수증 - 주문번호: " + order.getTossOrderId() + " / 수령인: " + user.getName();
+        Files.writeString(RECEIPTS_DIR.resolve(filename), content);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("filename", filename));
+    }
+
+    @GetMapping("/receipt/{filename}")
+    public ResponseEntity<?> downloadReceipt(@PathVariable String filename, HttpSession session) throws Exception {
+        User user = currentUser(session);
+        if (user == null) return unauthorized();
+        Path filePath = RECEIPTS_DIR.resolve(filename);
+        if (!Files.exists(filePath)) {
+            return ResponseEntity.notFound().build();
+        }
+        String content = Files.readString(filePath);
+        return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(content);
     }
 
     private void fireWebhook(String webhookUrl, Order order) {

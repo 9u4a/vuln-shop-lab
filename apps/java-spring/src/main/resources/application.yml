@@ -16,6 +16,15 @@ spring:
       max-file-size: 2MB
       max-request-size: 2MB
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
 app:
   cors:
     allowed-origin: ${APP_CORS_ALLOWED_ORIGIN:http://localhost:5173}

@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useBackend } from '../BackendContext.jsx';
 import { useCart } from '../CartContext.jsx';
 import { useSession } from '../SessionContext.jsx';
-import { fetchProduct, fetchReviews, createReview } from '../api.js';
+import { fetchProduct, fetchReviews, createReview, updateReview, deleteReview } from '../api.js';
 import { formatCurrency } from '../format.js';
 
 export default function ProductDetail() {
@@ -16,6 +16,9 @@ export default function ProductDetail() {
   const [rating, setRating] = useState(5);
   const [body, setBody] = useState('');
   const [error, setError] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editBody, setEditBody] = useState('');
+  const [editRating, setEditRating] = useState(5);
 
   const [quantity, setQuantity] = useState(1);
   const [selectedOption, setSelectedOption] = useState('');
@@ -46,6 +49,34 @@ export default function ProductDetail() {
     try {
       await createReview(backend.base, id, Number(rating), body);
       setBody('');
+      loadReviews();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  function startEdit(review) {
+    setEditingId(review.id);
+    setEditBody(review.body);
+    setEditRating(review.rating);
+  }
+
+  async function handleEditSubmit(e, review) {
+    e.preventDefault();
+    setError(null);
+    try {
+      await updateReview(backend.base, id, review.id, Number(editRating), editBody);
+      setEditingId(null);
+      loadReviews();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleDeleteReview(review) {
+    setError(null);
+    try {
+      await deleteReview(backend.base, id, review.id);
       loadReviews();
     } catch (err) {
       setError(err.message);
@@ -122,7 +153,29 @@ export default function ProductDetail() {
         <ul>
           {reviews.map((r) => (
             <li key={r.id}>
-              <strong>{r.username}</strong> ({r.rating}/5): {r.body}
+              {editingId === r.id ? (
+                <form onSubmit={(e) => handleEditSubmit(e, r)}>
+                  <select value={editRating} onChange={(e) => setEditRating(e.target.value)}>
+                    {[5, 4, 3, 2, 1].map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
+                  <textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} rows="2" required />
+                  <button type="submit" className="btn btn-primary">저장</button>
+                  <button type="button" onClick={() => setEditingId(null)}>취소</button>
+                </form>
+              ) : (
+                <>
+                  <strong>{r.username}</strong> ({r.rating}/5): <span dangerouslySetInnerHTML={{ __html: r.body }} />
+                  {user && (
+                    <span className="muted">
+                      {' '}
+                      <button type="button" onClick={() => startEdit(r)}>수정</button>
+                      <button type="button" onClick={() => handleDeleteReview(r)}>삭제</button>
+                    </span>
+                  )}
+                </>
+              )}
             </li>
           ))}
         </ul>

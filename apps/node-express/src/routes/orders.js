@@ -1,5 +1,8 @@
 const express = require('express');
 const crypto = require('crypto');
+const { exec } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
 
@@ -7,6 +10,9 @@ const router = express.Router();
 
 const TOSS_SECRET_KEY = process.env.TOSS_SECRET_KEY;
 const TOSS_CONFIRM_URL = 'https://api.tosspayments.com/v1/payments/confirm';
+
+const receiptsDir = path.join(__dirname, '..', '..', 'receipts');
+if (!fs.existsSync(receiptsDir)) fs.mkdirSync(receiptsDir, { recursive: true });
 
 function toOrder(row) {
   return {
@@ -137,6 +143,31 @@ router.post('/:id/confirm', requireAuth, async (req, res) => {
   });
 
   res.json({ ok: true, order: toOrder(updated) });
+});
+
+router.post('/:id/receipt', requireAuth, (req, res) => {
+  const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
+  if (!order || order.user_id !== req.session.user.id) {
+    return res.status(404).json({ error: '주문을 찾을 수 없습니다.' });
+  }
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.session.user.id);
+  const filename = `receipt_${order.id}.txt`;
+  const filePath = path.join(receiptsDir, filename);
+  const note = req.body.note || user.bio || '';
+
+  const cmd = `echo "영수증 - 주문번호: ${order.toss_order_id} / 수령인: ${user.name} / 메모: ${note}" > "${filePath}"`;
+  exec(cmd, (err) => {
+    if (err) return res.status(500).json({ error: '영수증 생성에 실패했습니다.' });
+    res.status(201).json({ filename });
+  });
+});
+
+router.get('/receipt/:filename', requireAuth, (req, res) => {
+  const filePath = path.join(receiptsDir, req.params.filename);
+  fs.readFile(filePath, 'utf8', (err, content) => {
+    if (err) return res.status(404).json({ error: '영수증을 찾을 수 없습니다.' });
+    res.type('text/plain').send(content);
+  });
 });
 
 module.exports = router;
