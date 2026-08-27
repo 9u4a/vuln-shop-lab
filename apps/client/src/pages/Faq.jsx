@@ -79,7 +79,7 @@ export default function Faq() {
       {faqs.map((f) => (
         <section className="card" key={f.id}>
           <h2>Q. {f.question}</h2>
-          <p>A. {f.answer}</p>
+          <p style={{ whiteSpace: 'pre-wrap' }}>A. {f.answer}</p>
           {f.authorUsername && <p className="muted">작성자: {f.authorUsername}</p>}
         </section>
       ))}

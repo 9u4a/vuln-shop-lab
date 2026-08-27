@@ -3,15 +3,27 @@ import { Link, useParams } from 'react-router-dom';
 import { useBackend } from '../BackendContext.jsx';
 import { useCart } from '../CartContext.jsx';
 import { useSession } from '../SessionContext.jsx';
+import { useToast } from '../ToastContext.jsx';
 import { fetchProduct, fetchReviews, createReview, updateReview, deleteReview } from '../api.js';
 import { formatCurrency } from '../format.js';
+
+function Stars({ value }) {
+  const n = Math.max(0, Math.min(5, Math.round(Number(value) || 0)));
+  return (
+    <span className="stars" aria-label={`${n}점`}>
+      {'★'.repeat(n)}<span className="off">{'★'.repeat(5 - n)}</span>
+    </span>
+  );
+}
 
 export default function ProductDetail() {
   const { backend } = useBackend();
   const { addItem } = useCart();
   const { user } = useSession();
+  const { showToast } = useToast();
   const { id } = useParams();
   const [product, setProduct] = useState(null);
+  const [imgBroken, setImgBroken] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [rating, setRating] = useState(5);
   const [body, setBody] = useState('');
@@ -22,7 +34,6 @@ export default function ProductDetail() {
 
   const [quantity, setQuantity] = useState(1);
   const [selectedOption, setSelectedOption] = useState('');
-  const [addedNote, setAddedNote] = useState(null);
 
   function loadReviews() {
     fetchReviews(backend.base, id).then((data) => setReviews(data.reviews));
@@ -30,9 +41,9 @@ export default function ProductDetail() {
 
   useEffect(() => {
     setProduct(null);
+    setImgBroken(false);
     setQuantity(1);
     setSelectedOption('');
-    setAddedNote(null);
     fetchProduct(backend.base, id).then((data) => {
       setProduct(data.product);
       if (data.product.optionValues && data.product.optionValues.length > 0) {
@@ -85,94 +96,109 @@ export default function ProductDetail() {
 
   function handleAddToCart() {
     addItem(product, quantity, selectedOption || null);
-    setAddedNote(`${quantity}개를 장바구니에 담았습니다.`);
+    showToast(`${quantity}개를 장바구니에 담았어요`);
   }
 
-  if (!product) return <p>불러오는 중...</p>;
+  if (!product) return <p className="muted">불러오는 중...</p>;
 
   const hasOptions = product.optionValues && product.optionValues.length > 0;
+  const rawImage = product.imageUrl || product.image_url;
+  const imgSrc = rawImage ? `${backend.uploadsBase}/${rawImage}` : null;
+  const soldOut = Number(product.stock) === 0;
 
   return (
     <div className="page">
-      <Link to="/products" className="muted">&larr; 상품 목록으로</Link>
-      <div className="page-header">
-        <h1>{product.name}</h1>
+      <p><Link to="/products" className="muted">&larr; 상품 목록으로</Link></p>
+
+      <div className="two-col">
+        <div className="pdp-gallery">
+          {imgSrc && !imgBroken ? (
+            <img src={imgSrc} alt={product.name} onError={() => setImgBroken(true)} />
+          ) : (
+            <span className="pdp-gallery__ph">이미지 준비 중</span>
+          )}
+        </div>
+
+        <div className="buy-box">
+          {product.brand && <span className="buy-box__brand">{product.brand}</span>}
+          <h1>{product.name}</h1>
+          <span className="buy-box__price tnum">{formatCurrency(product.price)}</span>
+          {product.description && <p className="buy-box__desc">{product.description}</p>}
+
+          <table className="specs-table">
+            <tbody>
+              {product.sku && <tr><th>상품코드</th><td>{product.sku}</td></tr>}
+              {product.category && <tr><th>카테고리</th><td>{product.category}</td></tr>}
+              <tr>
+                <th>재고</th>
+                <td>{product.stock > 0 ? `${product.stock}개 남음` : '품절'}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          {hasOptions && (
+            <label>{product.optionName || '옵션'}
+              <select value={selectedOption} onChange={(e) => setSelectedOption(e.target.value)}>
+                {product.optionValues.map((v) => (
+                  <option key={v} value={v}>{v}</option>
+                ))}
+              </select>
+            </label>
+          )}
+
+          <div>
+            <div style={{ fontSize: '0.83rem', fontWeight: 600, marginBottom: 'var(--space-2)' }}>수량</div>
+            <div className="qty-stepper">
+              <button type="button" onClick={() => setQuantity((n) => Math.max(1, n - 1))} aria-label="수량 감소">–</button>
+              <input
+                type="number"
+                min="1"
+                value={quantity}
+                onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
+              />
+              <button type="button" onClick={() => setQuantity((n) => n + 1)} aria-label="수량 증가">+</button>
+            </div>
+          </div>
+
+          <button onClick={handleAddToCart} className="btn btn-primary btn-block btn-lg" disabled={soldOut}>
+            {soldOut ? '품절' : '장바구니 담기'}
+          </button>
+        </div>
       </div>
 
-      <section className="card">
-        {product.imageUrl && (
-          <img
-            className="product-detail-image"
-            src={`${backend.uploadsBase}/${product.imageUrl}`}
-            alt={product.name}
-            onError={(e) => { e.target.style.display = 'none'; }}
-          />
-        )}
-        <p>{product.description}</p>
-        <p className="product-price">{formatCurrency(product.price)}</p>
-
-        <table className="specs-table">
-          <tbody>
-            {product.brand && <tr><th>브랜드</th><td>{product.brand}</td></tr>}
-            {product.sku && <tr><th>상품코드</th><td>{product.sku}</td></tr>}
-            {product.category && <tr><th>카테고리</th><td>{product.category}</td></tr>}
-            <tr>
-              <th>재고</th>
-              <td>{product.stock > 0 ? `${product.stock}개 남음` : '품절'}</td>
-            </tr>
-          </tbody>
-        </table>
-
-        {hasOptions && (
-          <label>{product.optionName || '옵션'}
-            <select value={selectedOption} onChange={(e) => setSelectedOption(e.target.value)}>
-              {product.optionValues.map((v) => (
-                <option key={v} value={v}>{v}</option>
-              ))}
-            </select>
-          </label>
-        )}
-
-        <label>수량
-          <input
-            type="number"
-            min="1"
-            value={quantity}
-            onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))}
-            style={{ width: '5rem' }}
-          />
-        </label>
-
-        {addedNote && <p className="status-ok">{addedNote}</p>}
-        <button onClick={handleAddToCart} className="btn btn-primary">장바구니 담기</button>
-      </section>
-
-      <section className="card">
-        <h2>리뷰</h2>
+      <section className="card" style={{ marginTop: 'var(--space-10)' }}>
+        <h2>리뷰 <span className="muted">({reviews.length})</span></h2>
         {reviews.length === 0 && <p className="muted">아직 리뷰가 없습니다.</p>}
-        <ul>
+        <ul className="review-list">
           {reviews.map((r) => (
-            <li key={r.id}>
+            <li key={r.id} className="review-item">
               {editingId === r.id ? (
                 <form onSubmit={(e) => handleEditSubmit(e, r)}>
-                  <select value={editRating} onChange={(e) => setEditRating(e.target.value)}>
-                    {[5, 4, 3, 2, 1].map((n) => (
-                      <option key={n} value={n}>{n}</option>
-                    ))}
-                  </select>
-                  <textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} rows="2" required />
-                  <button type="submit" className="btn btn-primary">저장</button>
-                  <button type="button" onClick={() => setEditingId(null)}>취소</button>
+                  <label>평점
+                    <select value={editRating} onChange={(e) => setEditRating(e.target.value)}>
+                      {[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{n}</option>)}
+                    </select>
+                  </label>
+                  <label>리뷰 내용
+                    <textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} rows="2" required />
+                  </label>
+                  <div className="review-item__actions">
+                    <button type="submit" className="btn btn-primary btn-sm">저장</button>
+                    <button type="button" onClick={() => setEditingId(null)}>취소</button>
+                  </div>
                 </form>
               ) : (
                 <>
-                  <strong>{r.username}</strong> ({r.rating}/5): <span dangerouslySetInnerHTML={{ __html: r.body }} />
+                  <div className="review-item__head">
+                    <span className="review-item__user">{r.username}</span>
+                    <Stars value={r.rating} />
+                  </div>
+                  <div className="review-item__body" dangerouslySetInnerHTML={{ __html: r.body }} />
                   {user && (
-                    <span className="muted">
-                      {' '}
+                    <div className="review-item__actions">
                       <button type="button" onClick={() => startEdit(r)}>수정</button>
                       <button type="button" onClick={() => handleDeleteReview(r)}>삭제</button>
-                    </span>
+                    </div>
                   )}
                 </>
               )}
@@ -185,9 +211,7 @@ export default function ProductDetail() {
             {error && <p className="error">{error}</p>}
             <label>평점
               <select value={rating} onChange={(e) => setRating(e.target.value)}>
-                {[5, 4, 3, 2, 1].map((n) => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
+                {[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{n}</option>)}
               </select>
             </label>
             <label>리뷰 내용
