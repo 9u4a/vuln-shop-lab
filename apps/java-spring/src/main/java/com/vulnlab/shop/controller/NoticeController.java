@@ -4,6 +4,7 @@ import com.vulnlab.shop.entity.Notice;
 import com.vulnlab.shop.entity.User;
 import com.vulnlab.shop.repository.NoticeRepository;
 import com.vulnlab.shop.security.Roles;
+import com.vulnlab.shop.vuln.TemplateRenderer;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -46,8 +47,17 @@ public class NoticeController {
         Page<Notice> result = (q == null || q.isBlank())
                 ? noticeRepository.findAll(pageable)
                 : noticeRepository.findByTitleContainingIgnoreCaseOrBodyContainingIgnoreCase(q, q, pageable);
+        java.util.List<Map<String, Object>> notices = new java.util.ArrayList<>();
+        for (Notice n : result.getContent()) {
+            java.util.Map<String, Object> m = new java.util.HashMap<>();
+            m.put("id", n.getId());
+            m.put("title", n.getTitle());
+            m.put("body", TemplateRenderer.render(n.getBody()));
+            m.put("createdAt", n.getCreatedAt());
+            notices.add(m);
+        }
         return Map.of(
-                "notices", result.getContent(),
+                "notices", notices,
                 "total", result.getTotalElements(),
                 "page", page,
                 "pageSize", pageable.getPageSize());
