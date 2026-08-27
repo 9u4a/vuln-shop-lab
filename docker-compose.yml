@@ -49,7 +49,7 @@ services:
         VITE_TOSS_CLIENT_KEY: ${TOSS_CLIENT_KEY:-}
     container_name: vulnshop-nginx
     ports:
-      - "8080:80"
+      - "8090:80"
     depends_on:
       - node-express
       - java-spring
