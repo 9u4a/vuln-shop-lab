@@ -1,45 +1,15 @@
-# Vulnerability batch: VULN-016 reflected XSS, VULN-017 DOM XSS, VULN-018 file upload
+# 21. 취약점 배치: VULN-016 반사형 XSS, VULN-017 DOM XSS, VULN-018 파일 업로드
 
-Branch: `feature/vuln-batch-016-xss-and-upload` (stacked on `feature/vuln-batch-015-business-logic`, not yet merged)
+브랜치: `feature/vuln-batch-016-xss-and-upload` · 관련 취약점: VULN-016, VULN-017, VULN-018
 
-Theme A03 injection (XSS) + file upload. Completes Reflected + DOM XSS coverage
-(only Stored existed via VULN-008).
+A03(XSS) + 파일 업로드. 반사형·DOM XSS 커버리지 완성(기존엔 저장형 VULN-008만 존재).
 
-## VULN-016 — Reflected XSS in printable HTML receipt
+## VULN-016 — 인쇄용 영수증 HTML 반사형 XSS
+- 신규 "인쇄용 보기". `GET /api/orders/:id/receipt/print`(양 스택)가 `text/html`에 `note` 쿼리를 이스케이프 없이 결합해 반환(`requireAuth`+소유권 유지). `OrderDetail`에 새 탭 링크.
 
-New "인쇄용 보기" feature. `GET /api/orders/:id/receipt/print` on both stacks returns
-`text/html` with the `note` query param concatenated unescaped:
-- `apps/node-express/src/routes/orders.js` — new route, `requireAuth` + ownership check kept.
-- `apps/java-spring/.../OrderController.java` — `@GetMapping(produces=TEXT_HTML_VALUE)` returning
-  the same HTML string.
-- `apps/client/src/pages/OrderDetail.jsx` — "인쇄용 보기" link opening that URL (`?note=<current note>`) in a new tab.
+## VULN-017 — 상품 검색 헤딩 DOM 기반 XSS
+- `Products.jsx`가 `q`를 `<p dangerouslySetInnerHTML={{__html:`'${q}' 검색 결과`}}/>`로 렌더. URL 소스·서버 왕복 없는 순수 클라 싱크(저장형 VULN-008과 구별).
 
-## VULN-017 — DOM-based XSS in product search heading
-
-`apps/client/src/pages/Products.jsx` — the `q` search param is rendered as
-`<p dangerouslySetInnerHTML={{ __html: `'${q}' 검색 결과` }} />`. Pure client sink,
-URL source, no server round-trip. Distinct from VULN-008 (stored, DB source).
-
-## VULN-018 — Unrestricted file upload (content-type trust)
-
-- `apps/node-express/src/uploads.js` — `fileFilter` drops the extension allowlist, now
-  `file.mimetype.startsWith('image/')`; stored filename keeps `path.extname(originalname)`.
-- `apps/java-spring/.../storage/Uploads.java` — `isAllowed()` checks `file.getContentType()`
-  starts with `image/`; `store()` keeps the original extension.
-
-`poc.html` sent with `Content-Type: image/png` is stored as `<uuid>.html` and served
-`text/html` from `/uploads/*` (same origin as the SPA via nginx) → stored XSS on the app
-origin. Chains with VULN-014 (CSRF-delivered avatar upload).
-
-## Verification
-
-- Node: `node -c` on `routes/orders.js`, `uploads.js`.
-- Java: `docker compose build java-spring`.
-- Client: `docker compose build client`.
-- End-to-end:
-  - `GET /api/{node,java}/orders/1/receipt/print?note=<script>alert(1)</script>` → response
-    `Content-Type: text/html` with the raw `<script>` in the body.
-  - upload `x.html` (`Content-Type: image/png`) to `/api/node/profile/avatar` → `GET
-    /uploads/node/<uuid>.html` returns `Content-Type: text/html`.
-  - a real `.png` avatar upload still succeeds (regression).
-  - `/products?q=<img src=x onerror=...>` executes in the browser.
+## VULN-018 — 파일 업로드 Content-Type 신뢰 → 앱 오리진 저장형 XSS
+- node `uploads.js` `fileFilter`가 확장자 화이트리스트를 버리고 `mimetype.startsWith('image/')`만, 저장 파일명은 원본 확장자 유지. java `Uploads.isAllowed()`도 동일.
+- `Content-Type: image/png`로 위장한 `.html`이 `/uploads/*`에서 `text/html`로 서빙(nginx가 SPA와 동일 오리진) → 앱 오리진 저장형 XSS. VULN-014(CSRF 아바타 업로드)와 연계.

@@ -1,6 +1,6 @@
-# Apparel catalog (의류 전환 · 카테고리 메뉴 분리 · 필터)
+# 26. 의류 카탈로그 (도메인 전환 · 카테고리 메뉴 분리 · 필터)
 
-Branch: `feature/apparel-catalog`
+브랜치: `feature/apparel-catalog` · 관련 취약점: VULN-001, VULN-005 (표면 확장)
 
 상품 도메인을 테크 가젯에서 **의류 쇼핑몰**로 전환한다. 요청받은 카테고리(상의·바지·가방·
 모자·액세서리)와 필터(성별·컬러·소재)를 지원하기 위한 토대 단계로, 이후 좋아요·후기 고도화·
@@ -58,15 +58,7 @@ Branch: `feature/apparel-catalog`
 **SQLi 표면을 확장**(신규 ID 없이 VULN-001 node / VULN-005 java 문서에 반영). Java의 products는
 15컬럼이 되어 UNION 페이로드 컬럼 수도 갱신.
 
-## 검증
-
-- node `node -c`(db.js/products.js/admin.js), java `docker compose build java-spring`,
-  client `npm run build` 모두 무오류.
-- `docker compose down -v && up --build` 클린 재시드 후 양 스택 스모크(동일 결과):
-  - 상품 16종, 샘플에 gender/color/material/reviewCount 노출.
-  - `category=top` 4건, `gender=여성&material=레더` 1건(레더 크로스백), `inStock=1` 15건(품절
-    조거팬츠 제외), `sort=reviews` 후기순 상위 정렬.
-  - SQLi 표면 확인: `?color=nomatch' OR '1'='1` → 16건 전체 반환(양 스택).
+> 스키마·시드가 바뀌므로 클린 재시드 필요(`docker compose down -v && up --build`).
 
 관련 취약점: `docs/vulnerabilities/VULN-001-sql-injection-product-search-node.md`,
 `docs/vulnerabilities/VULN-005-sql-injection-product-search-java.md`

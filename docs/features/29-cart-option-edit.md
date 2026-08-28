@@ -1,6 +1,6 @@
-# Cart option edit (장바구니 옵션 변경)
+# 29. 장바구니 옵션 변경
 
-Branch: `feature/cart-option-edit` (base: `feature/reviews-media-secret`)
+브랜치: `feature/cart-option-edit` · 관련 취약점: VULN-027
 
 장바구니 라인 아이템의 옵션(사이즈·색상 등)을 목록에서 바로 변경할 수 있게 한다. 클라이언트
 전용 변경(장바구니는 localStorage 기반).
@@ -22,10 +22,3 @@ Branch: `feature/cart-option-edit` (base: `feature/reviews-media-secret`)
 임의 옵션으로 주문 가능(A04 Insecure Design). 코드 변경 없이 기존 서버 동작을 문서화
 (장바구니 옵션 변경 기능이 옵션을 전면에 드러내며 부각된 결함).
 문서: `docs/vulnerabilities/VULN-027-order-option-not-validated.md`.
-
-## 검증
-
-- client `npm run build` 무오류.
-- 옵션 변경 후 동일 옵션 라인 존재 시 수량 병합(로직), 선택지 없는 라인은 정적 표시(폴백).
-- VULN-027: `POST /api/orders`에 상품이 제공하지 않는 `optionValue`로 주문 → 양 스택 모두
-  그대로 저장됨(주문 상세에서 확인).

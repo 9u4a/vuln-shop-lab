@@ -1,32 +1,11 @@
-# Chore: vulnerability index + scope-coverage refresh
+# 18. 취약점 인덱스 + 스코프 커버리지 정비 (chore)
 
-Branch: `chore/vuln-index-refresh` (built on `main` @ PR #18, not yet merged)
+브랜치: `chore/vuln-index-refresh`
 
-## Problem
+## 무엇을 만들었나
+- 문제: `docs/vulnerabilities/README.md`가 "아직 등록된 취약점 없음"인 채였고, 실제 인덱스는 `docs/features/17`의 표에만 있었다. OWASP 스코프 커버리지도 한눈에 볼 곳이 없었다.
+- 변경: `README.md`를 라이브 인덱스로 재작성 — VULN별 1행(구현·계획) + 스코프 커버리지 매트릭스(DONE/PLANNED). `CLAUDE.md` 취약점 스코프에 NoSQLi/XXE/대량 할당/CSRF/비즈니스 로직을 명시하고 인덱스 포인터 추가.
+- 코드 변경 없음. 이 문서가 먼저 병합돼 이후 VULN-013~022는 인덱스에 행만 추가하면 됨.
 
-`docs/vulnerabilities/README.md` still said "아직 등록된 취약점이 없다" even though VULN-001–012
-had shipped — the real index only existed as a table inside `docs/features/17-*.md`. No single
-place showed which OWASP scope classes were covered vs open.
-
-## Change
-
-- `docs/vulnerabilities/README.md` rewritten as the live index: one row per VULN-001…022
-  (implemented + planned), each linking to its doc, plus a scope-coverage matrix
-  (DONE / PLANNED per `CLAUDE.md` scope item).
-- `CLAUDE.md` "Vulnerability scope" section: NoSQLi noted as in-scope via a dedicated
-  MongoDB feature; XXE, mass assignment, CSRF, business-logic/insecure-design added as
-  explicit sub-items; a pointer to the README index/matrix added.
-
-No code changes. This lands first so each subsequent VULN-013–022 branch only appends a row.
-
-## Planned batch (VULN-013–022)
-
-Access control (013 mass assignment, 014 CSRF) → business logic (015 negative qty) →
-XSS/upload (016 reflected, 017 DOM, 018 file upload) → Java injection (019 cmd, 020 XXE,
-021 Text4Shell dep) → NoSQLi (022, adds a `mongo` compose service). Six branches, merged in
-order. Full detail: the plan file for this work.
-
-## Verified
-
-Docs only — `README.md` links resolve to existing `VULN-00N-*.md` filenames; matrix rows
-match the CLAUDE.md scope list.
+## 이후 변경
+- 예고했던 VULN-013~022 배치는 19~23에서 모두 구현 완료.

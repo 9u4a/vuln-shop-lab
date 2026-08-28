@@ -1,6 +1,6 @@
-# Admin access logs & user activation (관리자 접속 로그 · 사용자 활성/비활성)
+# 30. 관리자 접속 로그 · 사용자 활성/비활성
 
-Branch: `feature/admin-access-logs` (base: `feature/cart-option-edit`)
+브랜치: `feature/admin-access-logs` · 관련 취약점: VULN-028
 
 관리자가 사용자 로그인 이력(성공/실패)을 열람하고, 사용자 계정을 활성/비활성 전환할 수 있게 한다.
 비활성 계정은 로그인이 차단된다.
@@ -40,10 +40,4 @@ A03 XSS. 문서: `docs/vulnerabilities/VULN-028-stored-xss-login-log-user-agent.
 > `login_logs`는 Phase 4(SIEM) 탐지 단계의 소재 — 로그인 실패 폭주/비정상 UA를 Wazuh 룰로
 > 탐지하는 시나리오로 이어진다.
 
-## 검증
-
-- node `node -c`, java `docker compose build`, client `npm run build` 무오류.
-- 클린 재시드 후 양 스택 **동일 결과**:
-  - 로그인 성공/실패가 UA·IP와 함께 기록, `GET /admin/login-logs`에서 조회.
-  - user3 비활성화 → 로그인 403, 재활성화 → 200.
-  - VULN-028: `User-Agent: <img src=x onerror=...>`로 로그인 → 로그 응답에 페이로드 원문 저장.
+문서: `docs/vulnerabilities/VULN-028-stored-xss-login-log-user-agent.md`.

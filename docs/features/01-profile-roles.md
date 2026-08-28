@@ -1,33 +1,17 @@
-# Feature: Profile & Roles
+# 01. 프로필 · 역할 기반 인증
 
-Branch: `feature/profile-roles`
+브랜치: `feature/profile-roles`
 
-## What was added
+## 무엇을 만들었나
+- `users`에 `bio`·`avatar_url` 컬럼 추가(양 스택).
+- `GET/PUT /api/profile` — 본인 소개(bio) 조회·수정. `POST /api/profile/avatar` — 이미지 업로드(png/jpg/jpeg/gif/webp, 2MB), `/uploads/<파일>`로 서빙.
+- 재사용할 인증 가드 도입: node `requireAuth`/`requireAdmin` 미들웨어(java는 세션 검사 인라인).
+- 이후 기능을 염두에 두고 스키마 선반영: `products.category`, `reviews`, `orders`/`order_items`(webhook_url·toss_* 포함). node는 guarded `ALTER TABLE ADD COLUMN`, java는 `ddl-auto: update`.
+- 클라이언트: `/profile` 페이지, Vite dev 프록시에 `/uploads/node`·`/uploads/java` 추가.
 
-- `users` table gains `bio` and `avatar_url` columns (both stacks).
-- `GET/PUT /api/profile` — view and edit the logged-in user's own bio.
-- `POST /api/profile/avatar` — multipart image upload (png/jpg/jpeg/gif/webp, 2MB max), served back from `/uploads/<filename>` on each backend.
-- `requireAuth`/`requireAdmin` middleware added on the Node side (Java already gates via inline session checks); both are the reusable auth-guard pattern later features (admin panel) will build on.
-- Client: new `/profile` page (view bio/avatar, edit bio, upload avatar), linked from the nav when logged in.
-- Vite dev proxy extended with `/uploads/node` and `/uploads/java` so avatar images load through the same origin as the API, consistent with how `/api/node` and `/api/java` already avoid cross-origin cookie issues.
+## 설계 판단
+- 아직 기능 구현 단계라 파일 업로드 검증(확장자 화이트리스트+용량)은 **의도적으로 안전하게** 두었다. 업로드 취약점은 이후 단계에서 문서화된 변경으로 도입.
+- 아바타는 UUID 파일명으로 저장해 충돌·덮어쓰기 방지. `multer 1.4.5-lts.1`은 알려진 CVE를 포함하지만 "취약 의존성" 소재로 의도적으로 고정.
 
-## Schema prepared ahead of later features
-
-Per the plan to design the DB with the full feature set in mind, this branch also adds (unused for now, wired up in later branches):
-
-- `products.category` — for the search/filter feature.
-- `reviews` table — product reviews.
-- `orders` / `order_items` tables — cart checkout, including `webhook_url`, `toss_order_id`, `toss_payment_key` columns for the payment feature.
-
-Node uses a guarded `ALTER TABLE ... ADD COLUMN` (wrapped in try/catch, since `sqlite` has no `IF NOT EXISTS` for columns) so existing dev databases pick up new columns without a manual migration step. Java relies on Hibernate `ddl-auto: update`, which does the same automatically.
-
-## Why this design
-
-- File upload validation (extension whitelist + size cap) is intentionally correct here — this is feature work, not the vulnerability-injection phase. Any file-upload vulnerability (e.g. path traversal, extension bypass) will be introduced later as a tracked, documented change per `docs/vulnerabilities/` once we reach that phase.
-- Avatars are stored by random UUID filename, not the user-supplied name, to avoid accidental collisions/overwrites in this phase.
-- `role` was already on `users` but nothing checked it; `requireAdmin` exists now so the upcoming admin-panel branch has a ready-made guard instead of inventing access control ad hoc per route.
-- `multer` is pinned to `1.4.5-lts.1` deliberately (not the patched 2.x line) — this app intentionally carries known-CVE dependency versions as one of the planned vulnerability categories (vulnerable dependencies / SCA target). It'll get a proper `docs/vulnerabilities/VULN-xxx` entry once the deliberate vulnerability-injection phase starts; for now it's just pinned and left alone rather than "fixed."
-
-## Verified
-
-- `docker compose up --build`, then for both `node` and `java` backends via the client's Vite proxy: signup → login → `GET/PUT /api/profile` → `POST /api/profile/avatar` → uploaded image fetched back via `/uploads/<node|java>/<file>`. All 200s, bio and avatar persisted correctly.
+## 이후 변경
+- `/profile` → `/mypage`로 분할(10). 아바타 업로드는 Content-Type 신뢰 취약점(VULN-018, 21)의 표면이 됨.

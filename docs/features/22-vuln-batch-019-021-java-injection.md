@@ -1,47 +1,15 @@
-# Vulnerability batch: VULN-019 Java cmd injection, VULN-020 XXE, VULN-021 Text4Shell
+# 22. 취약점 배치: VULN-019 Java 커맨드 인젝션, VULN-020 XXE, VULN-021 Text4Shell
 
-Branch: `feature/vuln-batch-019-java-injection` (stacked on `feature/vuln-batch-016-xss-and-upload`, not yet merged)
+브랜치: `feature/vuln-batch-019-java-injection` · 관련 취약점: VULN-019, VULN-020, VULN-021
 
-Java-only. Heaviest branch of the batch (new maven dep, shell exec, new controller,
-`vuln/` helper).
+Java 전용. 배치 중 가장 무거움(신규 maven 의존성·셸 exec·신규 컨트롤러·`vuln/` 헬퍼).
 
-## VULN-019 — OS command injection in Java receipt generation
+## VULN-019 — Java 영수증 생성 OS 커맨드 인젝션
+- `OrderController.generateReceipt()` — `Files.writeString` → `note`(없으면 `user.getBio()`)를 `echo "..." > file`에 결합해 `Runtime.exec({"sh","-c",cmd})`. VULN-010(node)의 정확한 짝.
 
-`apps/java-spring/.../OrderController.java` `generateReceipt()` — was `Files.writeString`;
-now reads `note` from the request body (falls back to `user.getBio()`), concatenates it into
-an `echo "..." > file` string and runs `Runtime.getRuntime().exec(new String[]{"sh","-c",cmd})`.
-Exact mirror of VULN-010 (Node). Client already sends `{note}` → no client change.
-
-## VULN-020 — XXE in XML catalog import
-
-New `apps/java-spring/.../controller/CatalogImportController.java` —
-`POST /api/admin/products/import` (`consumes=application/xml`, admin-gated). Parses the body
-with a bare `DocumentBuilderFactory.newInstance()` (no `disallow-doctype-decl`, no secure
-processing), stores/echoes the parsed `<name>`. `<!ENTITY xxe SYSTEM "file:///proc/self/environ">`
-→ `TOSS_SECRET_KEY` in the response; external-DTD variant demonstrates SSRF.
+## VULN-020 — XML 상품 임포트 XXE
+- 신규 `CatalogImportController` — `POST /api/admin/products/import`(admin, `application/xml`). 무방비 `DocumentBuilderFactory`(doctype 차단·secure processing 없음). `<!ENTITY xxe SYSTEM "file:///...">`로 파일 읽기, 외부 DTD 변형으로 SSRF.
 
 ## VULN-021 — commons-text 1.9 (CVE-2022-42889, Text4Shell)
-
-- `pom.xml` — explicit `org.apache.commons:commons-text:1.9` (not BOM-managed, so no version
-  skew — same reasoning as VULN-012's refusal to pin `jackson-databind`).
-- `apps/java-spring/.../vuln/TemplateRenderer.java` — isolates the
-  `StringSubstitutor.createInterpolator().replace(...)` call.
-- `FaqController.list()` / `NoticeController.list()` now build response maps and pass each
-  `answer` / `body` through `TemplateRenderer.render()` (a "merge fields in announcements"
-  feature). Any logged-in user posts a FAQ with `${env:TOSS_SECRET_KEY}` / `${url:...}` /
-  `${dns:...}`; it resolves when the list renders. `${script:...}` RCE needs a JSR-223 engine
-  (not on the Java 21 base image) — the `env`/`url`/`dns` lookups are the live vectors here.
-
-## Verification
-
-- `docker compose build java-spring` (pulls commons-text 1.9, compiles the new controller +
-  helper + FAQ/notice changes).
-- End-to-end:
-  - `POST /api/java/orders/1/receipt {"note":"x; id > receipts/receipt_1.txt; echo x"}` →
-    `GET /api/java/orders/receipt/receipt_1.txt` contains `uid=...`.
-  - `POST /api/java/admin/products/import` (admin) with a `file:///etc/passwd` DOCTYPE →
-    `imported[0].name` contains the file (secrets need the OOB external-DTD variant — direct
-    `/proc/self/environ` fails on NUL bytes). Non-admin → 403.
-  - `POST /api/java/faqs {"answer":"k=${env:TOSS_SECRET_KEY}"}` → `GET /api/java/faqs` shows the
-    real key.
-  - FAQ/notice list response shape unchanged for normal (no `${...}`) content — client regression.
+- `pom.xml`에 `commons-text:1.9` 명시(BOM 미관리 — 버전 스큐 방지). `vuln/TemplateRenderer`가 `StringSubstitutor` 보간을 격리.
+- `FaqController.list()`/`NoticeController.list()`가 `answer`/`body`를 `render()`에 통과("공지 필드 치환" 기능). `${env:...}`/`${url:...}`/`${dns:...}` 룩업이 실동 벡터(`${script:...}` RCE는 JSR-223 엔진 부재로 불가).

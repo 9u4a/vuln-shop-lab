@@ -1,90 +1,26 @@
-# Vulnerability batch: VULN-005 – VULN-012
+# 17. 취약점 배치: VULN-005 ~ VULN-012
 
-Branch: `feature/vuln-batch-005-013` (built on `main` @ `4feb2ea`, not yet merged)
+브랜치: `feature/vuln-batch-005-013` · 관련 취약점: VULN-005~012
 
-Phase 1 work only — implement the intentional vulnerabilities and document intent/trigger
-in `docs/vulnerabilities/`. Diagnosis (Burp) and remediation are later phases.
+앞선 발견(VULN-001·002·004)이 남긴 OWASP 공백을 메우는 Phase 1(구현·문서화) 배치. 진단(Burp)·조치는 이후 단계.
 
-## Scope
+## 무엇을 만들었나 (취약점 8종)
 
-Eight vulnerabilities, chosen to round out the OWASP Top 10 coverage the earlier
-findings (VULN-001, 002, 004) left open — injection variants,
-access control, misconfig, deserialization.
+| ID | 취약점 | 스택 | 표면 |
+|----|--------|------|------|
+| 005 | 상품 검색/필터 SQLi | java | `GET /api/products`(VULN-001의 java 짝) |
+| 006 | 세션 고정 + 로그인 시도 제한 없음 | both | `POST /api/auth/login`(현행 동작 문서화) |
+| 007 | 진단 엔드포인트 노출 | both | `/actuator/*`(java), dev 에러 핸들러(node) |
+| 008 | 리뷰 본문 저장형 XSS | client+both | `ProductDetail`의 `dangerouslySetInnerHTML` |
+| 009 | 리뷰 수정/삭제 IDOR | both | `PUT/DELETE /api/products/:id/reviews/:rid` |
+| 010 | 영수증 생성 OS 커맨드 인젝션 | node | `POST /api/orders/:id/receipt` |
+| 011 | 영수증 다운로드 경로 순회 | both | `GET /api/orders/receipt/:filename` |
+| 012 | 장바구니 임포트 역직렬화 | java | `POST /api/cart/import` |
 
-| ID | Vuln | Stack | New endpoint / surface |
-|----|------|-------|------------------------|
-| VULN-005 | SQL injection in product search/filter | java-spring | `GET /api/products` (`q`, `category`) — Java twin of VULN-001 |
-| VULN-006 | Session fixation + no login lockout | both | existing `POST /api/auth/login` (doc-only, describes current behavior) |
-| VULN-007 | Security misconfiguration: exposed diagnostics | both | `/actuator/*` (Java), default `development` error handler (Node) |
-| VULN-008 | Stored XSS in review body | client + both | `ProductDetail.jsx` renders `r.body` via `dangerouslySetInnerHTML` |
-| VULN-009 | IDOR: review update/delete without ownership check | both | `PUT`/`DELETE /api/products/:id/reviews/:reviewId` |
-| VULN-010 | OS command injection in receipt generation | node-express | `POST /api/orders/:id/receipt` |
-| VULN-011 | Path traversal in receipt download | both | `GET /api/orders/receipt/:filename` |
-| VULN-012 | Insecure deserialization in cart backup import | java-spring | `POST /api/cart/import` |
-
-(The branch name says `005-013`; the batch landed at 012 — there is no VULN-013.)
-
-## Design notes
-
-- **VULN-005** — `ProductService.list()` now branches: no filters → `findAll()`; any filter →
-  hand-built native SQL string with `q`/`category` concatenated directly, run through
-  `EntityManager.createNativeQuery(..., Product.class)`. The typed `ProductRepository`
-  finder methods are left in place (unused for the filtered path) so the safe version is
-  a small diff at remediation time.
-
-- **VULN-006** — No code change. Both `AuthController.login` (Java) and `auth.js` login
-  (Node) already set the user on the pre-existing session without `regenerate()` /
-  `changeSessionId()`, and neither stack has any attempt counter. The doc records this as
-  the intentional finding so it flows through diagnosis/remediation like the others.
-
-- **VULN-007** — Java: added `spring-boot-starter-actuator` and
-  `management.endpoints.web.exposure.include: "*"` with `health.show-details: always`.
-  The app has no Spring Security, so every actuator endpoint (`/env`, `/heapdump`,
-  `/beans`, …) is unauthenticated. Node: relies on `NODE_ENV` being unset everywhere
-  (Dockerfile, `.env.example`) → Express defaults to `development` → stack traces in
-  error responses. No new code.
-
-- **VULN-008** — Client-side sink. Review list item switched from `{r.body}` to
-  `<span dangerouslySetInnerHTML={{ __html: r.body }} />`. Neither backend sanitizes
-  review bodies on create or update, so a stored `<img onerror=…>` executes for every
-  viewer of the product page.
-
-- **VULN-009** — New `PUT`/`DELETE` review routes on both stacks. Guarded by
-  `requireAuth` / session-user check only; they look the review up by
-  `(reviewId, productId)` but never compare `review.user_id` to the caller. Client gets
-  "수정 / 삭제" buttons on every review when logged in (not just your own) to exercise it.
-
-- **VULN-010** — `POST /api/orders/:id/receipt` builds an `echo "... 메모: ${note}" > file`
-  string and runs it through `child_process.exec`. `note` comes from the request body,
-  falling back to the user's `bio` (freely settable via `PUT /api/profile`), so the
-  injection is reachable even without the note field. Node-only — the Java receipt
-  endpoint writes the file with `Files.writeString`, no shell.
-
-- **VULN-011** — `GET /api/orders/receipt/:filename` on both stacks joins the raw
-  path parameter to the receipts dir (`path.join` / `RECEIPTS_DIR.resolve`) with no
-  normalization or ownership check. `../` and encoded traversal reach any file the WAS
-  process can read.
-
-- **VULN-012** — Isolated in `com.vulnlab.shop.vuln.CartImportController` per the
-  Java-stack convention. `POST /api/cart/import` reads the raw body with a local
-  `ObjectMapper` whose `activateDefaultTyping(LaissezFaireSubTypeValidator.instance, …)`
-  disables subtype validation, so a client-supplied array-form `@class` instantiates
-  arbitrary classpath types (CWE-502). Global `jackson-databind` version is deliberately
-  left at the Spring Boot BOM version — see the vuln doc for why pinning it down breaks
-  the rest of the app's JSON.
-
-- **Client API** — `api.js` gains `generateReceipt`, `fetchReceipt`, `updateReview`,
-  `deleteReview`, `importCartBackup`. The cart-backup import form only renders on the
-  Java backend (`backendKey === 'java'`).
-
-- `.gitignore` — added `apps/*/receipts/` (generated receipt files, both stacks).
-
-## Verification status
-
-- Node: `node -c` clean on `orders.js`, `products.js`, `auth.js`.
-- Java: not compiled locally (no Maven / wrapper on this machine). Changes reviewed by
-  hand — new imports present, reused existing helpers (`currentUser`/`unauthorized`,
-  `reviewRepository`, `orderRepository`), `vuln` package is under the
-  `com.vulnlab.shop` component-scan root.
-- End-to-end exploitation of each trigger is Phase 2 (Burp) — to be recorded in
-  `docs/findings/`.
+## 설계 판단
+- 005: `ProductService.list()`가 필터 있을 때만 네이티브 SQL 문자열 결합 경로로 분기, 안전한 finder는 그대로 둬 조치 시 diff 최소화.
+- 006/007: 코드 변경 없이 현행 동작(세션 재발급 없음, actuator 전체 노출/Node dev 기본값)을 의도된 발견으로 문서화.
+- 008: 리뷰 렌더를 `dangerouslySetInnerHTML`로 전환(백엔드 새니타이즈 없음).
+- 010: `echo "...${note}" > file`을 `child_process.exec` — `note`는 없으면 `bio`로 폴백해 필드 없이도 도달.
+- 012: java 규약대로 `vuln/CartImportController`에 격리, `activateDefaultTyping`으로 서브타입 검증 무력화(CWE-502). databind 버전은 BOM 정합성 때문에 낮추지 않음.
+- 클라 `api.js`에 receipt/review/cart-import 함수 추가, receipts 디렉터리 `.gitignore`.

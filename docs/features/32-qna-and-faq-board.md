@@ -1,6 +1,6 @@
-# Q&A 게시판 · FAQ 관리자 게시판화 · 상품 버튼 한 줄 배치
+# 32. Q&A 게시판 · FAQ 관리자 게시판화 · 상품 버튼 한 줄 배치
 
-Branch: `feature/qna-faq-board` (base: `main`)
+브랜치: `feature/qna-faq-board` · 관련 취약점: VULN-003
 
 사용자 요청 3건:
 1. 상품의 **좋아요 / 장바구니 담기 / 바로 구매**를 그 순서로 같은 줄에 배치.
@@ -64,12 +64,6 @@ answered_at, created_at`.
   반환, 마스킹은 클라이언트 전용(A01 Broken Access Control). 비밀 후기(VULN-026)와 동일 계열의 새 표면.
   `docs/vulnerabilities/VULN-003-qna-secret-question-access-control.md`.
 
-## 검증
+> 스키마가 바뀌므로 클린 재시드 필요(`docker compose down -v && up --build`).
 
-- node `node -c`(qna/faqs/server/db) OK, client `npm run build` OK, `docker compose build java-spring` OK.
-- `docker compose down -v && up --build` 클린 재시드 후 스모크(양 스택):
-  - 목록: 제목만 + secret/answered 플래그 정상, 본문 미노출.
-  - FAQ POST: 비인증 401 / 일반 사용자 403 / 관리자 201.
-  - Q&A: 작성 201(인증) · 일반 사용자 답변 403 · 관리자 답변 200(q2 `answeredBy:admin` 반영).
-  - **VULN-003**: 비인증 `GET /qna/3`(비밀글) 응답에 `body` 원문 포함 확인(node·java 동일).
-  - (Java의 한글 본문 POST가 curl에서 400은 Windows CP949 인코딩 아티팩트 — ASCII 본문/브라우저 UTF-8은 정상.)
+문서: `docs/vulnerabilities/VULN-003-qna-secret-question-access-control.md`.
