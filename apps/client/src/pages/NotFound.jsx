@@ -18,13 +18,12 @@ export default function NotFound() {
 
   return (
     <div className="page">
-      <div className="page-header">
-        <h1>404 - Page not found</h1>
-      </div>
-      <section className="card">
-        <p>요청하신 페이지를 찾을 수 없습니다.</p>
+      <div className="empty-state">
+        <span className="empty-state__emoji">🧭</span>
+        <h2>페이지를 찾을 수 없어요 (404)</h2>
+        <p>요청하신 페이지가 없거나 주소가 변경되었습니다.</p>
         <p className="muted">{seconds}초 후 홈으로 이동합니다...</p>
-      </section>
+      </div>
     </div>
   );
 }

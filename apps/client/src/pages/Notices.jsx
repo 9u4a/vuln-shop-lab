@@ -50,7 +50,7 @@ export default function Notices() {
       {notices.map((n) => (
         <section className="card" key={n.id}>
           <h2>{n.title}</h2>
-          <p>{n.body}</p>
+          <p style={{ whiteSpace: 'pre-wrap' }}>{n.body}</p>
           <p className="muted">{n.createdAt}</p>
         </section>
       ))}

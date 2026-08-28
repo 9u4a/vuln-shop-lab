@@ -18,13 +18,12 @@ export default function Forbidden() {
 
   return (
     <div className="page">
-      <div className="page-header">
-        <h1>403 - Access denied</h1>
-      </div>
-      <section className="card">
-        <p>이 페이지에 접근할 권한이 없습니다.</p>
+      <div className="empty-state">
+        <span className="empty-state__emoji">🔒</span>
+        <h2>접근 권한이 없어요 (403)</h2>
+        <p>이 페이지를 볼 수 있는 권한이 없습니다.</p>
         <p className="muted">{seconds}초 후 홈으로 이동합니다...</p>
-      </section>
+      </div>
     </div>
   );
 }

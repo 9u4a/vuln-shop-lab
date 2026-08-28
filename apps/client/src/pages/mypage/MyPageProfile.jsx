@@ -125,7 +125,7 @@ export default function MyPageProfile() {
       {backendKey === 'node' && activity.length > 0 && (
         <section className="card">
           <h2>최근 활동</h2>
-          <ul>
+          <ul className="activity-list">
             {activity.map((a, i) => (
               <li key={i}>
                 <span className="muted">{a.at}</span> · {a.action} — {a.detail}

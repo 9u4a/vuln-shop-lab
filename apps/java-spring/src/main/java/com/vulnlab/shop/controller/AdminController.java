@@ -2,8 +2,11 @@ package com.vulnlab.shop.controller;
 
 import com.vulnlab.shop.entity.Product;
 import com.vulnlab.shop.entity.User;
+import com.vulnlab.shop.entity.Order;
+import com.vulnlab.shop.entity.OrderItem;
 import com.vulnlab.shop.repository.FaqRepository;
 import com.vulnlab.shop.repository.NoticeRepository;
+import com.vulnlab.shop.repository.OrderItemRepository;
 import com.vulnlab.shop.repository.OrderRepository;
 import com.vulnlab.shop.repository.ProductRepository;
 import com.vulnlab.shop.repository.UserRepository;
@@ -27,15 +30,17 @@ public class AdminController {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
     private final FaqRepository faqRepository;
     private final NoticeRepository noticeRepository;
 
     public AdminController(UserRepository userRepository, ProductRepository productRepository,
-                            OrderRepository orderRepository, FaqRepository faqRepository,
-                            NoticeRepository noticeRepository) {
+                            OrderRepository orderRepository, OrderItemRepository orderItemRepository,
+                            FaqRepository faqRepository, NoticeRepository noticeRepository) {
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
         this.faqRepository = faqRepository;
         this.noticeRepository = noticeRepository;
     }
@@ -81,6 +86,25 @@ public class AdminController {
         return ResponseEntity.ok(Map.of("users", userRepository.findAll()));
     }
 
+    @GetMapping("/users/{id}")
+    public ResponseEntity<?> getUser(@PathVariable Long id, HttpSession session) {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        User target = userRepository.findById(id).orElse(null);
+        if (target == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "사용자를 찾을 수 없습니다."));
+        }
+        List<Map<String, Object>> orders = orderRepository.findByUserId(id).stream()
+                .sorted((a, b) -> b.getId().compareTo(a.getId()))
+                .map(o -> Map.<String, Object>of(
+                        "id", o.getId(),
+                        "status", o.getStatus(),
+                        "totalAmount", o.getTotalAmount(),
+                        "createdAt", o.getCreatedAt()))
+                .toList();
+        return ResponseEntity.ok(Map.of("user", target, "orders", orders));
+    }
+
     @PutMapping("/users/{id}/role")
     public ResponseEntity<?> updateRole(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
         ResponseEntity<?> denied = requireSystemAdmin(session);
@@ -110,6 +134,37 @@ public class AdminController {
                         "createdAt", o.getCreatedAt()))
                 .toList();
         return ResponseEntity.ok(Map.of("orders", orders));
+    }
+
+    @GetMapping("/orders/{id}")
+    public ResponseEntity<?> getOrder(@PathVariable Long id, HttpSession session) {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        Order order = orderRepository.findById(id).orElse(null);
+        if (order == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "주문을 찾을 수 없습니다."));
+        }
+        Map<String, Object> orderMap = new java.util.HashMap<>();
+        orderMap.put("id", order.getId());
+        orderMap.put("username", userRepository.findById(order.getUserId()).map(User::getUsername).orElse("unknown"));
+        orderMap.put("status", order.getStatus());
+        orderMap.put("totalAmount", order.getTotalAmount());
+        orderMap.put("tossOrderId", order.getTossOrderId());
+        orderMap.put("createdAt", order.getCreatedAt());
+
+        List<Map<String, Object>> items = orderItemRepository.findByOrderId(order.getId()).stream()
+                .map(oi -> {
+                    Map<String, Object> m = new java.util.HashMap<>();
+                    m.put("productId", oi.getProductId());
+                    m.put("productName", productRepository.findById(oi.getProductId())
+                            .map(com.vulnlab.shop.entity.Product::getName).orElse("(삭제된 상품)"));
+                    m.put("quantity", oi.getQuantity());
+                    m.put("unitPrice", oi.getUnitPrice());
+                    m.put("optionValue", oi.getOptionValue());
+                    return m;
+                })
+                .toList();
+        return ResponseEntity.ok(Map.of("order", orderMap, "items", items));
     }
 
     @PostMapping("/products")

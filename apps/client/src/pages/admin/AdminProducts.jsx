@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useBackend } from '../../BackendContext.jsx';
 import {
   fetchProducts,
@@ -21,6 +21,48 @@ const emptyProduct = {
   optionValues: '',
 };
 
+function ProductRow({ product, uploadsBase, onUpload, onDelete }) {
+  const inputRef = useRef(null);
+  const imageUrl = product.imageUrl || product.image_url;
+  return (
+    <tr>
+      <td>
+        {imageUrl ? (
+          <img
+            className="product-thumb"
+            style={{ width: 48, height: 48 }}
+            src={`${uploadsBase}/${imageUrl}`}
+            alt={product.name}
+          />
+        ) : (
+          <div className="product-thumb product-thumb-placeholder" style={{ width: 48, height: 48, fontSize: '0.6rem' }}>없음</div>
+        )}
+      </td>
+      <td>{product.name}</td>
+      <td>{product.category || '-'}</td>
+      <td className="tnum">{formatCurrency(product.price)}</td>
+      <td className="tnum">{product.stock}</td>
+      <td>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            const file = e.target.files[0];
+            if (file) onUpload(product.id, file);
+            e.target.value = '';
+          }}
+        />
+        <div className="admin-item-row__actions">
+          <button type="button" onClick={() => inputRef.current?.click()}>이미지 업로드</button>
+          <button type="button" onClick={() => onDelete(product.id)}>삭제</button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 export default function AdminProducts() {
   const { backend } = useBackend();
   const [products, setProducts] = useState([]);
@@ -37,6 +79,7 @@ export default function AdminProducts() {
 
   async function handleCreateProduct(e) {
     e.preventDefault();
+    setStatus(null);
     try {
       await createProductAdmin(backend.base, {
         ...newProduct,
@@ -47,6 +90,7 @@ export default function AdminProducts() {
           : undefined,
       });
       setNewProduct(emptyProduct);
+      setStatus('상품이 추가되었습니다.');
       load();
     } catch (err) {
       setError(err.message);
@@ -62,9 +106,7 @@ export default function AdminProducts() {
     }
   }
 
-  async function handleImageChange(productId, e) {
-    const file = e.target.files[0];
-    if (!file) return;
+  async function handleUpload(productId, file) {
     setError(null);
     setStatus(null);
     try {
@@ -76,65 +118,77 @@ export default function AdminProducts() {
     }
   }
 
+  const set = (field) => (e) => setNewProduct((p) => ({ ...p, [field]: e.target.value }));
+
   return (
-    <section className="card">
-      <h2>상품</h2>
-      {error && <p className="error">{error}</p>}
-      {status && <p className="status-ok">{status}</p>}
-      <ul className="product-grid">
-        {products.map((p) => {
-          const imageUrl = p.imageUrl || p.image_url;
-          return (
-            <li key={p.id}>
-              {imageUrl ? (
-                <img className="product-thumb" src={`${backend.uploadsBase}/${imageUrl}`} alt={p.name} />
-              ) : (
-                <div className="product-thumb product-thumb-placeholder">이미지 없음</div>
-              )}
-              <div>{p.name}</div>
-              <div className="product-price">{formatCurrency(p.price)}</div>
-              <label className="file-label">이미지 업로드
-                <input type="file" accept="image/*" onChange={(e) => handleImageChange(p.id, e)} />
-              </label>
-              <button onClick={() => handleDeleteProduct(p.id)}>삭제</button>
-            </li>
-          );
-        })}
-      </ul>
-      <h2>상품 추가</h2>
-      <form onSubmit={handleCreateProduct}>
-        <label>이름
-          <input value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} required />
-        </label>
-        <label>설명
-          <input value={newProduct.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} />
-        </label>
-        <label>가격 (원)
-          <input type="number" step="1" min="0" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })} required />
-        </label>
-        <label>이미지 URL (선택 — 생성 후 업로드 가능)
-          <input value={newProduct.imageUrl} onChange={(e) => setNewProduct({ ...newProduct, imageUrl: e.target.value })} />
-        </label>
-        <label>카테고리
-          <input value={newProduct.category} onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })} />
-        </label>
-        <label>브랜드
-          <input value={newProduct.brand} onChange={(e) => setNewProduct({ ...newProduct, brand: e.target.value })} />
-        </label>
-        <label>상품코드 (SKU)
-          <input value={newProduct.sku} onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })} />
-        </label>
-        <label>재고
-          <input type="number" min="0" value={newProduct.stock} onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })} />
-        </label>
-        <label>옵션명 (예: 색상)
-          <input value={newProduct.optionName} onChange={(e) => setNewProduct({ ...newProduct, optionName: e.target.value })} />
-        </label>
-        <label>옵션값 (쉼표로 구분)
-          <input value={newProduct.optionValues} onChange={(e) => setNewProduct({ ...newProduct, optionValues: e.target.value })} placeholder="빨강, 파랑, 검정" />
-        </label>
-        <button type="submit" className="btn btn-primary">상품 추가</button>
-      </form>
-    </section>
+    <>
+      <section className="card">
+        <h2>상품 <span className="muted">({products.length})</span></h2>
+        {error && <p className="error">{error}</p>}
+        {status && <p className="status-ok">{status}</p>}
+        <div className="admin-table__wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>이미지</th>
+                <th>이름</th>
+                <th>카테고리</th>
+                <th className="tnum">가격</th>
+                <th className="tnum">재고</th>
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.map((p) => (
+                <ProductRow
+                  key={p.id}
+                  product={p}
+                  uploadsBase={backend.uploadsBase}
+                  onUpload={handleUpload}
+                  onDelete={handleDeleteProduct}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="card">
+        <h2>상품 추가</h2>
+        <form onSubmit={handleCreateProduct} style={{ maxWidth: 'none' }}>
+          <label>이름
+            <input value={newProduct.name} onChange={set('name')} required />
+          </label>
+          <label>설명
+            <textarea value={newProduct.description} onChange={set('description')} rows="2" />
+          </label>
+          <label>가격 (원)
+            <input type="number" step="1" min="0" value={newProduct.price} onChange={set('price')} required />
+          </label>
+          <label>카테고리
+            <input value={newProduct.category} onChange={set('category')} placeholder="accessories / displays / office" />
+          </label>
+          <label>브랜드
+            <input value={newProduct.brand} onChange={set('brand')} />
+          </label>
+          <label>상품코드 (SKU)
+            <input value={newProduct.sku} onChange={set('sku')} />
+          </label>
+          <label>재고
+            <input type="number" min="0" value={newProduct.stock} onChange={set('stock')} />
+          </label>
+          <label>옵션명 (예: 색상)
+            <input value={newProduct.optionName} onChange={set('optionName')} />
+          </label>
+          <label>옵션값 (쉼표로 구분)
+            <input value={newProduct.optionValues} onChange={set('optionValues')} placeholder="빨강, 파랑, 검정" />
+          </label>
+          <label>이미지 URL (선택 — 추가 후 목록에서 파일 업로드 가능)
+            <input value={newProduct.imageUrl} onChange={set('imageUrl')} />
+          </label>
+          <button type="submit" className="btn btn-primary">상품 추가</button>
+        </form>
+      </section>
+    </>
   );
 }

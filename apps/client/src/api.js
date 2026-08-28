@@ -143,6 +143,14 @@ export function fetchAdminOrders(base) {
   return apiRequest(base, '/admin/orders');
 }
 
+export function fetchAdminUser(base, id) {
+  return apiRequest(base, `/admin/users/${id}`);
+}
+
+export function fetchAdminOrder(base, id) {
+  return apiRequest(base, `/admin/orders/${id}`);
+}
+
 export function createProductAdmin(base, product) {
   return apiRequest(base, '/admin/products', {
     method: 'POST',
@@ -170,6 +178,13 @@ export function createFaq(base, question, answer) {
   });
 }
 
+export function updateFaqAdmin(base, id, question, answer) {
+  return apiRequest(base, `/faqs/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ question, answer }),
+  });
+}
+
 export function deleteFaqAdmin(base, id) {
   return apiRequest(base, `/faqs/${id}`, { method: 'DELETE' });
 }
@@ -186,6 +201,13 @@ export function fetchNotices(base, { q, page, pageSize } = {}) {
 export function createNoticeAdmin(base, title, body) {
   return apiRequest(base, '/notices', {
     method: 'POST',
+    body: JSON.stringify({ title, body }),
+  });
+}
+
+export function updateNoticeAdmin(base, id, title, body) {
+  return apiRequest(base, `/notices/${id}`, {
+    method: 'PUT',
     body: JSON.stringify({ title, body }),
   });
 }

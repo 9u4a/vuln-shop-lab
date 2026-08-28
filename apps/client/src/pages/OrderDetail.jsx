@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useBackend } from '../BackendContext.jsx';
 import { fetchOrder, generateReceipt, fetchReceipt } from '../api.js';
 import { formatCurrency } from '../format.js';
+import StatusChip from '../components/StatusChip.jsx';
 
 export default function OrderDetail() {
   const { backend } = useBackend();
@@ -45,26 +46,33 @@ export default function OrderDetail() {
   }
 
   if (error) return <p className="error">{error}</p>;
-  if (!data) return <p>불러오는 중...</p>;
+  if (!data) return <p className="muted">불러오는 중...</p>;
 
   return (
     <div className="page">
-      <Link to="/orders" className="muted">&larr; 주문 내역으로</Link>
+      <p><Link to="/orders" className="muted">&larr; 주문 내역으로</Link></p>
       <div className="page-header">
-        <h1>주문 #{data.order.id}</h1>
-        <span className="badge">{data.order.status}</span>
+        <h1 style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+          주문 #{data.order.id} <StatusChip status={data.order.status} />
+        </h1>
       </div>
+
       <section className="card">
-        <p><strong>총액: {formatCurrency(data.order.totalAmount)}</strong></p>
-        <ul className="product-grid">
+        <ul className="line-list">
           {data.items.map((i) => (
-            <li key={`${i.productId}::${i.optionValue || ''}`}>
-              <div>{i.productName}</div>
-              {i.optionValue && <div className="muted">옵션: {i.optionValue}</div>}
-              <div className="muted">{i.quantity}개 x {formatCurrency(i.unitPrice)}</div>
+            <li key={`${i.productId}::${i.optionValue || ''}`} className="line-item">
+              <div className="line-item__main">
+                <span className="line-item__name">{i.productName}</span>
+                {i.optionValue && <span className="line-item__meta">옵션: {i.optionValue}</span>}
+                <span className="line-item__meta tnum">{i.quantity}개 · {formatCurrency(i.unitPrice)}</span>
+              </div>
+              <span className="line-item__price tnum">{formatCurrency(i.unitPrice * i.quantity)}</span>
             </li>
           ))}
         </ul>
+        <div className="summary-box__row summary-box__row--total" style={{ marginTop: 'var(--space-4)' }}>
+          <span>총 결제금액</span><span className="tnum">{formatCurrency(data.order.totalAmount)}</span>
+        </div>
       </section>
 
       <section className="card">
@@ -76,7 +84,7 @@ export default function OrderDetail() {
           </label>
           <button type="submit" className="btn btn-primary">영수증 생성</button>
         </form>
-        <p>
+        <p style={{ marginTop: 'var(--space-4)' }}>
           <a
             href={`${backend.base}/orders/${id}/receipt/print?note=${encodeURIComponent(note)}`}
             target="_blank"
@@ -91,7 +99,7 @@ export default function OrderDetail() {
           </label>
           <button type="submit" className="btn btn-primary">영수증 다운로드</button>
         </form>
-        {receipt && <pre>{receipt}</pre>}
+        {receipt && <pre style={{ background: 'var(--color-subtle)', padding: 'var(--space-4)', borderRadius: 'var(--radius)', overflowX: 'auto' }}>{receipt}</pre>}
       </section>
     </div>
   );
