@@ -28,10 +28,9 @@ export default function Login() {
   }
 
   return (
-    <div className="page">
-      <div className="page-header">
-        <h1>로그인</h1>
-      </div>
+    <div className="page auth-wrap">
+      <Link to="/" className="auth-brand">Vuln Shop</Link>
+      <h1>로그인</h1>
       <section className="card">
         {error && <p className="error">{error}</p>}
         <form onSubmit={handleSubmit}>
