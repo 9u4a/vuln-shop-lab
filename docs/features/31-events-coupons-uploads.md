@@ -32,8 +32,18 @@ Phase 5에서 추가한 `users.active`(및 `reviews.secret`) NOT NULL 컬럼에 
 
 ## 사용자 이벤트 메뉴 + 페이지
 
-`pages/Events.jsx` 신규 — `GET /api/events`(활성 이벤트) 카드 목록(이미지·본문·CTA). 라우트
-`/events` + 상단 메뉴 "이벤트". (이벤트 본문은 팝업과 동일하게 HTML 렌더 — VULN-023 표면 확장.)
+`pages/Events.jsx` 신규 — `GET /api/events`(활성 이벤트) **제목만** 카드 목록(이미지 썸네일+제목),
+클릭 시 상세로 이동. 라우트 `/events` + 상단 메뉴 "이벤트".
+
+## 공지/이벤트 목록 → 상세 분리
+
+공지·이벤트 모두 **목록은 제목(+날짜)만** 노출하고 본문은 **상세 페이지**에서만 렌더.
+- 백엔드(양 스택): 단일 조회 `GET /api/notices/:id`, `GET /api/events/:id`(public) 추가
+  (node `routes/notices.js`·`events.js`, java `NoticeController`·`EventController`).
+- 클라이언트: `pages/NoticeDetail.jsx`(`/notices/:id`), `pages/EventDetail.jsx`(`/events/:id`) 신규.
+  `Notices.jsx`는 `.post-list`(제목+날짜) 목록, `Events.jsx`는 제목 카드. `api.js`에 `fetchNotice`,
+  `fetchEvent`. `index.css`에 `.post-list*`, 이벤트 카드/상세 스타일.
+- 이벤트 상세 본문은 팝업과 동일하게 HTML 렌더(dangerouslySetInnerHTML) — **VULN-023 표면 확장**.
 
 ## 쿠폰 기능
 

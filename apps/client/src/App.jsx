@@ -24,6 +24,8 @@ import OrderDetail from './pages/OrderDetail.jsx';
 import Faq from './pages/Faq.jsx';
 import Notices from './pages/Notices.jsx';
 import Events from './pages/Events.jsx';
+import EventDetail from './pages/EventDetail.jsx';
+import NoticeDetail from './pages/NoticeDetail.jsx';
 import Coupons from './pages/Coupons.jsx';
 import NotFound from './pages/NotFound.jsx';
 import Forbidden from './pages/Forbidden.jsx';
@@ -63,7 +65,9 @@ export default function App() {
                 <Route path="/products/:id" element={<ProductDetail />} />
                 <Route path="/faq" element={<Faq />} />
                 <Route path="/notices" element={<Notices />} />
+                <Route path="/notices/:id" element={<NoticeDetail />} />
                 <Route path="/events" element={<Events />} />
+                <Route path="/events/:id" element={<EventDetail />} />
                 <Route path="/coupons" element={<Coupons />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout/success" element={<CheckoutResult success />} />

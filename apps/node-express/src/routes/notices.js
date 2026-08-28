@@ -31,6 +31,12 @@ router.get('/', (req, res) => {
   res.json({ notices: rows.map(toNotice), total, page, pageSize });
 });
 
+router.get('/:id', (req, res) => {
+  const row = db.prepare('SELECT * FROM notices WHERE id = ?').get(req.params.id);
+  if (!row) return res.status(404).json({ error: '공지사항을 찾을 수 없습니다.' });
+  res.json({ notice: toNotice(row) });
+});
+
 router.post('/', requireAdmin, (req, res) => {
   const title = (req.body.title || '').trim();
   const body = (req.body.body || '').trim();

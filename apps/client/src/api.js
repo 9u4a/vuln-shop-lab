@@ -240,6 +240,10 @@ export function fetchNotices(base, { q, page, pageSize } = {}) {
   return apiRequest(base, `/notices${query ? `?${query}` : ''}`);
 }
 
+export function fetchNotice(base, id) {
+  return apiRequest(base, `/notices/${id}`);
+}
+
 export function createNoticeAdmin(base, title, body, imageUrl) {
   return apiRequest(base, '/notices', {
     method: 'POST',
@@ -315,6 +319,10 @@ export async function uploadProductImageAdmin(base, productId, file) {
 
 export function fetchEvents(base) {
   return apiRequest(base, '/events');
+}
+
+export function fetchEvent(base, id) {
+  return apiRequest(base, `/events/${id}`);
 }
 
 export function fetchEventsManage(base) {

@@ -5,10 +5,6 @@ import { fetchEvents } from '../api.js';
 import { SkeletonGrid } from '../components/Skeleton.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 
-function isExternal(url) {
-  return /^https?:\/\//i.test(url || '');
-}
-
 export default function Events() {
   const { backend } = useBackend();
   const [events, setEvents] = useState(null);
@@ -33,17 +29,16 @@ export default function Events() {
         <ul className="event-cards">
           {events.map((e) => {
             const img = e.imageUrl ? `${backend.uploadsBase}/${e.imageUrl}` : null;
-            const cta = e.linkUrl
-              ? (isExternal(e.linkUrl)
-                  ? <a href={e.linkUrl} target="_blank" rel="noreferrer" className="btn btn-primary btn-sm">자세히 보기</a>
-                  : <Link to={e.linkUrl} className="btn btn-primary btn-sm">자세히 보기</Link>)
-              : null;
             return (
               <li key={e.id} className="event-card card">
-                {img && <img className="event-card__img" src={img} alt={e.title} loading="lazy" />}
-                <h2 className="event-card__title">{e.title}</h2>
-                {e.body && <div className="event-card__body" dangerouslySetInnerHTML={{ __html: e.body }} />}
-                {cta && <div className="event-card__cta">{cta}</div>}
+                <Link to={`/events/${e.id}`} className="event-card__link">
+                  {img ? (
+                    <img className="event-card__img" src={img} alt={e.title} loading="lazy" />
+                  ) : (
+                    <span className="event-card__ph">🎁</span>
+                  )}
+                  <h2 className="event-card__title">{e.title}</h2>
+                </Link>
               </li>
             );
           })}

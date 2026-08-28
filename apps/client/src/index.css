@@ -936,13 +936,33 @@ textarea { resize: vertical; min-height: 4.5rem; }
 .badge-danger { background: var(--status-cancelled-bg); color: var(--status-cancelled); border-color: transparent; }
 .access-log__ua { max-width: 320px; word-break: break-all; font-size: 0.78rem; color: var(--color-text-muted); }
 
-/* Events page */
-.event-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-5); }
-.event-card { display: flex; flex-direction: column; gap: var(--space-3); }
-.event-card__img { width: 100%; border-radius: var(--radius); object-fit: cover; }
-.event-card__title { font-size: 1.05rem; }
-.event-card__body { font-size: 0.9rem; color: var(--color-text); }
-.event-card__cta { margin-top: auto; }
+/* Notice / event list — 제목만 노출, 상세로 이동 */
+.post-list { display: flex; flex-direction: column; }
+.post-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-1);
+  border-bottom: 1px solid var(--color-line);
+}
+.post-list__title { font-weight: 500; color: var(--color-text); }
+.post-list__title:hover { color: var(--color-ink); }
+.post-list__date { font-size: 0.82rem; color: var(--color-text-muted); white-space: nowrap; }
+
+/* Events page (카드 → 상세) */
+.event-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-5); list-style: none; }
+.event-card { padding: 0; overflow: hidden; }
+.event-card__link { display: flex; flex-direction: column; }
+.event-card__link:hover { text-decoration: none; }
+.event-card__img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
+.event-card__ph {
+  display: flex; align-items: center; justify-content: center;
+  aspect-ratio: 16 / 10; font-size: 2.5rem; background: var(--color-subtle);
+}
+.event-card__title { font-size: 1rem; padding: var(--space-4); color: var(--color-text); }
+.event-card__link:hover .event-card__title { color: var(--color-ink); }
+.event-detail__body { font-size: 0.95rem; color: var(--color-text); }
 
 /* Notice image */
 .notice-image { max-width: 100%; border-radius: var(--radius); margin-bottom: var(--space-3); }

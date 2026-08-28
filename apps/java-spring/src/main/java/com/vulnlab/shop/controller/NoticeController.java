@@ -64,6 +64,21 @@ public class NoticeController {
                 "pageSize", pageable.getPageSize());
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<?> detail(@PathVariable Long id) {
+        Notice n = noticeRepository.findById(id).orElse(null);
+        if (n == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "공지사항을 찾을 수 없습니다."));
+        }
+        java.util.Map<String, Object> m = new java.util.HashMap<>();
+        m.put("id", n.getId());
+        m.put("title", n.getTitle());
+        m.put("body", TemplateRenderer.render(n.getBody()));
+        m.put("imageUrl", n.getImageUrl());
+        m.put("createdAt", n.getCreatedAt());
+        return ResponseEntity.ok(Map.of("notice", m));
+    }
+
     @PostMapping
     public ResponseEntity<?> create(@RequestBody Map<String, String> body, HttpSession session) {
         ResponseEntity<?> denied = requireAdmin(session);
