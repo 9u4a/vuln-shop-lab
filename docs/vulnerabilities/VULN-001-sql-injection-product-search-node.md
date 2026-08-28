@@ -6,14 +6,22 @@
 
 ## 위치
 
-`apps/node-express/src/routes/products.js`, `GET /api/products` — `q`, `category`, `sort` 쿼리 파라미터를 파라미터 바인딩 없이 SQL 문자열에 직접 이어붙인다.
+`apps/node-express/src/routes/products.js`, `GET /api/products` — `q`, `category`, `sort` 및 의류 전환 시 추가된 필터 파라미터 `gender`, `color`, `material`을 파라미터 바인딩 없이 SQL 문자열에 직접 이어붙인다.
 
 ```js
 let sql = 'SELECT * FROM products WHERE 1=1';
 if (q) sql += ` AND name LIKE '%${q}%'`;
 if (category) sql += ` AND category = '${category}'`;
-sql += ` ORDER BY ${sort || 'id'}`;
+if (gender) sql += ` AND gender = '${gender}'`;
+if (color) sql += ` AND color = '${color}'`;
+if (material) sql += ` AND material = '${material}'`;
+// ...minPrice/maxPrice는 Number()로 캐스팅, inStock은 고정 문자열
+if (sort && !APP_SORTS.has(sort)) sql += ` ORDER BY ${sort}`;
 ```
+
+> 의류 카탈로그(`feature/apparel-catalog`, `docs/features/26-apparel-catalog.md`)에서 필터
+> 파라미터 `gender/color/material`이 추가되며 인젝션 표면이 넓어졌다 — 문자열 결합 방식은 동일.
+> `minPrice/maxPrice`는 `Number()`로, `inStock`은 고정 문자열로 처리해 인젝션 대상이 아니다.
 
 ## 트리거 방법 (UNION 기반, `users` 테이블 덤프)
 
@@ -25,7 +33,7 @@ GET /api/products?category=nonexistent' UNION SELECT id, username, password_hash
 
 `sort` 파라미터도 `ORDER BY`에 그대로 들어가므로 blind/error-based 인젝션 지점으로 별도 사용 가능 (예: `sort=(SELECT CASE WHEN (1=1) THEN id ELSE name END)`).
 
-`q` 파라미터 역시 동일하게 취약 (`' OR '1'='1` 류의 조건 우회).
+`q` 파라미터 역시 동일하게 취약 (`' OR '1'='1` 류의 조건 우회). 신규 필터 파라미터도 마찬가지 — 예: `GET /api/products?color=nomatch' OR '1'='1` → 조건이 우회되어 전체 상품 반환.
 
 ## 영향
 

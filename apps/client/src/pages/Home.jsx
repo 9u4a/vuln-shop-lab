@@ -6,12 +6,7 @@ import { fetchProducts } from '../api.js';
 import ProductCard from '../components/ProductCard.jsx';
 import EventPopups from '../components/EventPopups.jsx';
 import { SkeletonGrid } from '../components/Skeleton.jsx';
-
-const CATEGORIES = [
-  { key: 'accessories', emoji: '⌨️', name: '액세서리', desc: '키보드 · 마우스 · 충전기' },
-  { key: 'displays', emoji: '🖥️', name: '디스플레이', desc: '모니터 · 포터블 스크린' },
-  { key: 'office', emoji: '💡', name: '오피스', desc: '조명 · 데스크 소품' },
-];
+import { CATEGORIES } from '../data/categories.js';
 
 export default function Home() {
   const { backend, backends, backendKey } = useBackend();
@@ -32,10 +27,10 @@ export default function Home() {
       <EventPopups />
 
       <section className="hero">
-        <h1>매일 쓰는 물건일수록, 신중하게</h1>
+        <h1>매일의 옷장을, 조금 더 신중하게</h1>
         <p>
           {user ? `${user.username}님, 다시 오셨네요. ` : ''}
-          좋은 것만 골라 담는 데스크 셋업 편집샵. 키보드부터 조명까지 큐레이션했습니다.
+          기본에 충실한 데일리 웨어 편집샵. 상의부터 액세서리까지 꼭 필요한 것만 골랐습니다.
         </p>
         <Link to="/products" className="btn btn-primary btn-lg">상품 둘러보기</Link>
         <p className="hero__meta">현재 백엔드 대상 · {backends[backendKey].label}</p>
@@ -48,9 +43,9 @@ export default function Home() {
         </div>
         <div className="category-tiles">
           {CATEGORIES.map((c) => (
-            <Link key={c.key} to={`/products?category=${c.key}`} className="category-tile">
+            <Link key={c.slug} to={`/products?category=${c.slug}`} className="category-tile">
               <span className="category-tile__emoji">{c.emoji}</span>
-              <span className="category-tile__name">{c.name}</span>
+              <span className="category-tile__name">{c.label}</span>
               <span className="category-tile__desc">{c.desc}</span>
             </Link>
           ))}

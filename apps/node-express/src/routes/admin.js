@@ -112,15 +112,15 @@ router.get('/orders/:id', requireAdmin, (req, res) => {
 });
 
 router.post('/products', requireAdmin, (req, res) => {
-  const { name, description, price, imageUrl, category, brand, sku, stock, optionName, optionValues } = req.body;
+  const { name, description, price, imageUrl, category, brand, sku, gender, color, material, stock, optionName, optionValues } = req.body;
   if (!name || price == null) {
     return res.status(400).json({ error: '이름과 가격은 필수입니다.' });
   }
   const result = db
     .prepare(
       `INSERT INTO products
-        (name, description, price, image_url, category, brand, sku, stock, option_name, option_values)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        (name, description, price, image_url, category, brand, sku, gender, color, material, stock, option_name, option_values)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       name,
@@ -130,6 +130,9 @@ router.post('/products', requireAdmin, (req, res) => {
       category || null,
       brand || null,
       sku || null,
+      gender || null,
+      color || null,
+      material || null,
       stock != null ? Number(stock) : 100,
       optionName || null,
       Array.isArray(optionValues) ? optionValues.join(',') : optionValues || null
@@ -140,11 +143,11 @@ router.post('/products', requireAdmin, (req, res) => {
 router.put('/products/:id', requireAdmin, (req, res) => {
   const existing = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: '상품을 찾을 수 없습니다.' });
-  const { name, description, price, imageUrl, category, brand, sku, stock, optionName, optionValues } = req.body;
+  const { name, description, price, imageUrl, category, brand, sku, gender, color, material, stock, optionName, optionValues } = req.body;
   db.prepare(
     `UPDATE products SET
       name = ?, description = ?, price = ?, image_url = ?, category = ?,
-      brand = ?, sku = ?, stock = ?, option_name = ?, option_values = ?
+      brand = ?, sku = ?, gender = ?, color = ?, material = ?, stock = ?, option_name = ?, option_values = ?
      WHERE id = ?`
   ).run(
     name ?? existing.name,
@@ -154,6 +157,9 @@ router.put('/products/:id', requireAdmin, (req, res) => {
     category ?? existing.category,
     brand ?? existing.brand,
     sku ?? existing.sku,
+    gender ?? existing.gender,
+    color ?? existing.color,
+    material ?? existing.material,
     stock != null ? Number(stock) : existing.stock,
     optionName ?? existing.option_name,
     (Array.isArray(optionValues) ? optionValues.join(',') : optionValues) ?? existing.option_values,

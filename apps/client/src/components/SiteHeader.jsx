@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useBackend } from '../BackendContext.jsx';
 import { useCart } from '../CartContext.jsx';
 import { useSession } from '../SessionContext.jsx';
 import { visibleNavLinks } from './navLinks.js';
+import { CATEGORIES } from '../data/categories.js';
 import SiteDrawer from './SiteDrawer.jsx';
 
 export default function SiteHeader() {
@@ -11,10 +12,13 @@ export default function SiteHeader() {
   const { items } = useCart();
   const { user, logout } = useSession();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [term, setTerm] = useState('');
 
   const links = visibleNavLinks(user);
+  const activeCategory = location.pathname === '/products' ? searchParams.get('category') || '' : null;
   const cartCount = items.reduce((n, i) => n + i.quantity, 0);
 
   function handleSearch(e) {
@@ -114,6 +118,26 @@ export default function SiteHeader() {
           </Link>
         </div>
       </div>
+
+      <nav className="category-nav" aria-label="카테고리">
+        <div className="category-nav__inner">
+          <Link
+            to="/products"
+            className={activeCategory === '' ? 'category-nav__link active' : 'category-nav__link'}
+          >
+            전체
+          </Link>
+          {CATEGORIES.map((c) => (
+            <Link
+              key={c.slug}
+              to={`/products?category=${c.slug}`}
+              className={activeCategory === c.slug ? 'category-nav__link active' : 'category-nav__link'}
+            >
+              {c.label}
+            </Link>
+          ))}
+        </div>
+      </nav>
 
       <SiteDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </header>

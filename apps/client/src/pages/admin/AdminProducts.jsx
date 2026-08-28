@@ -16,6 +16,9 @@ const emptyProduct = {
   category: '',
   brand: '',
   sku: '',
+  gender: '',
+  color: '',
+  material: '',
   stock: '',
   optionName: '',
   optionValues: '',
@@ -166,13 +169,22 @@ export default function AdminProducts() {
             <input type="number" step="1" min="0" value={newProduct.price} onChange={set('price')} required />
           </label>
           <label>카테고리
-            <input value={newProduct.category} onChange={set('category')} placeholder="accessories / displays / office" />
+            <input value={newProduct.category} onChange={set('category')} placeholder="top / bottom / bag / hat / acc" />
           </label>
           <label>브랜드
             <input value={newProduct.brand} onChange={set('brand')} />
           </label>
           <label>상품코드 (SKU)
             <input value={newProduct.sku} onChange={set('sku')} />
+          </label>
+          <label>성별
+            <input value={newProduct.gender} onChange={set('gender')} placeholder="남성 / 여성 / 공용" />
+          </label>
+          <label>컬러
+            <input value={newProduct.color} onChange={set('color')} placeholder="블랙 / 화이트 …" />
+          </label>
+          <label>소재
+            <input value={newProduct.material} onChange={set('material')} placeholder="코튼 / 데님 …" />
           </label>
           <label>재고
             <input type="number" min="0" value={newProduct.stock} onChange={set('stock')} />

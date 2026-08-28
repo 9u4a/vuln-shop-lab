@@ -33,11 +33,17 @@ export function logout(base) {
   return apiRequest(base, '/auth/logout', { method: 'POST' });
 }
 
-export function fetchProducts(base, { q, category, sort } = {}) {
+export function fetchProducts(base, { q, category, sort, gender, color, material, minPrice, maxPrice, inStock } = {}) {
   const params = new URLSearchParams();
   if (q) params.set('q', q);
   if (category) params.set('category', category);
   if (sort) params.set('sort', sort);
+  if (gender) params.set('gender', gender);
+  if (color) params.set('color', color);
+  if (material) params.set('material', material);
+  if (minPrice) params.set('minPrice', minPrice);
+  if (maxPrice) params.set('maxPrice', maxPrice);
+  if (inStock) params.set('inStock', inStock);
   const query = params.toString();
   return apiRequest(base, `/products${query ? `?${query}` : ''}`);
 }

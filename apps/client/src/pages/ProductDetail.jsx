@@ -6,6 +6,7 @@ import { useSession } from '../SessionContext.jsx';
 import { useToast } from '../ToastContext.jsx';
 import { fetchProduct, fetchReviews, createReview, updateReview, deleteReview } from '../api.js';
 import { formatCurrency } from '../format.js';
+import { CATEGORY_LABELS } from '../data/categories.js';
 
 function Stars({ value }) {
   const n = Math.max(0, Math.min(5, Math.round(Number(value) || 0)));
@@ -128,7 +129,10 @@ export default function ProductDetail() {
           <table className="specs-table">
             <tbody>
               {product.sku && <tr><th>상품코드</th><td>{product.sku}</td></tr>}
-              {product.category && <tr><th>카테고리</th><td>{product.category}</td></tr>}
+              {product.category && <tr><th>카테고리</th><td>{CATEGORY_LABELS[product.category] || product.category}</td></tr>}
+              {product.gender && <tr><th>성별</th><td>{product.gender}</td></tr>}
+              {product.color && <tr><th>컬러</th><td>{product.color}</td></tr>}
+              {product.material && <tr><th>소재</th><td>{product.material}</td></tr>}
               <tr>
                 <th>재고</th>
                 <td>{product.stock > 0 ? `${product.stock}개 남음` : '품절'}</td>

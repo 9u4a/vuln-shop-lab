@@ -14,15 +14,22 @@ function toProduct(row) {
     category: row.category,
     brand: row.brand,
     sku: row.sku,
+    gender: row.gender,
+    color: row.color,
+    material: row.material,
     stock: row.stock,
     optionName: row.option_name,
     optionValues: row.option_values ? row.option_values.split(',') : [],
+    reviewCount: row.review_count != null ? row.review_count : undefined,
     createdAt: row.created_at,
   };
 }
 
+// 앱 레벨에서 처리하는 정렬 키(SQL ORDER BY에 넣지 않는다).
+const APP_SORTS = new Set(['reviews']);
+
 router.get('/', (req, res) => {
-  const { q, category, sort } = req.query;
+  const { q, category, sort, gender, color, material, minPrice, maxPrice, inStock } = req.query;
 
   let sql = 'SELECT * FROM products WHERE 1=1';
   if (q) {
@@ -31,7 +38,29 @@ router.get('/', (req, res) => {
   if (category) {
     sql += ` AND category = '${category}'`;
   }
-  sql += ` ORDER BY ${sort || 'id'}`;
+  if (gender) {
+    sql += ` AND gender = '${gender}'`;
+  }
+  if (color) {
+    sql += ` AND color = '${color}'`;
+  }
+  if (material) {
+    sql += ` AND material = '${material}'`;
+  }
+  if (minPrice) {
+    sql += ` AND price >= ${Number(minPrice) || 0}`;
+  }
+  if (maxPrice) {
+    sql += ` AND price <= ${Number(maxPrice) || 0}`;
+  }
+  if (inStock === '1' || inStock === 'true') {
+    sql += ' AND stock > 0';
+  }
+  if (sort && !APP_SORTS.has(sort)) {
+    sql += ` ORDER BY ${sort}`;
+  } else {
+    sql += ' ORDER BY id';
+  }
 
   let products;
   try {
@@ -39,13 +68,22 @@ router.get('/', (req, res) => {
   } catch (err) {
     return res.status(400).json({ error: '잘못된 요청입니다.' });
   }
-  res.json({ products: products.map(toProduct) });
+
+  const counts = db.prepare('SELECT product_id, COUNT(*) AS c FROM reviews GROUP BY product_id').all();
+  const countMap = new Map(counts.map((r) => [r.product_id, r.c]));
+  let mapped = products.map((p) => toProduct({ ...p, review_count: countMap.get(p.id) || 0 }));
+  if (sort === 'reviews') {
+    mapped = mapped.sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0));
+  }
+
+  res.json({ products: mapped });
 });
 
 router.get('/:id', (req, res) => {
   const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
   if (!product) return res.status(404).json({ error: '상품을 찾을 수 없습니다.' });
-  res.json({ product: toProduct(product) });
+  const reviewCount = db.prepare('SELECT COUNT(*) AS c FROM reviews WHERE product_id = ?').get(product.id).c;
+  res.json({ product: toProduct({ ...product, review_count: reviewCount }) });
 });
 
 router.get('/:id/reviews', (req, res) => {

@@ -39,12 +39,31 @@ public class ProductController {
     @GetMapping
     public Map<String, Object> list(@RequestParam(required = false) String q,
                                      @RequestParam(required = false) String category,
-                                     @RequestParam(required = false) String sort) {
-        List<Product> products = productService.list(q, category);
+                                     @RequestParam(required = false) String sort,
+                                     @RequestParam(required = false) String gender,
+                                     @RequestParam(required = false) String color,
+                                     @RequestParam(required = false) String material,
+                                     @RequestParam(required = false) String minPrice,
+                                     @RequestParam(required = false) String maxPrice,
+                                     @RequestParam(required = false) String inStock) {
+        boolean stockOnly = "1".equals(inStock) || "true".equalsIgnoreCase(inStock);
+        List<Product> products = productService.list(q, category, gender, color, material, minPrice, maxPrice, stockOnly);
+        for (Product p : products) {
+            p.setReviewCount(reviewRepository.countByProductId(p.getId()));
+        }
 
         Map<String, Object> body = new LinkedHashMap<>();
         if (sort == null || sort.isBlank()) {
             body.put("products", products);
+            return body;
+        }
+
+        // 후기순은 앱 레벨 정렬 — SpEL로 평가하지 않는다.
+        if ("reviews".equals(sort)) {
+            List<Product> sorted = new ArrayList<>(products);
+            sorted.sort(Comparator.comparing((Product p) ->
+                    p.getReviewCount() == null ? 0L : p.getReviewCount()).reversed());
+            body.put("products", sorted);
             return body;
         }
 
@@ -77,6 +96,7 @@ public class ProductController {
         if (product == null) {
             return ResponseEntity.notFound().build();
         }
+        product.setReviewCount(reviewRepository.countByProductId(product.getId()));
         return ResponseEntity.ok(Map.of("product", product));
     }
 

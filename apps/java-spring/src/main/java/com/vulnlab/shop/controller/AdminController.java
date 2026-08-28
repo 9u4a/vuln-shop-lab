@@ -184,6 +184,9 @@ public class AdminController {
         product.setCategory((String) body.get("category"));
         product.setBrand((String) body.get("brand"));
         product.setSku((String) body.get("sku"));
+        product.setGender((String) body.get("gender"));
+        product.setColor((String) body.get("color"));
+        product.setMaterial((String) body.get("material"));
         if (body.get("stock") != null) product.setStock(Integer.parseInt(String.valueOf(body.get("stock"))));
         product.setOptionName((String) body.get("optionName"));
         product.setOptionValues(joinOptionValues(body.get("optionValues")));
@@ -212,6 +215,9 @@ public class AdminController {
         if (body.get("category") != null) product.setCategory((String) body.get("category"));
         if (body.get("brand") != null) product.setBrand((String) body.get("brand"));
         if (body.get("sku") != null) product.setSku((String) body.get("sku"));
+        if (body.get("gender") != null) product.setGender((String) body.get("gender"));
+        if (body.get("color") != null) product.setColor((String) body.get("color"));
+        if (body.get("material") != null) product.setMaterial((String) body.get("material"));
         if (body.get("stock") != null) product.setStock(Integer.parseInt(String.valueOf(body.get("stock"))));
         if (body.get("optionName") != null) product.setOptionName((String) body.get("optionName"));
         if (body.get("optionValues") != null) product.setOptionValues(joinOptionValues(body.get("optionValues")));
