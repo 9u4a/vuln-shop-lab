@@ -774,6 +774,22 @@ textarea { resize: vertical; min-height: 4.5rem; }
 .review-item__user { font-weight: 700; font-size: 0.9rem; }
 .review-item__body { font-size: 0.9rem; color: var(--color-text); }
 .review-item__actions { margin-top: var(--space-2); display: flex; gap: var(--space-2); }
+.review-item__lock { color: var(--color-text-muted); font-size: 0.85rem; }
+.review-item__photo { display: inline-block; margin-top: var(--space-2); }
+.review-item__photo img {
+  max-width: 160px;
+  max-height: 160px;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-line);
+  object-fit: cover;
+}
+.review-secret-check {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.86rem;
+}
+.review-secret-check input { width: auto; }
 .stars { color: var(--color-ink); font-size: 0.82rem; letter-spacing: 0.06em; }
 .stars .off { color: var(--color-line-strong); }
 

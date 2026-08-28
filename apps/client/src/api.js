@@ -121,18 +121,30 @@ export function fetchReviews(base, productId) {
   return apiRequest(base, `/products/${productId}/reviews`);
 }
 
-export function createReview(base, productId, rating, body) {
-  return apiRequest(base, `/products/${productId}/reviews`, {
-    method: 'POST',
-    body: JSON.stringify({ rating, body }),
-  });
+function reviewFormData({ rating, body, secret, image }) {
+  const fd = new FormData();
+  fd.append('rating', rating);
+  fd.append('body', body);
+  fd.append('secret', secret ? 'true' : 'false');
+  if (image) fd.append('image', image);
+  return fd;
 }
 
-export function updateReview(base, productId, reviewId, rating, body) {
-  return apiRequest(base, `/products/${productId}/reviews/${reviewId}`, {
-    method: 'PUT',
-    body: JSON.stringify({ rating, body }),
-  });
+async function reviewRequest(url, method, payload) {
+  const res = await fetch(url, { method, credentials: 'include', body: reviewFormData(payload) });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error(data?.error || `요청에 실패했습니다 (${res.status})`);
+  }
+  return data;
+}
+
+export function createReview(base, productId, payload) {
+  return reviewRequest(`${base}/products/${productId}/reviews`, 'POST', payload);
+}
+
+export function updateReview(base, productId, reviewId, payload) {
+  return reviewRequest(`${base}/products/${productId}/reviews/${reviewId}`, 'PUT', payload);
 }
 
 export function deleteReview(base, productId, reviewId) {

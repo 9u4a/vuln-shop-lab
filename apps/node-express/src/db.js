@@ -48,6 +48,8 @@ db.exec(`
     user_id INTEGER NOT NULL REFERENCES users(id),
     rating INTEGER NOT NULL,
     body TEXT NOT NULL,
+    image_url TEXT,
+    secret INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
@@ -126,6 +128,8 @@ for (const stmt of [
   'ALTER TABLE products ADD COLUMN option_values TEXT',
   'ALTER TABLE order_items ADD COLUMN option_value TEXT',
   'ALTER TABLE faqs ADD COLUMN user_id INTEGER REFERENCES users(id)',
+  'ALTER TABLE reviews ADD COLUMN image_url TEXT',
+  'ALTER TABLE reviews ADD COLUMN secret INTEGER NOT NULL DEFAULT 0',
 ]) {
   try {
     db.exec(stmt);
@@ -330,6 +334,10 @@ if (reviewCount === 0) {
       [7, user3Id, 5, "조거팬츠 밴딩이 편하고 카키 색이 코디하기 좋습니다. 집에서도 밖에서도 자주 입게 되네요."]
     ];
     for (const row of reviews) insertReview.run(...row);
+    // 데모용: user2가 상품1에 남긴 후기를 비밀글로 표시
+    db.prepare(
+      'UPDATE reviews SET secret = 1 WHERE product_id = 1 AND user_id = ?'
+    ).run(user2Id);
   }
 }
 

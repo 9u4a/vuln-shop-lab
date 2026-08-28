@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
+const { upload } = require('../uploads');
 
 const router = express.Router();
 
@@ -120,15 +121,18 @@ router.get('/:id/reviews', (req, res) => {
   res.json({
     reviews: rows.map((r) => ({
       id: r.id,
+      userId: r.user_id,
       username: r.username,
       rating: r.rating,
       body: r.body,
+      imageUrl: r.image_url,
+      secret: !!r.secret,
       createdAt: r.created_at,
     })),
   });
 });
 
-router.post('/:id/reviews', requireAuth, (req, res) => {
+router.post('/:id/reviews', requireAuth, upload.single('image'), (req, res) => {
   const product = db.prepare('SELECT id FROM products WHERE id = ?').get(req.params.id);
   if (!product) return res.status(404).json({ error: '상품을 찾을 수 없습니다.' });
 
@@ -137,22 +141,27 @@ router.post('/:id/reviews', requireAuth, (req, res) => {
   if (!Number.isInteger(rating) || rating < 1 || rating > 5 || !body) {
     return res.status(400).json({ error: '평점(1~5)과 내용을 입력해주세요.' });
   }
+  const secret = req.body.secret === 'true' || req.body.secret === '1' || req.body.secret === true ? 1 : 0;
+  const imageUrl = req.file ? req.file.filename : null;
 
   const result = db
-    .prepare('INSERT INTO reviews (product_id, user_id, rating, body) VALUES (?, ?, ?, ?)')
-    .run(product.id, req.session.user.id, rating, body);
+    .prepare('INSERT INTO reviews (product_id, user_id, rating, body, image_url, secret) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(product.id, req.session.user.id, rating, body, imageUrl, secret);
 
   res.status(201).json({
     review: {
       id: result.lastInsertRowid,
+      userId: req.session.user.id,
       username: req.session.user.username,
       rating,
       body,
+      imageUrl,
+      secret: !!secret,
     },
   });
 });
 
-router.put('/:id/reviews/:reviewId', requireAuth, (req, res) => {
+router.put('/:id/reviews/:reviewId', requireAuth, upload.single('image'), (req, res) => {
   const review = db.prepare('SELECT * FROM reviews WHERE id = ? AND product_id = ?').get(req.params.reviewId, req.params.id);
   if (!review) return res.status(404).json({ error: '리뷰를 찾을 수 없습니다.' });
 
@@ -161,9 +170,11 @@ router.put('/:id/reviews/:reviewId', requireAuth, (req, res) => {
   if (!Number.isInteger(rating) || rating < 1 || rating > 5 || !body) {
     return res.status(400).json({ error: '평점(1~5)과 내용을 입력해주세요.' });
   }
+  const secret = req.body.secret === 'true' || req.body.secret === '1' || req.body.secret === true ? 1 : 0;
+  const imageUrl = req.file ? req.file.filename : review.image_url;
 
-  db.prepare('UPDATE reviews SET rating = ?, body = ? WHERE id = ?').run(rating, body, review.id);
-  res.json({ review: { id: review.id, rating, body } });
+  db.prepare('UPDATE reviews SET rating = ?, body = ?, image_url = ?, secret = ? WHERE id = ?').run(rating, body, imageUrl, secret, review.id);
+  res.json({ review: { id: review.id, rating, body, imageUrl, secret: !!secret } });
 });
 
 router.delete('/:id/reviews/:reviewId', requireAuth, (req, res) => {

@@ -287,6 +287,8 @@ public class DataSeeder implements CommandLineRunner {
                         review(p6, user1Id, 5, "논워싱 인디고라 처음엔 뻣뻣하지만 입을수록 길들여집니다. 스트레이트 핏이 군더더기 없어 오래 입을 것 같아요."),
                         review(p7, user3Id, 5, "조거팬츠 밴딩이 편하고 카키 색이 코디하기 좋습니다. 집에서도 밖에서도 자주 입게 되네요.")
                 );
+                // 데모용: user2가 상품1에 남긴 후기(인덱스 1)를 비밀글로 표시
+                reviews.get(1).setSecret(true);
                 reviewRepository.saveAll(reviews);
             }
         }

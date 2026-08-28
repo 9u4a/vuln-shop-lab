@@ -8,6 +8,7 @@ import { fetchProduct, fetchReviews, createReview, updateReview, deleteReview } 
 import { formatCurrency } from '../format.js';
 import { CATEGORY_LABELS } from '../data/categories.js';
 import LikeButton from '../components/LikeButton.jsx';
+import { ADMIN_ROLES } from '../components/navLinks.js';
 
 function Stars({ value }) {
   const n = Math.max(0, Math.min(5, Math.round(Number(value) || 0)));
@@ -30,10 +31,14 @@ export default function ProductDetail() {
   const [reviews, setReviews] = useState([]);
   const [rating, setRating] = useState(5);
   const [body, setBody] = useState('');
+  const [secret, setSecret] = useState(false);
+  const [image, setImage] = useState(null);
   const [error, setError] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editBody, setEditBody] = useState('');
   const [editRating, setEditRating] = useState(5);
+  const [editSecret, setEditSecret] = useState(false);
+  const [editImage, setEditImage] = useState(null);
 
   const [quantity, setQuantity] = useState(1);
   const [selectedOption, setSelectedOption] = useState('');
@@ -61,8 +66,11 @@ export default function ProductDetail() {
     e.preventDefault();
     setError(null);
     try {
-      await createReview(backend.base, id, Number(rating), body);
+      await createReview(backend.base, id, { rating: Number(rating), body, secret, image });
       setBody('');
+      setSecret(false);
+      setImage(null);
+      e.target.reset?.();
       loadReviews();
     } catch (err) {
       setError(err.message);
@@ -73,13 +81,15 @@ export default function ProductDetail() {
     setEditingId(review.id);
     setEditBody(review.body);
     setEditRating(review.rating);
+    setEditSecret(!!review.secret);
+    setEditImage(null);
   }
 
   async function handleEditSubmit(e, review) {
     e.preventDefault();
     setError(null);
     try {
-      await updateReview(backend.base, id, review.id, Number(editRating), editBody);
+      await updateReview(backend.base, id, review.id, { rating: Number(editRating), body: editBody, secret: editSecret, image: editImage });
       setEditingId(null);
       loadReviews();
     } catch (err) {
@@ -187,7 +197,12 @@ export default function ProductDetail() {
         <h2>리뷰 <span className="muted">({reviews.length})</span></h2>
         {reviews.length === 0 && <p className="muted">아직 리뷰가 없습니다.</p>}
         <ul className="review-list">
-          {reviews.map((r) => (
+          {reviews.map((r) => {
+            const owns = user && (r.userId === user.id || r.username === user.username);
+            const isAdmin = ADMIN_ROLES.includes(user?.role);
+            const canView = !r.secret || owns || isAdmin;
+            const imgSrc = r.imageUrl ? `${backend.uploadsBase}/${r.imageUrl}` : null;
+            return (
             <li key={r.id} className="review-item">
               {editingId === r.id ? (
                 <form onSubmit={(e) => handleEditSubmit(e, r)}>
@@ -199,6 +214,13 @@ export default function ProductDetail() {
                   <label>리뷰 내용
                     <textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} rows="2" required />
                   </label>
+                  <label>사진 변경 (선택)
+                    <input type="file" accept="image/*" onChange={(e) => setEditImage(e.target.files[0] || null)} />
+                  </label>
+                  <label className="review-secret-check">
+                    <input type="checkbox" checked={editSecret} onChange={(e) => setEditSecret(e.target.checked)} />
+                    비밀글
+                  </label>
                   <div className="review-item__actions">
                     <button type="submit" className="btn btn-primary btn-sm">저장</button>
                     <button type="button" onClick={() => setEditingId(null)}>취소</button>
@@ -207,11 +229,25 @@ export default function ProductDetail() {
               ) : (
                 <>
                   <div className="review-item__head">
-                    <span className="review-item__user">{r.username}</span>
+                    <span className="review-item__user">
+                      {r.username}
+                      {r.secret && <span className="review-item__lock" title="비밀글"> 🔒</span>}
+                    </span>
                     <Stars value={r.rating} />
                   </div>
-                  <div className="review-item__body" dangerouslySetInnerHTML={{ __html: r.body }} />
-                  {user && (
+                  {canView ? (
+                    <>
+                      <div className="review-item__body" dangerouslySetInnerHTML={{ __html: r.body }} />
+                      {imgSrc && (
+                        <a href={imgSrc} target="_blank" rel="noreferrer" className="review-item__photo">
+                          <img src={imgSrc} alt="리뷰 사진" loading="lazy" />
+                        </a>
+                      )}
+                    </>
+                  ) : (
+                    <div className="review-item__body muted">🔒 비밀글입니다. 작성자와 관리자만 볼 수 있어요.</div>
+                  )}
+                  {user && canView && (
                     <div className="review-item__actions">
                       <button type="button" onClick={() => startEdit(r)}>수정</button>
                       <button type="button" onClick={() => handleDeleteReview(r)}>삭제</button>
@@ -220,7 +256,8 @@ export default function ProductDetail() {
                 </>
               )}
             </li>
-          ))}
+            );
+          })}
         </ul>
 
         {user ? (
@@ -233,6 +270,13 @@ export default function ProductDetail() {
             </label>
             <label>리뷰 내용
               <textarea value={body} onChange={(e) => setBody(e.target.value)} rows="3" required />
+            </label>
+            <label>사진 첨부 (선택)
+              <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files[0] || null)} />
+            </label>
+            <label className="review-secret-check">
+              <input type="checkbox" checked={secret} onChange={(e) => setSecret(e.target.checked)} />
+              비밀글로 작성 (작성자와 관리자만 볼 수 있어요)
             </label>
             <button type="submit" className="btn btn-primary">리뷰 등록</button>
           </form>
