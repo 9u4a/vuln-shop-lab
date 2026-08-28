@@ -18,6 +18,7 @@ export default function SiteFooter() {
             <li>1544-0000 (평일 10:00–18:00)</li>
             <li>점심 12:30–13:30 / 주말·공휴일 휴무</li>
             <li><Link to="/faq">자주 묻는 질문</Link></li>
+            <li><Link to="/qna">Q&amp;A 문의</Link></li>
           </ul>
         </div>
 
@@ -32,11 +33,20 @@ export default function SiteFooter() {
         </div>
 
         <div>
+          <h4>혜택 · 소식</h4>
+          <ul>
+            <li><Link to="/events">이벤트</Link></li>
+            <li><Link to="/coupons">쿠폰</Link></li>
+            <li><Link to="/notices">공지사항</Link></li>
+          </ul>
+        </div>
+
+        <div>
           <h4>이용안내</h4>
           <ul>
-            <li><Link to="/notices">공지사항</Link></li>
             <li><Link to="/notices">이용약관</Link></li>
             <li><Link to="/notices">개인정보 처리방침</Link></li>
+            <li><Link to="/orders">주문 내역</Link></li>
           </ul>
         </div>
       </div>
