@@ -31,6 +31,7 @@ import AdminOrders from './pages/admin/AdminOrders.jsx';
 import AdminProducts from './pages/admin/AdminProducts.jsx';
 import AdminFaq from './pages/admin/AdminFaq.jsx';
 import AdminNotices from './pages/admin/AdminNotices.jsx';
+import AdminEvents from './pages/admin/AdminEvents.jsx';
 
 function Layout({ children }) {
   return (
@@ -83,6 +84,7 @@ export default function App() {
                   <Route path="products" element={<AdminProducts />} />
                   <Route path="faq" element={<AdminFaq />} />
                   <Route path="notices" element={<AdminNotices />} />
+                  <Route path="events" element={<AdminEvents />} />
                 </Route>
 
                 <Route path="/forbidden" element={<Forbidden />} />

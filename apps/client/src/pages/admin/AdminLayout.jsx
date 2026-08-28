@@ -8,6 +8,7 @@ const TABS = [
   { to: 'products', label: '상품' },
   { to: 'faq', label: 'FAQ' },
   { to: 'notices', label: '공지사항' },
+  { to: 'events', label: '이벤트' },
 ];
 
 export default function AdminLayout() {
