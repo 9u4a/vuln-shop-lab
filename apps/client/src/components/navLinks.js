@@ -6,6 +6,7 @@ export const NAV_LINKS = [
   { to: '/coupons', label: '쿠폰' },
   { to: '/notices', label: '공지사항' },
   { to: '/faq', label: '자주 묻는 질문' },
+  { to: '/qna', label: 'Q&A' },
 ];
 
 // 계정/관리 링크(상단 유틸 바 및 모바일 드로어).

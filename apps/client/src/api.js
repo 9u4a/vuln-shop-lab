@@ -231,6 +231,37 @@ export function deleteFaqAdmin(base, id) {
   return apiRequest(base, `/faqs/${id}`, { method: 'DELETE' });
 }
 
+export function fetchQuestions(base, { q, page, pageSize } = {}) {
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (page) params.set('page', page);
+  if (pageSize) params.set('pageSize', pageSize);
+  const query = params.toString();
+  return apiRequest(base, `/qna${query ? `?${query}` : ''}`);
+}
+
+export function fetchQuestion(base, id) {
+  return apiRequest(base, `/qna/${id}`);
+}
+
+export function createQuestion(base, { title, body, secret }) {
+  return apiRequest(base, '/qna', {
+    method: 'POST',
+    body: JSON.stringify({ title, body, secret: !!secret }),
+  });
+}
+
+export function answerQuestion(base, id, answer) {
+  return apiRequest(base, `/qna/${id}/answer`, {
+    method: 'PUT',
+    body: JSON.stringify({ answer }),
+  });
+}
+
+export function deleteQuestion(base, id) {
+  return apiRequest(base, `/qna/${id}`, { method: 'DELETE' });
+}
+
 export function fetchNotices(base, { q, page, pageSize } = {}) {
   const params = new URLSearchParams();
   if (q) params.set('q', q);

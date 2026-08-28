@@ -140,6 +140,19 @@ db.exec(`
     ends_at TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
+
+  CREATE TABLE IF NOT EXISTS questions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER REFERENCES users(id),
+    username TEXT,
+    title TEXT NOT NULL,
+    body TEXT NOT NULL,
+    secret INTEGER NOT NULL DEFAULT 0,
+    answer TEXT,
+    answered_by TEXT,
+    answered_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
 `);
 
 for (const stmt of [
@@ -283,6 +296,27 @@ if (faqCount === 0) {
     ["개인정보 보호 및 보안 관련 정책이 어떻게 되나요?", "저희는 회원님의 모든 패스워드를 최신 암호화 알고리즘(BCrypt)으로 처리하여 철저하게 보호하고 있으며, 결제 정보 등 주요 데이터 역시 안전한 보안 프레임워크를 통해 철저하게 관리되고 있으니 안심하셔도 됩니다.", systemAdminId]
   ];
   for (const row of faqs) insertFaq.run(...row);
+}
+
+// 3b. Seed Q&A questions (if missing)
+const questionCount = db.prepare('SELECT COUNT(*) AS count FROM questions').get().count;
+if (questionCount === 0) {
+  const user1 = db.prepare("SELECT id FROM users WHERE username = 'user1'").get()?.id || 1;
+  const user2 = db.prepare("SELECT id FROM users WHERE username = 'user2'").get()?.id || 1;
+  const insertAnswered = db.prepare(
+    "INSERT INTO questions (user_id, username, title, body, secret, answer, answered_by, answered_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))"
+  );
+  const insertOpen = db.prepare(
+    'INSERT INTO questions (user_id, username, title, body, secret) VALUES (?, ?, ?, ?, ?)'
+  );
+  insertAnswered.run(
+    user1, 'user1', '주문한 상품 배송이 언제 시작되나요?',
+    '어제 결제를 완료했는데 아직 배송 시작 알림이 없어서 문의드립니다.', 0,
+    '안녕하세요. 결제 확인 후 영업일 기준 1일 내 순차 출고되고 있으며, 오늘 중 출고 예정입니다. 이용에 불편을 드려 죄송합니다.',
+    'admin'
+  );
+  insertOpen.run(user2, 'user2', '사이즈 교환도 가능한가요?', 'M 사이즈를 주문했는데 L로 교환하고 싶습니다. 절차가 궁금합니다.', 0);
+  insertOpen.run(user1, 'user1', '(비밀글) 결제 영수증 재발급 문의', '세금계산서 처리 때문에 영수증 재발급이 필요합니다. 계정 정보 확인 부탁드립니다.', 1);
 }
 
 // 4. Seed Notices (if missing)

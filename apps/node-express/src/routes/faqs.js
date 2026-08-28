@@ -1,6 +1,6 @@
 const express = require('express');
 const db = require('../db');
-const { requireAuth, requireAdmin } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -36,7 +36,7 @@ router.get('/', (req, res) => {
   res.json({ faqs: rows.map(toFaq), total, page, pageSize });
 });
 
-router.post('/', requireAuth, (req, res) => {
+router.post('/', requireAdmin, (req, res) => {
   const question = (req.body.question || '').trim();
   const answer = (req.body.answer || '').trim();
   if (!question || !answer) {
