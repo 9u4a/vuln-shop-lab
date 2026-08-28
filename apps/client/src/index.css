@@ -1103,6 +1103,71 @@ textarea { resize: vertical; min-height: 4.5rem; }
 }
 
 /* ------------------------------------------------------------------ */
+/* Event popups                                                       */
+/* ------------------------------------------------------------------ */
+.event-popups {
+  position: fixed;
+  top: calc(var(--header-h) + var(--space-6));
+  left: 50%;
+  z-index: 90;
+  pointer-events: none;
+}
+.event-popup {
+  pointer-events: auto;
+  position: absolute;
+  top: calc(var(--offset, 0) * 22px);
+  left: calc(var(--offset, 0) * 22px);
+  transform: translateX(-50%);
+  width: 340px;
+  max-width: calc(100vw - var(--space-8));
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-pop);
+  overflow: hidden;
+  animation: toast-in 0.22s ease-out;
+}
+.event-popup__image { width: 100%; display: block; object-fit: cover; max-height: 200px; }
+.event-popup__body { padding: var(--space-6); }
+.event-popup__title { font-size: 1.1rem; margin-bottom: var(--space-3); }
+.event-popup__content { font-size: 0.9rem; color: var(--color-text); }
+.event-popup__content :first-child { margin-top: 0; }
+.event-popup__content :last-child { margin-bottom: 0; }
+.event-popup__content h3 { font-size: 1rem; margin-bottom: var(--space-2); }
+.event-popup__body .btn { margin-top: var(--space-4); }
+.event-popup__foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--color-line);
+  background: var(--color-subtle);
+}
+.event-popup__dismiss, .event-popup__close {
+  border: none;
+  background: transparent;
+  padding: var(--space-3) var(--space-5);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+.event-popup__dismiss:hover, .event-popup__close:hover { color: var(--color-ink); }
+.event-popup__close { font-weight: 600; }
+
+@media (max-width: 640px) {
+  .event-popups { top: auto; bottom: 0; left: 0; right: 0; display: flex; flex-direction: column; }
+  .event-popup {
+    position: relative;
+    top: 0;
+    left: 0;
+    transform: none;
+    width: 100%;
+    max-width: none;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    margin-top: -1px;
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Toss payment widgets                                               */
 /* ------------------------------------------------------------------ */
 #payment-method, #agreement { margin: var(--space-4) 0; }

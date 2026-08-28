@@ -231,6 +231,26 @@ export async function uploadProductImageAdmin(base, productId, file) {
   return data;
 }
 
+export function fetchEvents(base) {
+  return apiRequest(base, '/events');
+}
+
+export function fetchEventsManage(base) {
+  return apiRequest(base, '/events/manage');
+}
+
+export function createEvent(base, event) {
+  return apiRequest(base, '/events', { method: 'POST', body: JSON.stringify(event) });
+}
+
+export function updateEvent(base, id, event) {
+  return apiRequest(base, `/events/${id}`, { method: 'PUT', body: JSON.stringify(event) });
+}
+
+export function deleteEvent(base, id) {
+  return apiRequest(base, `/events/${id}`, { method: 'DELETE' });
+}
+
 export function changePassword(base, currentPassword, newPassword) {
   return apiRequest(base, '/profile/password', {
     method: 'PUT',
