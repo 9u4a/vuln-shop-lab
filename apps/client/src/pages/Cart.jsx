@@ -10,7 +10,7 @@ import EmptyState from '../components/EmptyState.jsx';
 const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY;
 
 export default function Cart() {
-  const { items, total, setQuantity, removeItem } = useCart();
+  const { items, total, setQuantity, changeOption, removeItem } = useCart();
   const { backend, backendKey } = useBackend();
   const [error, setError] = useState(null);
   const [pendingNote, setPendingNote] = useState(null);
@@ -128,7 +128,21 @@ export default function Cart() {
               <li key={`${i.productId}::${i.option || ''}`} className="line-item">
                 <div className="line-item__main">
                   <span className="line-item__name">{i.name}</span>
-                  {i.option && <span className="line-item__meta">옵션: {i.option}</span>}
+                  {i.optionValues && i.optionValues.length > 0 ? (
+                    <label className="line-item__option">
+                      {i.optionName || '옵션'}
+                      <select
+                        value={i.option || ''}
+                        onChange={(e) => changeOption(i.productId, i.option, e.target.value)}
+                      >
+                        {i.optionValues.map((v) => (
+                          <option key={v} value={v}>{v}</option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : (
+                    i.option && <span className="line-item__meta">옵션: {i.option}</span>
+                  )}
                   <span className="line-item__meta tnum">{formatCurrency(i.price)}</span>
                 </div>
                 <div className="qty-stepper">

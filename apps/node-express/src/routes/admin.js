@@ -17,14 +17,49 @@ router.get('/stats', requireAdmin, (req, res) => {
 });
 
 router.get('/users', requireAdmin, (req, res) => {
-  const rows = db.prepare('SELECT id, username, role, bio, avatar_url, created_at FROM users ORDER BY id').all();
-  res.json({ users: rows });
+  const rows = db.prepare('SELECT id, username, role, bio, avatar_url, active, created_at FROM users ORDER BY id').all();
+  res.json({ users: rows.map((u) => ({ ...u, active: u.active !== 0 })) });
+});
+
+router.put('/users/:id/active', requireAdmin, (req, res) => {
+  const { active } = req.body;
+  const target = db.prepare('SELECT id FROM users WHERE id = ?').get(req.params.id);
+  if (!target) return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
+  db.prepare('UPDATE users SET active = ? WHERE id = ?').run(active ? 1 : 0, target.id);
+  res.json({ ok: true, active: !!active });
+});
+
+router.get('/login-logs', requireAdmin, (req, res) => {
+  const { username, success } = req.query;
+  let sql = 'SELECT * FROM login_logs WHERE 1=1';
+  const params = [];
+  if (username) {
+    sql += ' AND username = ?';
+    params.push(username);
+  }
+  if (success === '0' || success === '1') {
+    sql += ' AND success = ?';
+    params.push(Number(success));
+  }
+  sql += ' ORDER BY id DESC LIMIT 200';
+  const rows = db.prepare(sql).all(...params);
+  res.json({
+    logs: rows.map((r) => ({
+      id: r.id,
+      userId: r.user_id,
+      username: r.username,
+      ip: r.ip,
+      userAgent: r.user_agent,
+      success: !!r.success,
+      at: r.at,
+    })),
+  });
 });
 
 router.get('/users/:id', requireAdmin, (req, res) => {
   const u = db
     .prepare(
-      `SELECT id, username, role, bio, avatar_url, name, phone, postcode, address, address_detail, created_at
+      `SELECT id, username, role, bio, avatar_url, name, phone, postcode, address, address_detail, active, created_at
        FROM users WHERE id = ?`
     )
     .get(req.params.id);
@@ -44,6 +79,7 @@ router.get('/users/:id', requireAdmin, (req, res) => {
       postcode: u.postcode,
       address: u.address,
       addressDetail: u.address_detail,
+      active: u.active !== 0,
       createdAt: u.created_at,
     },
     orders: orders.map((o) => ({
@@ -112,15 +148,15 @@ router.get('/orders/:id', requireAdmin, (req, res) => {
 });
 
 router.post('/products', requireAdmin, (req, res) => {
-  const { name, description, price, imageUrl, category, brand, sku, stock, optionName, optionValues } = req.body;
+  const { name, description, price, imageUrl, category, brand, sku, gender, color, material, stock, optionName, optionValues } = req.body;
   if (!name || price == null) {
     return res.status(400).json({ error: '이름과 가격은 필수입니다.' });
   }
   const result = db
     .prepare(
       `INSERT INTO products
-        (name, description, price, image_url, category, brand, sku, stock, option_name, option_values)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        (name, description, price, image_url, category, brand, sku, gender, color, material, stock, option_name, option_values)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       name,
@@ -130,6 +166,9 @@ router.post('/products', requireAdmin, (req, res) => {
       category || null,
       brand || null,
       sku || null,
+      gender || null,
+      color || null,
+      material || null,
       stock != null ? Number(stock) : 100,
       optionName || null,
       Array.isArray(optionValues) ? optionValues.join(',') : optionValues || null
@@ -140,11 +179,11 @@ router.post('/products', requireAdmin, (req, res) => {
 router.put('/products/:id', requireAdmin, (req, res) => {
   const existing = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: '상품을 찾을 수 없습니다.' });
-  const { name, description, price, imageUrl, category, brand, sku, stock, optionName, optionValues } = req.body;
+  const { name, description, price, imageUrl, category, brand, sku, gender, color, material, stock, optionName, optionValues } = req.body;
   db.prepare(
     `UPDATE products SET
       name = ?, description = ?, price = ?, image_url = ?, category = ?,
-      brand = ?, sku = ?, stock = ?, option_name = ?, option_values = ?
+      brand = ?, sku = ?, gender = ?, color = ?, material = ?, stock = ?, option_name = ?, option_values = ?
      WHERE id = ?`
   ).run(
     name ?? existing.name,
@@ -154,12 +193,23 @@ router.put('/products/:id', requireAdmin, (req, res) => {
     category ?? existing.category,
     brand ?? existing.brand,
     sku ?? existing.sku,
+    gender ?? existing.gender,
+    color ?? existing.color,
+    material ?? existing.material,
     stock != null ? Number(stock) : existing.stock,
     optionName ?? existing.option_name,
     (Array.isArray(optionValues) ? optionValues.join(',') : optionValues) ?? existing.option_values,
     existing.id
   );
   res.json({ ok: true });
+});
+
+// 공용 이미지 업로드 — 공지/이벤트 등에서 파일을 올린 뒤 반환된 filename을 imageUrl로 사용.
+router.post('/upload', requireAdmin, upload.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: '이미지 파일이 없거나 형식이 올바르지 않습니다.' });
+  }
+  res.status(201).json({ filename: req.file.filename });
 });
 
 router.post('/products/:id/image', requireAdmin, upload.single('image'), (req, res) => {

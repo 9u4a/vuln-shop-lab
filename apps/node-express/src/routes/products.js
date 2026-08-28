@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
+const { upload } = require('../uploads');
 
 const router = express.Router();
 
@@ -14,15 +15,24 @@ function toProduct(row) {
     category: row.category,
     brand: row.brand,
     sku: row.sku,
+    gender: row.gender,
+    color: row.color,
+    material: row.material,
     stock: row.stock,
     optionName: row.option_name,
     optionValues: row.option_values ? row.option_values.split(',') : [],
+    reviewCount: row.review_count != null ? row.review_count : undefined,
+    likeCount: row.like_count != null ? row.like_count : undefined,
+    liked: row.liked != null ? !!row.liked : undefined,
     createdAt: row.created_at,
   };
 }
 
+// 앱 레벨에서 처리하는 정렬 키(SQL ORDER BY에 넣지 않는다).
+const APP_SORTS = new Set(['reviews', 'likes']);
+
 router.get('/', (req, res) => {
-  const { q, category, sort } = req.query;
+  const { q, category, sort, gender, color, material, minPrice, maxPrice, inStock } = req.query;
 
   let sql = 'SELECT * FROM products WHERE 1=1';
   if (q) {
@@ -31,7 +41,29 @@ router.get('/', (req, res) => {
   if (category) {
     sql += ` AND category = '${category}'`;
   }
-  sql += ` ORDER BY ${sort || 'id'}`;
+  if (gender) {
+    sql += ` AND gender = '${gender}'`;
+  }
+  if (color) {
+    sql += ` AND color = '${color}'`;
+  }
+  if (material) {
+    sql += ` AND material = '${material}'`;
+  }
+  if (minPrice) {
+    sql += ` AND price >= ${Number(minPrice) || 0}`;
+  }
+  if (maxPrice) {
+    sql += ` AND price <= ${Number(maxPrice) || 0}`;
+  }
+  if (inStock === '1' || inStock === 'true') {
+    sql += ' AND stock > 0';
+  }
+  if (sort && !APP_SORTS.has(sort)) {
+    sql += ` ORDER BY ${sort}`;
+  } else {
+    sql += ' ORDER BY id';
+  }
 
   let products;
   try {
@@ -39,13 +71,43 @@ router.get('/', (req, res) => {
   } catch (err) {
     return res.status(400).json({ error: '잘못된 요청입니다.' });
   }
-  res.json({ products: products.map(toProduct) });
+
+  const counts = db.prepare('SELECT product_id, COUNT(*) AS c FROM reviews GROUP BY product_id').all();
+  const countMap = new Map(counts.map((r) => [r.product_id, r.c]));
+  const likeCounts = db.prepare('SELECT product_id, COUNT(*) AS c FROM product_likes GROUP BY product_id').all();
+  const likeMap = new Map(likeCounts.map((r) => [r.product_id, r.c]));
+  const likedSet = req.session.user
+    ? new Set(
+        db.prepare('SELECT product_id FROM product_likes WHERE user_id = ?').all(req.session.user.id).map((r) => r.product_id)
+      )
+    : new Set();
+
+  let mapped = products.map((p) =>
+    toProduct({
+      ...p,
+      review_count: countMap.get(p.id) || 0,
+      like_count: likeMap.get(p.id) || 0,
+      liked: likedSet.has(p.id) ? 1 : 0,
+    })
+  );
+  if (sort === 'reviews') {
+    mapped = mapped.sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0));
+  } else if (sort === 'likes') {
+    mapped = mapped.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0));
+  }
+
+  res.json({ products: mapped });
 });
 
 router.get('/:id', (req, res) => {
   const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
   if (!product) return res.status(404).json({ error: '상품을 찾을 수 없습니다.' });
-  res.json({ product: toProduct(product) });
+  const reviewCount = db.prepare('SELECT COUNT(*) AS c FROM reviews WHERE product_id = ?').get(product.id).c;
+  const likeCount = db.prepare('SELECT COUNT(*) AS c FROM product_likes WHERE product_id = ?').get(product.id).c;
+  const liked = req.session.user
+    ? !!db.prepare('SELECT id FROM product_likes WHERE user_id = ? AND product_id = ?').get(req.session.user.id, product.id)
+    : false;
+  res.json({ product: toProduct({ ...product, review_count: reviewCount, like_count: likeCount, liked: liked ? 1 : 0 }) });
 });
 
 router.get('/:id/reviews', (req, res) => {
@@ -59,15 +121,18 @@ router.get('/:id/reviews', (req, res) => {
   res.json({
     reviews: rows.map((r) => ({
       id: r.id,
+      userId: r.user_id,
       username: r.username,
       rating: r.rating,
       body: r.body,
+      imageUrl: r.image_url,
+      secret: !!r.secret,
       createdAt: r.created_at,
     })),
   });
 });
 
-router.post('/:id/reviews', requireAuth, (req, res) => {
+router.post('/:id/reviews', requireAuth, upload.single('image'), (req, res) => {
   const product = db.prepare('SELECT id FROM products WHERE id = ?').get(req.params.id);
   if (!product) return res.status(404).json({ error: '상품을 찾을 수 없습니다.' });
 
@@ -76,22 +141,27 @@ router.post('/:id/reviews', requireAuth, (req, res) => {
   if (!Number.isInteger(rating) || rating < 1 || rating > 5 || !body) {
     return res.status(400).json({ error: '평점(1~5)과 내용을 입력해주세요.' });
   }
+  const secret = req.body.secret === 'true' || req.body.secret === '1' || req.body.secret === true ? 1 : 0;
+  const imageUrl = req.file ? req.file.filename : null;
 
   const result = db
-    .prepare('INSERT INTO reviews (product_id, user_id, rating, body) VALUES (?, ?, ?, ?)')
-    .run(product.id, req.session.user.id, rating, body);
+    .prepare('INSERT INTO reviews (product_id, user_id, rating, body, image_url, secret) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(product.id, req.session.user.id, rating, body, imageUrl, secret);
 
   res.status(201).json({
     review: {
       id: result.lastInsertRowid,
+      userId: req.session.user.id,
       username: req.session.user.username,
       rating,
       body,
+      imageUrl,
+      secret: !!secret,
     },
   });
 });
 
-router.put('/:id/reviews/:reviewId', requireAuth, (req, res) => {
+router.put('/:id/reviews/:reviewId', requireAuth, upload.single('image'), (req, res) => {
   const review = db.prepare('SELECT * FROM reviews WHERE id = ? AND product_id = ?').get(req.params.reviewId, req.params.id);
   if (!review) return res.status(404).json({ error: '리뷰를 찾을 수 없습니다.' });
 
@@ -100,9 +170,11 @@ router.put('/:id/reviews/:reviewId', requireAuth, (req, res) => {
   if (!Number.isInteger(rating) || rating < 1 || rating > 5 || !body) {
     return res.status(400).json({ error: '평점(1~5)과 내용을 입력해주세요.' });
   }
+  const secret = req.body.secret === 'true' || req.body.secret === '1' || req.body.secret === true ? 1 : 0;
+  const imageUrl = req.file ? req.file.filename : review.image_url;
 
-  db.prepare('UPDATE reviews SET rating = ?, body = ? WHERE id = ?').run(rating, body, review.id);
-  res.json({ review: { id: review.id, rating, body } });
+  db.prepare('UPDATE reviews SET rating = ?, body = ?, image_url = ?, secret = ? WHERE id = ?').run(rating, body, imageUrl, secret, review.id);
+  res.json({ review: { id: review.id, rating, body, imageUrl, secret: !!secret } });
 });
 
 router.delete('/:id/reviews/:reviewId', requireAuth, (req, res) => {
@@ -114,3 +186,4 @@ router.delete('/:id/reviews/:reviewId', requireAuth, (req, res) => {
 });
 
 module.exports = router;
+module.exports.toProduct = toProduct;

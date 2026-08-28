@@ -35,9 +35,24 @@ public class Product {
 
     private String sku;
 
+    private String gender;
+
+    private String color;
+
+    private String material;
+
     @Column(nullable = false)
     @ColumnDefault("100")
     private int stock = 100;
+
+    @Transient
+    private Long reviewCount;
+
+    @Transient
+    private Long likeCount;
+
+    @Transient
+    private Boolean liked;
 
     @Column(name = "option_name")
     private String optionName;
@@ -72,8 +87,26 @@ public class Product {
     public String getSku() { return sku; }
     public void setSku(String sku) { this.sku = sku; }
 
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
+
+    public String getColor() { return color; }
+    public void setColor(String color) { this.color = color; }
+
+    public String getMaterial() { return material; }
+    public void setMaterial(String material) { this.material = material; }
+
     public int getStock() { return stock; }
     public void setStock(int stock) { this.stock = stock; }
+
+    public Long getReviewCount() { return reviewCount; }
+    public void setReviewCount(Long reviewCount) { this.reviewCount = reviewCount; }
+
+    public Long getLikeCount() { return likeCount; }
+    public void setLikeCount(Long likeCount) { this.likeCount = likeCount; }
+
+    public Boolean getLiked() { return liked; }
+    public void setLiked(Boolean liked) { this.liked = liked; }
 
     public String getOptionName() { return optionName; }
     public void setOptionName(String optionName) { this.optionName = optionName; }

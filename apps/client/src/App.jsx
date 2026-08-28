@@ -15,6 +15,7 @@ import Products from './pages/Products.jsx';
 import ProductDetail from './pages/ProductDetail.jsx';
 import MyPageLayout from './pages/mypage/MyPageLayout.jsx';
 import MyPageProfile from './pages/mypage/MyPageProfile.jsx';
+import MyPageLikes from './pages/mypage/MyPageLikes.jsx';
 import MyPagePassword from './pages/mypage/MyPagePassword.jsx';
 import Cart from './pages/Cart.jsx';
 import CheckoutResult from './pages/CheckoutResult.jsx';
@@ -22,16 +23,22 @@ import Orders from './pages/Orders.jsx';
 import OrderDetail from './pages/OrderDetail.jsx';
 import Faq from './pages/Faq.jsx';
 import Notices from './pages/Notices.jsx';
+import Events from './pages/Events.jsx';
+import EventDetail from './pages/EventDetail.jsx';
+import NoticeDetail from './pages/NoticeDetail.jsx';
+import Coupons from './pages/Coupons.jsx';
 import NotFound from './pages/NotFound.jsx';
 import Forbidden from './pages/Forbidden.jsx';
 import AdminLayout from './pages/admin/AdminLayout.jsx';
 import AdminSettings from './pages/admin/AdminSettings.jsx';
 import AdminUsers from './pages/admin/AdminUsers.jsx';
+import AdminAccessLogs from './pages/admin/AdminAccessLogs.jsx';
 import AdminOrders from './pages/admin/AdminOrders.jsx';
 import AdminProducts from './pages/admin/AdminProducts.jsx';
 import AdminFaq from './pages/admin/AdminFaq.jsx';
 import AdminNotices from './pages/admin/AdminNotices.jsx';
 import AdminEvents from './pages/admin/AdminEvents.jsx';
+import AdminCoupons from './pages/admin/AdminCoupons.jsx';
 
 function Layout({ children }) {
   return (
@@ -58,12 +65,17 @@ export default function App() {
                 <Route path="/products/:id" element={<ProductDetail />} />
                 <Route path="/faq" element={<Faq />} />
                 <Route path="/notices" element={<Notices />} />
+                <Route path="/notices/:id" element={<NoticeDetail />} />
+                <Route path="/events" element={<Events />} />
+                <Route path="/events/:id" element={<EventDetail />} />
+                <Route path="/coupons" element={<Coupons />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout/success" element={<CheckoutResult success />} />
                 <Route path="/checkout/fail" element={<CheckoutResult success={false} />} />
 
                 <Route path="/mypage" element={<RequireAuth><MyPageLayout /></RequireAuth>}>
                   <Route index element={<MyPageProfile />} />
+                  <Route path="likes" element={<MyPageLikes />} />
                   <Route path="password" element={<MyPagePassword />} />
                 </Route>
                 <Route path="/orders" element={<RequireAuth><Orders /></RequireAuth>} />
@@ -80,11 +92,13 @@ export default function App() {
                   <Route index element={<Navigate to="settings" replace />} />
                   <Route path="settings" element={<AdminSettings />} />
                   <Route path="users" element={<AdminUsers />} />
+                  <Route path="logs" element={<AdminAccessLogs />} />
                   <Route path="orders" element={<AdminOrders />} />
                   <Route path="products" element={<AdminProducts />} />
                   <Route path="faq" element={<AdminFaq />} />
                   <Route path="notices" element={<AdminNotices />} />
                   <Route path="events" element={<AdminEvents />} />
+                  <Route path="coupons" element={<AdminCoupons />} />
                 </Route>
 
                 <Route path="/forbidden" element={<Forbidden />} />

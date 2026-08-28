@@ -58,6 +58,16 @@ public class EventController {
         return ResponseEntity.ok(Map.of("events", events));
     }
 
+    // 단일 이벤트(상세 페이지용) — public.
+    @GetMapping("/{id}")
+    public ResponseEntity<?> detail(@PathVariable Long id) {
+        Event event = eventRepository.findById(id).orElse(null);
+        if (event == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "이벤트를 찾을 수 없습니다."));
+        }
+        return ResponseEntity.ok(Map.of("event", event));
+    }
+
     @PostMapping
     public ResponseEntity<?> create(@RequestBody Map<String, Object> body, HttpSession session) {
         ResponseEntity<?> denied = requireAdmin(session);

@@ -39,6 +39,13 @@ router.get('/manage', requireAdmin, (req, res) => {
   res.json({ events: rows.map(toEvent) });
 });
 
+// 단일 이벤트(상세 페이지용) — public.
+router.get('/:id', (req, res) => {
+  const row = db.prepare('SELECT * FROM events WHERE id = ?').get(req.params.id);
+  if (!row) return res.status(404).json({ error: '이벤트를 찾을 수 없습니다.' });
+  res.json({ event: toEvent(row) });
+});
+
 router.post('/', requireAdmin, (req, res) => {
   const { title, body, imageUrl, linkUrl, active, startsAt, endsAt } = req.body;
   if (!title || !String(title).trim()) {

@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useBackend } from '../BackendContext.jsx';
 import { useSession } from '../SessionContext.jsx';
-import { visibleNavLinks } from './navLinks.js';
+import { NAV_LINKS, ACCOUNT_LINKS, visibleLinks } from './navLinks.js';
+import { CATEGORIES } from '../data/categories.js';
 
 export default function SiteDrawer({ open, onClose }) {
   const { backends, backendKey, selectBackend } = useBackend();
@@ -16,7 +17,8 @@ export default function SiteDrawer({ open, onClose }) {
     return () => { document.body.style.overflow = ''; };
   }, [open]);
 
-  const links = visibleNavLinks(user);
+  const links = visibleLinks(NAV_LINKS, user);
+  const accountLinks = visibleLinks(ACCOUNT_LINKS, user);
 
   return (
     <>
@@ -31,9 +33,20 @@ export default function SiteDrawer({ open, onClose }) {
           <Link key={l.to} to={l.to} className="drawer__link">{l.label}</Link>
         ))}
 
+        <p className="drawer__section-label">카테고리</p>
+        <Link to="/products" className="drawer__link">전체 상품</Link>
+        {CATEGORIES.map((c) => (
+          <Link key={c.slug} to={`/products?category=${c.slug}`} className="drawer__link">
+            {c.emoji} {c.label}
+          </Link>
+        ))}
+
         <p className="drawer__section-label">계정</p>
         {user ? (
           <>
+            {accountLinks.map((l) => (
+              <Link key={l.to} to={l.to} className="drawer__link">{l.label}</Link>
+            ))}
             <Link to="/mypage" className="drawer__link">마이페이지 ({user.username})</Link>
             <button
               type="button"

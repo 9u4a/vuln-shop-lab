@@ -40,4 +40,12 @@ public class AuthService {
         return userRepository.findByUsername(username)
                 .filter(user -> passwordEncoder.matches(rawPassword, user.getPasswordHash()));
     }
+
+    public Optional<User> findByUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
+
+    public boolean passwordMatches(User user, String rawPassword) {
+        return passwordEncoder.matches(rawPassword, user.getPasswordHash());
+    }
 }

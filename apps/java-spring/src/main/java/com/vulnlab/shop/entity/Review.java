@@ -1,6 +1,7 @@
 package com.vulnlab.shop.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.ColumnDefault;
 import java.time.LocalDateTime;
 
 @Entity
@@ -23,6 +24,13 @@ public class Review {
     @Column(nullable = false, length = 2000)
     private String body;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
+    @Column(nullable = false)
+    @ColumnDefault("false")
+    private boolean secret = false;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -40,6 +48,12 @@ public class Review {
 
     public String getBody() { return body; }
     public void setBody(String body) { this.body = body; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public boolean isSecret() { return secret; }
+    public void setSecret(boolean secret) { this.secret = secret; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

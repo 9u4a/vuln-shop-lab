@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { CATEGORIES } from '../data/categories.js';
 
 export default function SiteFooter() {
   return (
@@ -24,9 +25,9 @@ export default function SiteFooter() {
           <h4>쇼핑</h4>
           <ul>
             <li><Link to="/products">전체 상품</Link></li>
-            <li><Link to="/products?category=accessories">액세서리</Link></li>
-            <li><Link to="/products?category=displays">디스플레이</Link></li>
-            <li><Link to="/products?category=office">오피스</Link></li>
+            {CATEGORIES.map((c) => (
+              <li key={c.slug}><Link to={`/products?category=${c.slug}`}>{c.label}</Link></li>
+            ))}
           </ul>
         </div>
 

@@ -33,17 +33,32 @@ export function logout(base) {
   return apiRequest(base, '/auth/logout', { method: 'POST' });
 }
 
-export function fetchProducts(base, { q, category, sort } = {}) {
+export function fetchProducts(base, { q, category, sort, gender, color, material, minPrice, maxPrice, inStock } = {}) {
   const params = new URLSearchParams();
   if (q) params.set('q', q);
   if (category) params.set('category', category);
   if (sort) params.set('sort', sort);
+  if (gender) params.set('gender', gender);
+  if (color) params.set('color', color);
+  if (material) params.set('material', material);
+  if (minPrice) params.set('minPrice', minPrice);
+  if (maxPrice) params.set('maxPrice', maxPrice);
+  if (inStock) params.set('inStock', inStock);
   const query = params.toString();
   return apiRequest(base, `/products${query ? `?${query}` : ''}`);
 }
 
 export function fetchProduct(base, id) {
   return apiRequest(base, `/products/${id}`);
+}
+
+export function toggleLike(base, productId) {
+  return apiRequest(base, `/likes/${productId}`, { method: 'POST' });
+}
+
+export function fetchWishlist(base, userId) {
+  const qs = userId ? `?userId=${encodeURIComponent(userId)}` : '';
+  return apiRequest(base, `/likes${qs}`);
 }
 
 export function fetchProfile(base) {
@@ -106,18 +121,30 @@ export function fetchReviews(base, productId) {
   return apiRequest(base, `/products/${productId}/reviews`);
 }
 
-export function createReview(base, productId, rating, body) {
-  return apiRequest(base, `/products/${productId}/reviews`, {
-    method: 'POST',
-    body: JSON.stringify({ rating, body }),
-  });
+function reviewFormData({ rating, body, secret, image }) {
+  const fd = new FormData();
+  fd.append('rating', rating);
+  fd.append('body', body);
+  fd.append('secret', secret ? 'true' : 'false');
+  if (image) fd.append('image', image);
+  return fd;
 }
 
-export function updateReview(base, productId, reviewId, rating, body) {
-  return apiRequest(base, `/products/${productId}/reviews/${reviewId}`, {
-    method: 'PUT',
-    body: JSON.stringify({ rating, body }),
-  });
+async function reviewRequest(url, method, payload) {
+  const res = await fetch(url, { method, credentials: 'include', body: reviewFormData(payload) });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error(data?.error || `요청에 실패했습니다 (${res.status})`);
+  }
+  return data;
+}
+
+export function createReview(base, productId, payload) {
+  return reviewRequest(`${base}/products/${productId}/reviews`, 'POST', payload);
+}
+
+export function updateReview(base, productId, reviewId, payload) {
+  return reviewRequest(`${base}/products/${productId}/reviews/${reviewId}`, 'PUT', payload);
 }
 
 export function deleteReview(base, productId, reviewId) {
@@ -137,6 +164,21 @@ export function updateUserRole(base, userId, role) {
     method: 'PUT',
     body: JSON.stringify({ role }),
   });
+}
+
+export function toggleUserActive(base, userId, active) {
+  return apiRequest(base, `/admin/users/${userId}/active`, {
+    method: 'PUT',
+    body: JSON.stringify({ active }),
+  });
+}
+
+export function fetchLoginLogs(base, { username, success } = {}) {
+  const params = new URLSearchParams();
+  if (username) params.set('username', username);
+  if (success === '0' || success === '1') params.set('success', success);
+  const query = params.toString();
+  return apiRequest(base, `/admin/login-logs${query ? `?${query}` : ''}`);
 }
 
 export function fetchAdminOrders(base) {
@@ -198,18 +240,62 @@ export function fetchNotices(base, { q, page, pageSize } = {}) {
   return apiRequest(base, `/notices${query ? `?${query}` : ''}`);
 }
 
-export function createNoticeAdmin(base, title, body) {
+export function fetchNotice(base, id) {
+  return apiRequest(base, `/notices/${id}`);
+}
+
+export function createNoticeAdmin(base, title, body, imageUrl) {
   return apiRequest(base, '/notices', {
     method: 'POST',
-    body: JSON.stringify({ title, body }),
+    body: JSON.stringify({ title, body, imageUrl: imageUrl || null }),
   });
 }
 
-export function updateNoticeAdmin(base, id, title, body) {
+export function updateNoticeAdmin(base, id, title, body, imageUrl) {
   return apiRequest(base, `/notices/${id}`, {
     method: 'PUT',
-    body: JSON.stringify({ title, body }),
+    body: JSON.stringify({ title, body, imageUrl: imageUrl ?? null }),
   });
+}
+
+// 공용 관리자 이미지 업로드 — 반환된 filename을 imageUrl로 사용.
+export async function uploadImageAdmin(base, file) {
+  const formData = new FormData();
+  formData.append('image', file);
+  const res = await fetch(`${base}/admin/upload`, { method: 'POST', credentials: 'include', body: formData });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error(data?.error || `요청에 실패했습니다 (${res.status})`);
+  }
+  return data;
+}
+
+export function fetchCoupons(base) {
+  return apiRequest(base, '/coupons');
+}
+
+export function fetchMyCoupons(base) {
+  return apiRequest(base, '/coupons/mine');
+}
+
+export function claimCoupon(base, id) {
+  return apiRequest(base, `/coupons/${id}/claim`, { method: 'POST' });
+}
+
+export function fetchCouponsManage(base) {
+  return apiRequest(base, '/coupons/manage');
+}
+
+export function createCoupon(base, coupon) {
+  return apiRequest(base, '/coupons', { method: 'POST', body: JSON.stringify(coupon) });
+}
+
+export function updateCoupon(base, id, coupon) {
+  return apiRequest(base, `/coupons/${id}`, { method: 'PUT', body: JSON.stringify(coupon) });
+}
+
+export function deleteCoupon(base, id) {
+  return apiRequest(base, `/coupons/${id}`, { method: 'DELETE' });
 }
 
 export function deleteNoticeAdmin(base, id) {
@@ -233,6 +319,10 @@ export async function uploadProductImageAdmin(base, productId, file) {
 
 export function fetchEvents(base) {
   return apiRequest(base, '/events');
+}
+
+export function fetchEvent(base, id) {
+  return apiRequest(base, `/events/${id}`);
 }
 
 export function fetchEventsManage(base) {

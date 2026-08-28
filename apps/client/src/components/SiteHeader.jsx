@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useBackend } from '../BackendContext.jsx';
 import { useCart } from '../CartContext.jsx';
 import { useSession } from '../SessionContext.jsx';
-import { visibleNavLinks } from './navLinks.js';
+import { NAV_LINKS, ACCOUNT_LINKS, visibleLinks } from './navLinks.js';
+import { CATEGORIES } from '../data/categories.js';
 import SiteDrawer from './SiteDrawer.jsx';
 
 export default function SiteHeader() {
@@ -11,10 +12,14 @@ export default function SiteHeader() {
   const { items } = useCart();
   const { user, logout } = useSession();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [term, setTerm] = useState('');
 
-  const links = visibleNavLinks(user);
+  const links = visibleLinks(NAV_LINKS, user);
+  const accountLinks = visibleLinks(ACCOUNT_LINKS, user);
+  const activeCategory = location.pathname === '/products' ? searchParams.get('category') || '' : null;
   const cartCount = items.reduce((n, i) => n + i.quantity, 0);
 
   function handleSearch(e) {
@@ -49,6 +54,9 @@ export default function SiteHeader() {
           {user ? (
             <>
               <span>{user.username}님</span>
+              {accountLinks.map((l) => (
+                <Link key={l.to} to={l.to} className="link-plain">{l.label}</Link>
+              ))}
               <Link to="/mypage" className="link-plain">마이페이지</Link>
               <button
                 type="button"
@@ -81,6 +89,22 @@ export default function SiteHeader() {
         <Link to="/" className="site-header__brand">Vuln Shop</Link>
 
         <nav className="site-nav">
+          <Link
+            to="/products"
+            className={activeCategory === '' ? 'site-nav__link active' : 'site-nav__link'}
+          >
+            전체
+          </Link>
+          {CATEGORIES.map((c) => (
+            <Link
+              key={c.slug}
+              to={`/products?category=${c.slug}`}
+              className={activeCategory === c.slug ? 'site-nav__link active' : 'site-nav__link'}
+            >
+              {c.label}
+            </Link>
+          ))}
+          <span className="site-nav__divider" aria-hidden="true" />
           {links.map((l) => (
             <NavLink
               key={l.to}

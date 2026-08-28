@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackend } from '../../BackendContext.jsx';
 import { useSession } from '../../SessionContext.jsx';
-import { fetchAdminUsers, fetchAdminUser, updateUserRole } from '../../api.js';
+import { fetchAdminUsers, fetchAdminUser, updateUserRole, toggleUserActive } from '../../api.js';
 import { formatCurrency } from '../../format.js';
 import StatusChip from '../../components/StatusChip.jsx';
 
@@ -45,6 +45,16 @@ export default function AdminUsers() {
     }
   }
 
+  async function handleToggleActive(userId, active) {
+    setError(null);
+    try {
+      await toggleUserActive(backend.base, userId, active);
+      load();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   async function handleRoleChange(userId, role) {
     try {
       await updateUserRole(backend.base, userId, role);
@@ -72,6 +82,7 @@ export default function AdminUsers() {
               <th>아이디</th>
               <th>이름</th>
               <th>권한</th>
+              <th>상태</th>
               <th>가입일</th>
             </tr>
           </thead>
@@ -89,6 +100,19 @@ export default function AdminUsers() {
                   ) : (
                     <span className="badge">{u.role}</span>
                   )}
+                </td>
+                <td onClick={(e) => e.stopPropagation()}>
+                  <span className={u.active === false ? 'badge badge-danger' : 'badge badge-ok'}>
+                    {u.active === false ? '비활성' : '활성'}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    style={{ marginLeft: 'var(--space-2)' }}
+                    onClick={() => handleToggleActive(u.id, u.active === false)}
+                  >
+                    {u.active === false ? '활성화' : '비활성화'}
+                  </button>
                 </td>
                 <td>{(u.createdAt || u.created_at || '').slice(0, 10)}</td>
               </tr>

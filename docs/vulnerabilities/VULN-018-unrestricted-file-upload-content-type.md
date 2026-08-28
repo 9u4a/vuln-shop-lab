@@ -23,6 +23,9 @@ GET http://localhost:8090/uploads/node/<uuid>.html   → text/html, 스크립트
 ```
 
 관리자 상품 이미지 업로드(`POST /api/{node,java}/admin/products/:id/image`)도 동일 경로.
+후기 이미지 업로드(VULN-025)와 공지/이벤트용 공용 업로드(`POST /api/{node,java}/admin/upload`,
+`docs/features/31-events-coupons-uploads.md`)도 같은 헬퍼를 재사용하므로 동일하게 취약 —
+2026-08-28 재확인 시 `/admin/upload` 로 올린 `.html` 이 `/uploads/*` 에서 `text/html` 로 서빙됨.
 
 ## 영향
 

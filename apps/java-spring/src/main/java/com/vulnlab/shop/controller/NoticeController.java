@@ -53,6 +53,7 @@ public class NoticeController {
             m.put("id", n.getId());
             m.put("title", n.getTitle());
             m.put("body", TemplateRenderer.render(n.getBody()));
+            m.put("imageUrl", n.getImageUrl());
             m.put("createdAt", n.getCreatedAt());
             notices.add(m);
         }
@@ -61,6 +62,21 @@ public class NoticeController {
                 "total", result.getTotalElements(),
                 "page", page,
                 "pageSize", pageable.getPageSize());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> detail(@PathVariable Long id) {
+        Notice n = noticeRepository.findById(id).orElse(null);
+        if (n == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "공지사항을 찾을 수 없습니다."));
+        }
+        java.util.Map<String, Object> m = new java.util.HashMap<>();
+        m.put("id", n.getId());
+        m.put("title", n.getTitle());
+        m.put("body", TemplateRenderer.render(n.getBody()));
+        m.put("imageUrl", n.getImageUrl());
+        m.put("createdAt", n.getCreatedAt());
+        return ResponseEntity.ok(Map.of("notice", m));
     }
 
     @PostMapping
@@ -75,6 +91,7 @@ public class NoticeController {
         Notice notice = new Notice();
         notice.setTitle(title);
         notice.setBody(text);
+        notice.setImageUrl(body.get("imageUrl"));
         noticeRepository.save(notice);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("notice", notice));
     }
@@ -87,6 +104,7 @@ public class NoticeController {
         if (notice == null) return ResponseEntity.notFound().build();
         if (body.get("title") != null) notice.setTitle(body.get("title").trim());
         if (body.get("body") != null) notice.setBody(body.get("body").trim());
+        if (body.containsKey("imageUrl")) notice.setImageUrl(body.get("imageUrl"));
         noticeRepository.save(notice);
         return ResponseEntity.ok(Map.of("notice", notice));
     }

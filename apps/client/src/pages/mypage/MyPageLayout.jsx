@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 
 const TABS = [
   { to: '', label: '프로필', end: true },
+  { to: 'likes', label: '찜한 상품' },
   { to: 'password', label: '비밀번호 변경' },
 ];
 

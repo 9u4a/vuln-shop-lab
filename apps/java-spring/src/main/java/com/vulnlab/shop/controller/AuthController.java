@@ -1,7 +1,10 @@
 package com.vulnlab.shop.controller;
 
+import com.vulnlab.shop.entity.LoginLog;
 import com.vulnlab.shop.entity.User;
+import com.vulnlab.shop.repository.LoginLogRepository;
 import com.vulnlab.shop.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,9 +18,11 @@ import java.util.Optional;
 public class AuthController {
 
     private final AuthService authService;
+    private final LoginLogRepository loginLogRepository;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, LoginLogRepository loginLogRepository) {
         this.authService = authService;
+        this.loginLogRepository = loginLogRepository;
     }
 
     @PostMapping("/signup")
@@ -46,16 +51,29 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> body, HttpSession session) {
+    public ResponseEntity<?> login(@RequestBody Map<String, String> body, HttpSession session,
+                                    HttpServletRequest request) {
         String username = body.get("username");
         String password = body.get("password");
-        Optional<User> user = authService.login(username, password);
-        if (user.isEmpty()) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isBlank()) ip = request.getRemoteAddr();
+        String userAgent = request.getHeader("User-Agent");
+
+        Optional<User> found = authService.findByUsername(username);
+        if (found.isEmpty() || !authService.passwordMatches(found.get(), password)) {
+            loginLogRepository.save(new LoginLog(found.map(User::getId).orElse(null), username, ip, userAgent, false));
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "아이디 또는 비밀번호가 올바르지 않습니다."));
         }
-        session.setAttribute("user", user.get());
-        return ResponseEntity.ok(Map.of("user", user.get()));
+        User user = found.get();
+        if (!user.isActive()) {
+            loginLogRepository.save(new LoginLog(user.getId(), username, ip, userAgent, false));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "비활성화된 계정입니다. 관리자에게 문의하세요."));
+        }
+        loginLogRepository.save(new LoginLog(user.getId(), username, ip, userAgent, true));
+        session.setAttribute("user", user);
+        return ResponseEntity.ok(Map.of("user", user));
     }
 
     @PostMapping("/logout")

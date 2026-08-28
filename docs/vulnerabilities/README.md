@@ -34,6 +34,12 @@
 | [VULN-021](VULN-021-commons-text-1.9-text4shell.md) | 취약 의존성 `commons-text:1.9` (CVE-2022-42889 Text4Shell) | java | A06 Vulnerable Components | Critical | 구현됨 |
 | [VULN-022](VULN-022-nosql-injection-activity.md) | Mongo 기반 활동 피드 NoSQL 인젝션 | node | A03 Injection (NoSQL) | High | 구현됨 |
 | [VULN-023](VULN-023-stored-xss-event-popup.md) | 이벤트 팝업 본문 저장형 XSS (메인 페이지 전역 렌더) | both + client | A03 Injection (XSS) | High | 구현됨 |
+| [VULN-024](VULN-024-idor-wishlist-userid.md) | 위시리스트 조회 IDOR (`userId` 파라미터 신뢰) | both | A01 Broken Access Control | Medium | 구현됨 |
+| [VULN-025](VULN-025-unrestricted-review-image-upload.md) | 후기 이미지 업로드 Content-Type 신뢰 → 저장형 XSS | both | A05 Misconfiguration | High | 구현됨 |
+| [VULN-026](VULN-026-broken-access-control-secret-review.md) | 비밀 후기 본문 API 노출 (클라이언트 마스킹만) | both + client | A01 Broken Access Control | Medium | 구현됨 |
+| [VULN-027](VULN-027-order-option-not-validated.md) | 주문 옵션 값 미검증 (제공 옵션과 대조 없음) | both | A04 Insecure Design | Low | 구현됨 |
+| [VULN-028](VULN-028-stored-xss-login-log-user-agent.md) | 접속 로그 User-Agent 저장형 XSS (관리자 대상) | both + client | A03 Injection (XSS) | High | 구현됨 |
+| [VULN-029](VULN-029-coupon-claim-no-dedup.md) | 쿠폰 중복 발급 (claim 한도/중복 검증 없음) | both | A04 Insecure Design | Low | 구현됨 |
 
 ## OWASP / CLAUDE.md 스코프 커버리지
 
@@ -44,18 +50,26 @@
 | Injection — SpEL/OGNL (Spring) | DONE | 002 |
 | Injection — NoSQL (Express) | DONE (Mongo 컨테이너) | 022 |
 | Broken Authentication / Session Management | DONE | 006 |
-| XSS — Stored | DONE | 008, 018, 023 |
+| XSS — Stored | DONE | 008, 018, 023, 025, 028 |
 | XSS — Reflected | DONE | 016 |
 | XSS — DOM | DONE | 017 |
-| IDOR / Broken Access Control | DONE | 009, 011, 013, 014 |
-| Security Misconfiguration | DONE | 007, 018, 020 |
+| IDOR / Broken Access Control | DONE | 009, 011, 013, 014, 024, 026 |
+| Security Misconfiguration | DONE | 007, 018, 020, 025 |
 | Insecure Deserialization (Java) | DONE | 012 |
 | XXE | DONE | 020 |
 | SSRF | DONE | 004 (020 OOB로 재확인) |
 | File Upload / Path Traversal | DONE | 011 (traversal), 018 (upload) |
 | Vulnerable dependencies | DONE | 021 |
-| Business logic / Insecure Design | DONE | 015 |
+| Business logic / Insecure Design | DONE | 015, 027, 029 |
 | CSRF | DONE | 014 |
 
 배치 013–022 완료 — CLAUDE.md 스코프의 모든 클래스가 최소 1개 구현 항목으로 커버된다.
 VULN-023은 이벤트 팝업 기능(`docs/features/25-event-popups.md`)과 함께 추가된 저장형 XSS.
+VULN-024는 좋아요/위시리스트 기능(`docs/features/27-product-likes.md`)과 함께 추가된 위시리스트 IDOR.
+VULN-025·026은 후기 사진 업로드/비밀글 기능(`docs/features/28-reviews-media-secret.md`)과 함께 추가.
+VULN-027은 장바구니 옵션 변경 기능(`docs/features/29-cart-option-edit.md`)에서 드러난 주문 옵션 미검증.
+VULN-028은 관리자 접속 로그/사용자 활성화 기능(`docs/features/30-admin-access-logs.md`)과 함께 추가된 로그 뷰어 저장형 XSS.
+VULN-029는 쿠폰 기능(`docs/features/31-events-coupons-uploads.md`)과 함께 추가된 쿠폰 중복 발급.
+같은 배치에서 공지/이벤트 이미지 업로드가 공용 업로드 엔드포인트로 전환되며 VULN-018 표면이,
+이벤트 본문이 `/events` 페이지에도 렌더되며 VULN-023 표면이 확장됨(신규 ID 없음).
+의류 카탈로그(`docs/features/26-apparel-catalog.md`)에서 상품 필터 파라미터 추가로 VULN-001/005 SQLi 표면이 확장됨(신규 ID 없음).

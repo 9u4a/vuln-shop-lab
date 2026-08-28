@@ -25,10 +25,24 @@ router.post('/signup', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
+  const ip = req.headers['x-forwarded-for'] || req.ip || '';
+  const userAgent = req.headers['user-agent'] || '';
   const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+
+  const record = (userId, success) =>
+    db
+      .prepare('INSERT INTO login_logs (user_id, username, ip, user_agent, success) VALUES (?, ?, ?, ?, ?)')
+      .run(userId, username || null, String(ip), userAgent, success ? 1 : 0);
+
   if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+    record(user ? user.id : null, 0);
     return res.status(401).json({ error: '아이디 또는 비밀번호가 올바르지 않습니다.' });
   }
+  if (user.active === 0) {
+    record(user.id, 0);
+    return res.status(403).json({ error: '비활성화된 계정입니다. 관리자에게 문의하세요.' });
+  }
+  record(user.id, 1);
   req.session.user = { id: user.id, username: user.username, role: user.role };
   res.json({ user: req.session.user });
 });

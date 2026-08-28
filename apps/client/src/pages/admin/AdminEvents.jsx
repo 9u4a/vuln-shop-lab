@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useBackend } from '../../BackendContext.jsx';
 import { fetchEventsManage, createEvent, updateEvent, deleteEvent } from '../../api.js';
+import AdminImageField from '../../components/AdminImageField.jsx';
 
 const emptyEvent = {
   title: '',
@@ -23,9 +24,7 @@ function EventForm({ value, onChange, onSubmit, submitLabel, onCancel }) {
       <label>본문 (HTML 허용)
         <textarea value={value.body} onChange={set('body')} rows="4" placeholder="<p>할인 내용...</p>" />
       </label>
-      <label>이미지 URL (선택)
-        <input value={value.imageUrl} onChange={set('imageUrl')} placeholder="/uploads/node/..." />
-      </label>
+      <AdminImageField label="이미지" value={value.imageUrl} onChange={(filename) => onChange({ ...value, imageUrl: filename })} />
       <label>링크 URL (선택)
         <input value={value.linkUrl} onChange={set('linkUrl')} placeholder="/products?category=displays" />
       </label>

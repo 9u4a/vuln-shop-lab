@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useBackend } from '../BackendContext.jsx';
 import { fetchNotices } from '../api.js';
 import Pagination from '../components/Pagination.jsx';
@@ -47,13 +48,16 @@ export default function Notices() {
 
       {error && <p className="error">{error}</p>}
       {notices.length === 0 && !error && <p className="muted">아직 공지사항이 없습니다.</p>}
-      {notices.map((n) => (
-        <section className="card" key={n.id}>
-          <h2>{n.title}</h2>
-          <p style={{ whiteSpace: 'pre-wrap' }}>{n.body}</p>
-          <p className="muted">{n.createdAt}</p>
-        </section>
-      ))}
+      {notices.length > 0 && (
+        <ul className="post-list">
+          {notices.map((n) => (
+            <li key={n.id} className="post-list__item">
+              <Link to={`/notices/${n.id}`} className="post-list__title">{n.title}</Link>
+              <span className="post-list__date">{(n.createdAt || '').slice(0, 10)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <Pagination page={page} pageSize={PAGE_SIZE} total={total} onChange={setPage} />
     </div>

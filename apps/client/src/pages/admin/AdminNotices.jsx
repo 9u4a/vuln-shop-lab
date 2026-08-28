@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useBackend } from '../../BackendContext.jsx';
 import { fetchNotices, createNoticeAdmin, updateNoticeAdmin, deleteNoticeAdmin } from '../../api.js';
+import AdminImageField from '../../components/AdminImageField.jsx';
 
-const emptyNotice = { title: '', body: '' };
+const emptyNotice = { title: '', body: '', imageUrl: '' };
 
 export default function AdminNotices() {
   const { backend } = useBackend();
@@ -22,7 +23,7 @@ export default function AdminNotices() {
   async function handleCreate(e) {
     e.preventDefault();
     try {
-      await createNoticeAdmin(backend.base, newNotice.title, newNotice.body);
+      await createNoticeAdmin(backend.base, newNotice.title, newNotice.body, newNotice.imageUrl);
       setNewNotice(emptyNotice);
       load();
     } catch (err) {
@@ -32,13 +33,13 @@ export default function AdminNotices() {
 
   function startEdit(n) {
     setEditingId(n.id);
-    setEditForm({ title: n.title, body: n.body });
+    setEditForm({ title: n.title, body: n.body, imageUrl: n.imageUrl || '' });
   }
 
   async function handleSaveEdit(e) {
     e.preventDefault();
     try {
-      await updateNoticeAdmin(backend.base, editingId, editForm.title, editForm.body);
+      await updateNoticeAdmin(backend.base, editingId, editForm.title, editForm.body, editForm.imageUrl);
       setEditingId(null);
       load();
     } catch (err) {
@@ -71,6 +72,7 @@ export default function AdminNotices() {
                 <label>내용
                   <textarea value={editForm.body} onChange={(e) => setEditForm({ ...editForm, body: e.target.value })} rows="5" required />
                 </label>
+                <AdminImageField value={editForm.imageUrl} onChange={(f) => setEditForm({ ...editForm, imageUrl: f })} />
                 <div className="admin-item-row__actions">
                   <button type="submit" className="btn btn-primary btn-sm">저장</button>
                   <button type="button" onClick={() => setEditingId(null)}>취소</button>
@@ -100,6 +102,7 @@ export default function AdminNotices() {
         <label>내용
           <textarea value={newNotice.body} onChange={(e) => setNewNotice({ ...newNotice, body: e.target.value })} rows="5" required />
         </label>
+        <AdminImageField value={newNotice.imageUrl} onChange={(f) => setNewNotice({ ...newNotice, imageUrl: f })} />
         <button type="submit" className="btn btn-primary">공지사항 추가</button>
       </form>
     </section>

@@ -7,6 +7,8 @@ import com.vulnlab.shop.entity.OrderItem;
 import com.vulnlab.shop.repository.FaqRepository;
 import com.vulnlab.shop.repository.NoticeRepository;
 import com.vulnlab.shop.repository.OrderItemRepository;
+import com.vulnlab.shop.entity.LoginLog;
+import com.vulnlab.shop.repository.LoginLogRepository;
 import com.vulnlab.shop.repository.OrderRepository;
 import com.vulnlab.shop.repository.ProductRepository;
 import com.vulnlab.shop.repository.UserRepository;
@@ -33,16 +35,19 @@ public class AdminController {
     private final OrderItemRepository orderItemRepository;
     private final FaqRepository faqRepository;
     private final NoticeRepository noticeRepository;
+    private final LoginLogRepository loginLogRepository;
 
     public AdminController(UserRepository userRepository, ProductRepository productRepository,
                             OrderRepository orderRepository, OrderItemRepository orderItemRepository,
-                            FaqRepository faqRepository, NoticeRepository noticeRepository) {
+                            FaqRepository faqRepository, NoticeRepository noticeRepository,
+                            LoginLogRepository loginLogRepository) {
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.faqRepository = faqRepository;
         this.noticeRepository = noticeRepository;
+        this.loginLogRepository = loginLogRepository;
     }
 
     private ResponseEntity<?> requireAdmin(HttpSession session) {
@@ -120,6 +125,41 @@ public class AdminController {
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
+    @PutMapping("/users/{id}/active")
+    public ResponseEntity<?> updateActive(@PathVariable Long id, @RequestBody Map<String, Object> body, HttpSession session) {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        User target = userRepository.findById(id).orElse(null);
+        if (target == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "사용자를 찾을 수 없습니다."));
+        }
+        boolean active = Boolean.parseBoolean(String.valueOf(body.get("active")));
+        target.setActive(active);
+        userRepository.save(target);
+        return ResponseEntity.ok(Map.of("ok", true, "active", active));
+    }
+
+    @GetMapping("/login-logs")
+    public ResponseEntity<?> loginLogs(@RequestParam(required = false) String username,
+                                        @RequestParam(required = false) String success,
+                                        HttpSession session) {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        boolean hasUsername = username != null && !username.isBlank();
+        boolean hasSuccess = "0".equals(success) || "1".equals(success);
+        List<LoginLog> logs;
+        if (hasUsername && hasSuccess) {
+            logs = loginLogRepository.findTop200ByUsernameAndSuccessOrderByIdDesc(username, "1".equals(success));
+        } else if (hasUsername) {
+            logs = loginLogRepository.findTop200ByUsernameOrderByIdDesc(username);
+        } else if (hasSuccess) {
+            logs = loginLogRepository.findTop200BySuccessOrderByIdDesc("1".equals(success));
+        } else {
+            logs = loginLogRepository.findTop200ByOrderByIdDesc();
+        }
+        return ResponseEntity.ok(Map.of("logs", logs));
+    }
+
     @GetMapping("/orders")
     public ResponseEntity<?> listOrders(HttpSession session) {
         ResponseEntity<?> denied = requireAdmin(session);
@@ -184,6 +224,9 @@ public class AdminController {
         product.setCategory((String) body.get("category"));
         product.setBrand((String) body.get("brand"));
         product.setSku((String) body.get("sku"));
+        product.setGender((String) body.get("gender"));
+        product.setColor((String) body.get("color"));
+        product.setMaterial((String) body.get("material"));
         if (body.get("stock") != null) product.setStock(Integer.parseInt(String.valueOf(body.get("stock"))));
         product.setOptionName((String) body.get("optionName"));
         product.setOptionValues(joinOptionValues(body.get("optionValues")));
@@ -212,11 +255,25 @@ public class AdminController {
         if (body.get("category") != null) product.setCategory((String) body.get("category"));
         if (body.get("brand") != null) product.setBrand((String) body.get("brand"));
         if (body.get("sku") != null) product.setSku((String) body.get("sku"));
+        if (body.get("gender") != null) product.setGender((String) body.get("gender"));
+        if (body.get("color") != null) product.setColor((String) body.get("color"));
+        if (body.get("material") != null) product.setMaterial((String) body.get("material"));
         if (body.get("stock") != null) product.setStock(Integer.parseInt(String.valueOf(body.get("stock"))));
         if (body.get("optionName") != null) product.setOptionName((String) body.get("optionName"));
         if (body.get("optionValues") != null) product.setOptionValues(joinOptionValues(body.get("optionValues")));
         productRepository.save(product);
         return ResponseEntity.ok(Map.of("ok", true));
+    }
+
+    // 공용 이미지 업로드 — 공지/이벤트 등에서 파일을 올린 뒤 반환된 filename을 imageUrl로 사용.
+    @PostMapping("/upload")
+    public ResponseEntity<?> upload(@RequestParam("image") MultipartFile file, HttpSession session) throws IOException {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        if (!Uploads.isAllowed(file)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "이미지 파일이 없거나 형식이 올바르지 않습니다."));
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("filename", Uploads.store(file)));
     }
 
     @PostMapping("/products/{id}/image")

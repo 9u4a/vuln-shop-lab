@@ -4,11 +4,13 @@ import { useSession } from '../../SessionContext.jsx';
 const TABS = [
   { to: 'settings', label: '설정' },
   { to: 'users', label: '사용자' },
+  { to: 'logs', label: '접속 로그' },
   { to: 'orders', label: '주문' },
   { to: 'products', label: '상품' },
   { to: 'faq', label: 'FAQ' },
   { to: 'notices', label: '공지사항' },
   { to: 'events', label: '이벤트' },
+  { to: 'coupons', label: '쿠폰' },
 ];
 
 export default function AdminLayout() {

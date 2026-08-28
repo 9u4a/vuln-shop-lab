@@ -1,0 +1,5 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'>
+  <rect width='600' height='600' fill='#E8DFF5'/>
+  <text x='300' y='300' font-size='220' text-anchor='middle' dominant-baseline='central'>👕</text>
+  <text x='300' y='470' font-size='44' font-family='sans-serif' font-weight='700' fill='#5b4b8a' text-anchor='middle'>상의</text>
+</svg>
