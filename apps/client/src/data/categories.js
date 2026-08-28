@@ -29,4 +29,5 @@ export const SORTS = [
   { value: 'name', label: '이름순' },
   { value: 'price', label: '가격순' },
   { value: 'reviews', label: '후기순' },
+  { value: 'likes', label: '좋아요순' },
 ];

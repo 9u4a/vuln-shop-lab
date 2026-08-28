@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useBackend } from '../BackendContext.jsx';
 import { useCart } from '../CartContext.jsx';
 import { useSession } from '../SessionContext.jsx';
@@ -7,6 +7,7 @@ import { useToast } from '../ToastContext.jsx';
 import { fetchProduct, fetchReviews, createReview, updateReview, deleteReview } from '../api.js';
 import { formatCurrency } from '../format.js';
 import { CATEGORY_LABELS } from '../data/categories.js';
+import LikeButton from '../components/LikeButton.jsx';
 
 function Stars({ value }) {
   const n = Math.max(0, Math.min(5, Math.round(Number(value) || 0)));
@@ -23,6 +24,7 @@ export default function ProductDetail() {
   const { user } = useSession();
   const { showToast } = useToast();
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [imgBroken, setImgBroken] = useState(false);
   const [reviews, setReviews] = useState([]);
@@ -100,6 +102,11 @@ export default function ProductDetail() {
     showToast(`${quantity}개를 장바구니에 담았어요`);
   }
 
+  function handleBuyNow() {
+    addItem(product, quantity, selectedOption || null);
+    navigate('/cart');
+  }
+
   if (!product) return <p className="muted">불러오는 중...</p>;
 
   const hasOptions = product.optionValues && product.optionValues.length > 0;
@@ -164,9 +171,15 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          <button onClick={handleAddToCart} className="btn btn-primary btn-block btn-lg" disabled={soldOut}>
-            {soldOut ? '품절' : '장바구니 담기'}
-          </button>
+          <div className="buy-box__actions">
+            <button onClick={handleAddToCart} className="btn btn-ghost btn-lg" disabled={soldOut}>
+              {soldOut ? '품절' : '장바구니 담기'}
+            </button>
+            <button onClick={handleBuyNow} className="btn btn-primary btn-lg" disabled={soldOut}>
+              바로 구매
+            </button>
+          </div>
+          <LikeButton product={product} className="buy-box__like" />
         </div>
       </div>
 

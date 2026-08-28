@@ -29,12 +29,14 @@ public class DataSeeder implements CommandLineRunner {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final EventRepository eventRepository;
+    private final ProductLikeRepository productLikeRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public DataSeeder(ProductRepository productRepository, UserRepository userRepository,
                       FaqRepository faqRepository, NoticeRepository noticeRepository,
                       ReviewRepository reviewRepository, OrderRepository orderRepository,
-                      OrderItemRepository orderItemRepository, EventRepository eventRepository) {
+                      OrderItemRepository orderItemRepository, EventRepository eventRepository,
+                      ProductLikeRepository productLikeRepository) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.faqRepository = faqRepository;
@@ -43,6 +45,7 @@ public class DataSeeder implements CommandLineRunner {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.eventRepository = eventRepository;
+        this.productLikeRepository = productLikeRepository;
     }
 
     @Override
@@ -54,6 +57,30 @@ public class DataSeeder implements CommandLineRunner {
         seedEvents();
         seedReviews();
         seedOrders();
+        seedLikes();
+    }
+
+    private void seedLikes() {
+        if (productLikeRepository.count() > 0) {
+            return;
+        }
+        Long user1Id = userRepository.findByUsername("user1").map(User::getId).orElse(null);
+        Long user2Id = userRepository.findByUsername("user2").map(User::getId).orElse(null);
+        Long user3Id = userRepository.findByUsername("user3").map(User::getId).orElse(null);
+        List<Product> products = productRepository.findAll();
+        if (user1Id == null || user2Id == null || user3Id == null || products.size() < 16) {
+            return;
+        }
+        // 인덱스는 seedProducts 순서 기준: 0=티셔츠, 4=슬랙스, 8=토트백, 9=크로스백, 14=목걸이
+        int[][] likes = {
+                {0, 0}, {0, 4}, {0, 8},   // user1
+                {1, 0}, {1, 9}, {1, 14},  // user2
+                {2, 0}, {2, 4},           // user3
+        };
+        Long[] userIds = {user1Id, user2Id, user3Id};
+        for (int[] like : likes) {
+            productLikeRepository.save(new ProductLike(userIds[like[0]], products.get(like[1]).getId()));
+        }
     }
 
     private void seedUsers() {

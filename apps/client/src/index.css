@@ -624,6 +624,36 @@ textarea { resize: vertical; min-height: 4.5rem; }
   letter-spacing: 0.05em;
   color: var(--color-text-muted);
 }
+
+/* Like (찜) button */
+.like-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  line-height: 1;
+}
+.like-btn__heart { font-size: 1.15rem; line-height: 1; }
+.like-btn.liked { color: var(--color-sale); }
+.like-btn:hover { color: var(--color-sale); }
+.like-btn__count { font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.product-card__like {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: var(--radius-pill);
+  padding: 0.25rem 0.5rem;
+  box-shadow: var(--shadow-sm);
+}
+.buy-box__actions { display: flex; gap: var(--space-3); }
+.buy-box__actions .btn { flex: 1; }
+.buy-box__like { align-self: center; margin-top: var(--space-1); }
 .product-card__name {
   font-size: 0.92rem;
   font-weight: 500;

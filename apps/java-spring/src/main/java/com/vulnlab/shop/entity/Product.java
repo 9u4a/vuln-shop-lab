@@ -48,6 +48,12 @@ public class Product {
     @Transient
     private Long reviewCount;
 
+    @Transient
+    private Long likeCount;
+
+    @Transient
+    private Boolean liked;
+
     @Column(name = "option_name")
     private String optionName;
 
@@ -95,6 +101,12 @@ public class Product {
 
     public Long getReviewCount() { return reviewCount; }
     public void setReviewCount(Long reviewCount) { this.reviewCount = reviewCount; }
+
+    public Long getLikeCount() { return likeCount; }
+    public void setLikeCount(Long likeCount) { this.likeCount = likeCount; }
+
+    public Boolean getLiked() { return liked; }
+    public void setLiked(Boolean liked) { this.liked = liked; }
 
     public String getOptionName() { return optionName; }
     public void setOptionName(String optionName) { this.optionName = optionName; }

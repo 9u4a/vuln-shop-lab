@@ -52,6 +52,15 @@ export function fetchProduct(base, id) {
   return apiRequest(base, `/products/${id}`);
 }
 
+export function toggleLike(base, productId) {
+  return apiRequest(base, `/likes/${productId}`, { method: 'POST' });
+}
+
+export function fetchWishlist(base, userId) {
+  const qs = userId ? `?userId=${encodeURIComponent(userId)}` : '';
+  return apiRequest(base, `/likes${qs}`);
+}
+
 export function fetchProfile(base) {
   return apiRequest(base, '/profile');
 }

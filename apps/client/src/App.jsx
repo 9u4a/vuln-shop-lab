@@ -15,6 +15,7 @@ import Products from './pages/Products.jsx';
 import ProductDetail from './pages/ProductDetail.jsx';
 import MyPageLayout from './pages/mypage/MyPageLayout.jsx';
 import MyPageProfile from './pages/mypage/MyPageProfile.jsx';
+import MyPageLikes from './pages/mypage/MyPageLikes.jsx';
 import MyPagePassword from './pages/mypage/MyPagePassword.jsx';
 import Cart from './pages/Cart.jsx';
 import CheckoutResult from './pages/CheckoutResult.jsx';
@@ -64,6 +65,7 @@ export default function App() {
 
                 <Route path="/mypage" element={<RequireAuth><MyPageLayout /></RequireAuth>}>
                   <Route index element={<MyPageProfile />} />
+                  <Route path="likes" element={<MyPageLikes />} />
                   <Route path="password" element={<MyPagePassword />} />
                 </Route>
                 <Route path="/orders" element={<RequireAuth><Orders /></RequireAuth>} />

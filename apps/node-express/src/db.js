@@ -51,6 +51,14 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
+  CREATE TABLE IF NOT EXISTS product_likes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    product_id INTEGER NOT NULL REFERENCES products(id),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(user_id, product_id)
+  );
+
   CREATE TABLE IF NOT EXISTS orders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL REFERENCES users(id),
@@ -322,6 +330,23 @@ if (reviewCount === 0) {
       [7, user3Id, 5, "조거팬츠 밴딩이 편하고 카키 색이 코디하기 좋습니다. 집에서도 밖에서도 자주 입게 되네요."]
     ];
     for (const row of reviews) insertReview.run(...row);
+  }
+}
+
+// 5.5 Seed Product Likes (if missing)
+const likeCount = db.prepare('SELECT COUNT(*) AS count FROM product_likes').get().count;
+if (likeCount === 0) {
+  const insertLike = db.prepare('INSERT OR IGNORE INTO product_likes (user_id, product_id) VALUES (?, ?)');
+  const user1Id = db.prepare("SELECT id FROM users WHERE username = 'user1'").get()?.id;
+  const user2Id = db.prepare("SELECT id FROM users WHERE username = 'user2'").get()?.id;
+  const user3Id = db.prepare("SELECT id FROM users WHERE username = 'user3'").get()?.id;
+  if (user1Id && user2Id && user3Id) {
+    const likes = [
+      [user1Id, 1], [user1Id, 5], [user1Id, 9],
+      [user2Id, 1], [user2Id, 10], [user2Id, 15],
+      [user3Id, 1], [user3Id, 5],
+    ];
+    for (const [uid, pid] of likes) insertLike.run(uid, pid);
   }
 }
 

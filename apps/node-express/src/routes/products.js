@@ -21,12 +21,14 @@ function toProduct(row) {
     optionName: row.option_name,
     optionValues: row.option_values ? row.option_values.split(',') : [],
     reviewCount: row.review_count != null ? row.review_count : undefined,
+    likeCount: row.like_count != null ? row.like_count : undefined,
+    liked: row.liked != null ? !!row.liked : undefined,
     createdAt: row.created_at,
   };
 }
 
 // 앱 레벨에서 처리하는 정렬 키(SQL ORDER BY에 넣지 않는다).
-const APP_SORTS = new Set(['reviews']);
+const APP_SORTS = new Set(['reviews', 'likes']);
 
 router.get('/', (req, res) => {
   const { q, category, sort, gender, color, material, minPrice, maxPrice, inStock } = req.query;
@@ -71,9 +73,26 @@ router.get('/', (req, res) => {
 
   const counts = db.prepare('SELECT product_id, COUNT(*) AS c FROM reviews GROUP BY product_id').all();
   const countMap = new Map(counts.map((r) => [r.product_id, r.c]));
-  let mapped = products.map((p) => toProduct({ ...p, review_count: countMap.get(p.id) || 0 }));
+  const likeCounts = db.prepare('SELECT product_id, COUNT(*) AS c FROM product_likes GROUP BY product_id').all();
+  const likeMap = new Map(likeCounts.map((r) => [r.product_id, r.c]));
+  const likedSet = req.session.user
+    ? new Set(
+        db.prepare('SELECT product_id FROM product_likes WHERE user_id = ?').all(req.session.user.id).map((r) => r.product_id)
+      )
+    : new Set();
+
+  let mapped = products.map((p) =>
+    toProduct({
+      ...p,
+      review_count: countMap.get(p.id) || 0,
+      like_count: likeMap.get(p.id) || 0,
+      liked: likedSet.has(p.id) ? 1 : 0,
+    })
+  );
   if (sort === 'reviews') {
     mapped = mapped.sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0));
+  } else if (sort === 'likes') {
+    mapped = mapped.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0));
   }
 
   res.json({ products: mapped });
@@ -83,7 +102,11 @@ router.get('/:id', (req, res) => {
   const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
   if (!product) return res.status(404).json({ error: '상품을 찾을 수 없습니다.' });
   const reviewCount = db.prepare('SELECT COUNT(*) AS c FROM reviews WHERE product_id = ?').get(product.id).c;
-  res.json({ product: toProduct({ ...product, review_count: reviewCount }) });
+  const likeCount = db.prepare('SELECT COUNT(*) AS c FROM product_likes WHERE product_id = ?').get(product.id).c;
+  const liked = req.session.user
+    ? !!db.prepare('SELECT id FROM product_likes WHERE user_id = ? AND product_id = ?').get(req.session.user.id, product.id)
+    : false;
+  res.json({ product: toProduct({ ...product, review_count: reviewCount, like_count: likeCount, liked: liked ? 1 : 0 }) });
 });
 
 router.get('/:id/reviews', (req, res) => {
@@ -152,3 +175,4 @@ router.delete('/:id/reviews/:reviewId', requireAuth, (req, res) => {
 });
 
 module.exports = router;
+module.exports.toProduct = toProduct;

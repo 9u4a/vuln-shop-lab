@@ -4,6 +4,7 @@ import { useBackend } from '../BackendContext.jsx';
 import { useCart } from '../CartContext.jsx';
 import { useToast } from '../ToastContext.jsx';
 import { formatCurrency } from '../format.js';
+import LikeButton from './LikeButton.jsx';
 
 export default function ProductCard({ product }) {
   const { backend } = useBackend();
@@ -29,6 +30,7 @@ export default function ProductCard({ product }) {
           <span className="product-card__ph">이미지 준비 중</span>
         )}
         {soldOut && <span className="product-card__soldout">품절</span>}
+        <LikeButton product={product} className="product-card__like" />
       </Link>
       {product.brand && <span className="product-card__brand">{product.brand}</span>}
       <Link to={`/products/${product.id}`} className="product-card__name">{product.name}</Link>

@@ -3,6 +3,7 @@ package com.vulnlab.shop.controller;
 import com.vulnlab.shop.entity.Product;
 import com.vulnlab.shop.entity.Review;
 import com.vulnlab.shop.entity.User;
+import com.vulnlab.shop.repository.ProductLikeRepository;
 import com.vulnlab.shop.repository.ReviewRepository;
 import com.vulnlab.shop.repository.UserRepository;
 import com.vulnlab.shop.service.ProductService;
@@ -28,12 +29,14 @@ public class ProductController {
     private final ProductService productService;
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
+    private final ProductLikeRepository likeRepository;
 
     public ProductController(ProductService productService, ReviewRepository reviewRepository,
-                              UserRepository userRepository) {
+                              UserRepository userRepository, ProductLikeRepository likeRepository) {
         this.productService = productService;
         this.reviewRepository = reviewRepository;
         this.userRepository = userRepository;
+        this.likeRepository = likeRepository;
     }
 
     @GetMapping
@@ -45,11 +48,15 @@ public class ProductController {
                                      @RequestParam(required = false) String material,
                                      @RequestParam(required = false) String minPrice,
                                      @RequestParam(required = false) String maxPrice,
-                                     @RequestParam(required = false) String inStock) {
+                                     @RequestParam(required = false) String inStock,
+                                     HttpSession session) {
         boolean stockOnly = "1".equals(inStock) || "true".equalsIgnoreCase(inStock);
         List<Product> products = productService.list(q, category, gender, color, material, minPrice, maxPrice, stockOnly);
+        User sessionUser = (User) session.getAttribute("user");
         for (Product p : products) {
             p.setReviewCount(reviewRepository.countByProductId(p.getId()));
+            p.setLikeCount(likeRepository.countByProductId(p.getId()));
+            p.setLiked(sessionUser != null && likeRepository.existsByUserIdAndProductId(sessionUser.getId(), p.getId()));
         }
 
         Map<String, Object> body = new LinkedHashMap<>();
@@ -58,11 +65,18 @@ public class ProductController {
             return body;
         }
 
-        // 후기순은 앱 레벨 정렬 — SpEL로 평가하지 않는다.
+        // 후기순/좋아요순은 앱 레벨 정렬 — SpEL로 평가하지 않는다.
         if ("reviews".equals(sort)) {
             List<Product> sorted = new ArrayList<>(products);
             sorted.sort(Comparator.comparing((Product p) ->
                     p.getReviewCount() == null ? 0L : p.getReviewCount()).reversed());
+            body.put("products", sorted);
+            return body;
+        }
+        if ("likes".equals(sort)) {
+            List<Product> sorted = new ArrayList<>(products);
+            sorted.sort(Comparator.comparing((Product p) ->
+                    p.getLikeCount() == null ? 0L : p.getLikeCount()).reversed());
             body.put("products", sorted);
             return body;
         }
@@ -91,12 +105,15 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> detail(@PathVariable Long id) {
+    public ResponseEntity<?> detail(@PathVariable Long id, HttpSession session) {
         Product product = productService.findById(id);
         if (product == null) {
             return ResponseEntity.notFound().build();
         }
         product.setReviewCount(reviewRepository.countByProductId(product.getId()));
+        product.setLikeCount(likeRepository.countByProductId(product.getId()));
+        User sessionUser = (User) session.getAttribute("user");
+        product.setLiked(sessionUser != null && likeRepository.existsByUserIdAndProductId(sessionUser.getId(), product.getId()));
         return ResponseEntity.ok(Map.of("product", product));
     }
 

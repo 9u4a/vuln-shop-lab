@@ -14,6 +14,7 @@ const faqRoutes = require('./routes/faqs');
 const noticeRoutes = require('./routes/notices');
 const eventRoutes = require('./routes/events');
 const activityRoutes = require('./routes/activity');
+const likeRoutes = require('./routes/likes');
 const { initMongo } = require('./mongo');
 
 const app = express();
@@ -57,6 +58,7 @@ app.use('/api/faqs', faqRoutes);
 app.use('/api/notices', noticeRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/activity', activityRoutes);
+app.use('/api/likes', likeRoutes);
 
 initMongo().catch((err) => console.error('mongo init failed:', err.message));
 
