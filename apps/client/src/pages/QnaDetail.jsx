@@ -5,6 +5,7 @@ import { useSession } from '../SessionContext.jsx';
 import { useToast } from '../ToastContext.jsx';
 import { fetchQuestion, answerQuestion, deleteQuestion } from '../api.js';
 import { ADMIN_ROLES } from '../components/navLinks.js';
+import ConfirmDialog from '../components/ConfirmDialog.jsx';
 
 export default function QnaDetail() {
   const { backend } = useBackend();
@@ -15,6 +16,7 @@ export default function QnaDetail() {
   const [question, setQuestion] = useState(null);
   const [error, setError] = useState(null);
   const [answer, setAnswer] = useState('');
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   function load() {
     setError(null);
@@ -45,6 +47,7 @@ export default function QnaDetail() {
   }
 
   async function handleDelete() {
+    setConfirmOpen(false);
     setError(null);
     try {
       await deleteQuestion(backend.base, id);
@@ -84,7 +87,7 @@ export default function QnaDetail() {
 
         {(owns || isAdmin) && (
           <div className="review-item__actions">
-            <button type="button" onClick={handleDelete}>삭제</button>
+            <button type="button" onClick={() => setConfirmOpen(true)}>삭제</button>
           </div>
         )}
       </section>
@@ -108,6 +111,14 @@ export default function QnaDetail() {
           </form>
         </section>
       )}
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="문의를 삭제하시겠어요?"
+        message="삭제한 문의는 되돌릴 수 없습니다."
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }

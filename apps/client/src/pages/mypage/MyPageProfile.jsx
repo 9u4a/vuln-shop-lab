@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useBackend } from '../../BackendContext.jsx';
 import { fetchProfile, updateProfile, uploadAvatar, fetchActivity } from '../../api.js';
+import SafeImage from '../../components/SafeImage.jsx';
 
 export default function MyPageProfile() {
   const { backend, backendKey } = useBackend();
@@ -89,7 +90,7 @@ export default function MyPageProfile() {
         <h2>계정</h2>
         <div className="profile-summary">
           {avatarSrc ? (
-            <img className="avatar" src={avatarSrc} alt="avatar" width="72" height="72" />
+            <SafeImage className="avatar" src={avatarSrc} alt="avatar" width="72" height="72" placeholderClassName="avatar avatar-placeholder" placeholderText={profile.username[0]?.toUpperCase() || '?'} />
           ) : (
             <div className="avatar avatar-placeholder">{profile.username[0]?.toUpperCase()}</div>
           )}

@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('express-async-errors');
 const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
@@ -67,6 +68,15 @@ app.use('/api/qna', qnaRoutes);
 app.use('/api/addresses', addressRoutes);
 
 initMongo().catch((err) => console.error('mongo init failed:', err.message));
+
+// 라우트 밖에서 발생한 미포착 오류로 프로세스가 죽지 않도록 로깅만 하고 유지한다.
+// (라우트 내부의 async 오류는 express-async-errors가 기본 에러 핸들러로 전달 — VULN-007 유지)
+process.on('unhandledRejection', (reason) => {
+  console.error('unhandledRejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('uncaughtException:', err);
+});
 
 app.listen(PORT, () => {
   console.log(`node-express vulnerable shop API running on http://localhost:${PORT}`);

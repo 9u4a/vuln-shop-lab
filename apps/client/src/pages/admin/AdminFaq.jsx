@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useBackend } from '../../BackendContext.jsx';
 import { fetchFaqs, createFaq, updateFaqAdmin, deleteFaqAdmin } from '../../api.js';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
 const emptyFaq = { question: '', answer: '' };
 
@@ -11,6 +12,7 @@ export default function AdminFaq() {
   const [error, setError] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState(emptyFaq);
+  const [pendingId, setPendingId] = useState(null);
 
   function load() {
     setError(null);
@@ -84,7 +86,7 @@ export default function AdminFaq() {
                 </div>
                 <div className="admin-item-row__actions">
                   <button type="button" onClick={() => startEdit(f)}>수정</button>
-                  <button type="button" onClick={() => handleDelete(f.id)}>삭제</button>
+                  <button type="button" onClick={() => setPendingId(f.id)}>삭제</button>
                 </div>
               </>
             )}
@@ -102,6 +104,13 @@ export default function AdminFaq() {
         </label>
         <button type="submit" className="btn btn-primary">FAQ 추가</button>
       </form>
+
+      <ConfirmDialog
+        open={pendingId != null}
+        title="FAQ를 삭제하시겠어요?"
+        onConfirm={() => { handleDelete(pendingId); setPendingId(null); }}
+        onCancel={() => setPendingId(null)}
+      />
     </section>
   );
 }

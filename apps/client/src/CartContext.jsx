@@ -39,6 +39,7 @@ function CartProvider({ children }) {
         option: option || null,
         optionName: product.optionName || null,
         optionValues: Array.isArray(product.optionValues) ? product.optionValues : [],
+        stock: product.stock != null ? Number(product.stock) : null,
         quantity: (prev[key]?.quantity || 0) + quantity,
       },
     }));

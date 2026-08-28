@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useBackend } from '../BackendContext.jsx';
 import { fetchEvent } from '../api.js';
+import SafeImage from '../components/SafeImage.jsx';
 
 function isExternal(url) {
   return /^https?:\/\//i.test(url || '');
@@ -34,7 +35,7 @@ export default function EventDetail() {
       {event && (
         <article className="card">
           <h1>{event.title}</h1>
-          {img && <img className="notice-image" src={img} alt={event.title} />}
+          {img && <SafeImage className="notice-image" src={img} alt={event.title} />}
           {event.body && (
             <div
               className="event-detail__body"
