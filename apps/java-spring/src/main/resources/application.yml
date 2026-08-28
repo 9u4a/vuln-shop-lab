@@ -33,6 +33,6 @@ management:
 
 app:
   cors:
-    allowed-origin: ${APP_CORS_ALLOWED_ORIGIN:http://localhost:5173}
+    allowed-origin: ${APP_CORS_ALLOWED_ORIGIN:http://localhost:5173,http://localhost:8090}
   toss:
     secret-key: ${TOSS_SECRET_KEY:}
