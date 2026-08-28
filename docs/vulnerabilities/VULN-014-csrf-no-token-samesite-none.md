@@ -1,4 +1,4 @@
-# VULN-014 CSRF: no anti-CSRF tokens, session cookie SameSite=None
+# VULN-014 CSRF — 토큰 부재 + SameSite=None 쿠키
 
 - 대상 스택: node-express, java-spring (동일)
 - 심각도: High

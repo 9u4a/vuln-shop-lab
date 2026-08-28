@@ -1,4 +1,4 @@
-# VULN-021 Vulnerable dependency: commons-text 1.9 (CVE-2022-42889, "Text4Shell")
+# VULN-021 취약 의존성 commons-text 1.9 (CVE-2022-42889 Text4Shell)
 
 - 대상 스택: java-spring
 - 심각도: Critical

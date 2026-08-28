@@ -1,4 +1,4 @@
-# VULN-017 DOM-based XSS in product search results heading
+# VULN-017 상품 검색 결과 헤딩 DOM 기반 XSS
 
 - 대상 스택: client (node-express / java-spring 양쪽 백엔드에서 공통)
 - 심각도: Medium

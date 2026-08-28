@@ -1,4 +1,4 @@
-# VULN-010 OS command injection in receipt generation
+# VULN-010 영수증 생성 OS 커맨드 인젝션
 
 - 대상 스택: node-express
 - 심각도: Critical
@@ -23,5 +23,13 @@ POST /api/orders/1/receipt
 ```
 
 `note`/`bio`에 백틱, `;`, `$()`, `|` 등을 포함시켜 임의 명령 실행. 컨테이너 내 임의 코드 실행(RCE)으로 이어짐.
+
+## 영향
+
+- WAS 프로세스 권한으로 컨테이너 내 임의 명령 실행(RCE) — 시크릿 탈취, 내부망 피벗, 컨테이너 장악.
+
+## 증거 (재현 확인)
+
+(진단 단계에서 채움) — Phase 2(Burp 진단)에서 재현 예정.
 
 ## 조치 상태: 미조치 (의도된 취약점)

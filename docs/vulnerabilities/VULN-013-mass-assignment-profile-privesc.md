@@ -1,4 +1,4 @@
-# VULN-013 Mass assignment → privilege escalation via profile update
+# VULN-013 프로필 업데이트 대량 할당 → 권한 상승
 
 - 대상 스택: node-express, java-spring (동일)
 - 심각도: Critical

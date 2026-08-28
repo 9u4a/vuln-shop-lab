@@ -1,4 +1,4 @@
-# VULN-007 Security misconfiguration: exposed diagnostics
+# VULN-007 진단 엔드포인트 노출 (actuator 전체 / dev 스택트레이스)
 
 - 대상 스택: node-express, java-spring
 - 심각도: Medium
@@ -17,5 +17,13 @@ GET /api/java/actuator/heapdump
 ```
 
 Node는 서버 에러를 유발하는 요청(예: 잘못된 타입의 바디로 미처리 라우트 호출) 후 응답 바디에 스택트레이스 포함 여부 확인.
+
+## 영향
+
+- 인증 없이 `/actuator/env`·`/actuator/heapdump`로 환경변수(`TOSS_SECRET_KEY` 등)·힙 덤프 열람 → 시크릿 유출. Node의 dev 스택트레이스는 내부 경로·의존성·코드 구조를 노출해 후속 공격의 정찰 정보를 제공한다.
+
+## 증거 (재현 확인)
+
+(진단 단계에서 채움) — Phase 2(Burp 진단)에서 재현 예정.
 
 ## 조치 상태: 미조치 (의도된 취약점)

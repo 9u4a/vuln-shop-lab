@@ -1,4 +1,4 @@
-# VULN-016 Reflected XSS in printable HTML receipt
+# VULN-016 인쇄용 영수증 HTML 반사형 XSS
 
 - 대상 스택: node-express, java-spring (동일)
 - 심각도: High
