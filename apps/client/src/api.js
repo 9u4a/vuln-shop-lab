@@ -231,6 +231,10 @@ export function deleteFaqAdmin(base, id) {
   return apiRequest(base, `/faqs/${id}`, { method: 'DELETE' });
 }
 
+export function searchAddresses(base, q) {
+  return apiRequest(base, `/addresses?q=${encodeURIComponent(q)}`);
+}
+
 export function fetchQuestions(base, { q, page, pageSize } = {}) {
   const params = new URLSearchParams();
   if (q) params.set('q', q);

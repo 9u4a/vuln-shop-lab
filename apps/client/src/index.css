@@ -354,7 +354,7 @@ img { max-width: 100%; }
   margin: 0 auto;
   padding: var(--space-12) var(--space-6) var(--space-8);
   display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
   gap: var(--space-8);
 }
 .site-footer__brand {

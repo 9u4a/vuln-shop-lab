@@ -17,6 +17,7 @@ const activityRoutes = require('./routes/activity');
 const likeRoutes = require('./routes/likes');
 const couponRoutes = require('./routes/coupons');
 const qnaRoutes = require('./routes/qna');
+const addressRoutes = require('./routes/addresses');
 const { initMongo } = require('./mongo');
 
 const app = express();
@@ -63,6 +64,7 @@ app.use('/api/activity', activityRoutes);
 app.use('/api/likes', likeRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/qna', qnaRoutes);
+app.use('/api/addresses', addressRoutes);
 
 initMongo().catch((err) => console.error('mongo init failed:', err.message));
 
