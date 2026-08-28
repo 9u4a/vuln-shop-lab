@@ -21,7 +21,18 @@ db.exec(`
     postcode TEXT,
     address TEXT,
     address_detail TEXT,
+    active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS login_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    username TEXT,
+    ip TEXT,
+    user_agent TEXT,
+    success INTEGER NOT NULL DEFAULT 0,
+    at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
   CREATE TABLE IF NOT EXISTS products (
@@ -117,6 +128,7 @@ for (const stmt of [
   'ALTER TABLE users ADD COLUMN postcode TEXT',
   'ALTER TABLE users ADD COLUMN address TEXT',
   'ALTER TABLE users ADD COLUMN address_detail TEXT',
+  'ALTER TABLE users ADD COLUMN active INTEGER NOT NULL DEFAULT 1',
   'ALTER TABLE products ADD COLUMN category TEXT',
   'ALTER TABLE products ADD COLUMN brand TEXT',
   'ALTER TABLE products ADD COLUMN sku TEXT',

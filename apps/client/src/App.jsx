@@ -28,6 +28,7 @@ import Forbidden from './pages/Forbidden.jsx';
 import AdminLayout from './pages/admin/AdminLayout.jsx';
 import AdminSettings from './pages/admin/AdminSettings.jsx';
 import AdminUsers from './pages/admin/AdminUsers.jsx';
+import AdminAccessLogs from './pages/admin/AdminAccessLogs.jsx';
 import AdminOrders from './pages/admin/AdminOrders.jsx';
 import AdminProducts from './pages/admin/AdminProducts.jsx';
 import AdminFaq from './pages/admin/AdminFaq.jsx';
@@ -82,6 +83,7 @@ export default function App() {
                   <Route index element={<Navigate to="settings" replace />} />
                   <Route path="settings" element={<AdminSettings />} />
                   <Route path="users" element={<AdminUsers />} />
+                  <Route path="logs" element={<AdminAccessLogs />} />
                   <Route path="orders" element={<AdminOrders />} />
                   <Route path="products" element={<AdminProducts />} />
                   <Route path="faq" element={<AdminFaq />} />

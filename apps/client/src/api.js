@@ -166,6 +166,21 @@ export function updateUserRole(base, userId, role) {
   });
 }
 
+export function toggleUserActive(base, userId, active) {
+  return apiRequest(base, `/admin/users/${userId}/active`, {
+    method: 'PUT',
+    body: JSON.stringify({ active }),
+  });
+}
+
+export function fetchLoginLogs(base, { username, success } = {}) {
+  const params = new URLSearchParams();
+  if (username) params.set('username', username);
+  if (success === '0' || success === '1') params.set('success', success);
+  const query = params.toString();
+  return apiRequest(base, `/admin/login-logs${query ? `?${query}` : ''}`);
+}
+
 export function fetchAdminOrders(base) {
   return apiRequest(base, '/admin/orders');
 }

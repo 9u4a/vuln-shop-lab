@@ -17,14 +17,49 @@ router.get('/stats', requireAdmin, (req, res) => {
 });
 
 router.get('/users', requireAdmin, (req, res) => {
-  const rows = db.prepare('SELECT id, username, role, bio, avatar_url, created_at FROM users ORDER BY id').all();
-  res.json({ users: rows });
+  const rows = db.prepare('SELECT id, username, role, bio, avatar_url, active, created_at FROM users ORDER BY id').all();
+  res.json({ users: rows.map((u) => ({ ...u, active: u.active !== 0 })) });
+});
+
+router.put('/users/:id/active', requireAdmin, (req, res) => {
+  const { active } = req.body;
+  const target = db.prepare('SELECT id FROM users WHERE id = ?').get(req.params.id);
+  if (!target) return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
+  db.prepare('UPDATE users SET active = ? WHERE id = ?').run(active ? 1 : 0, target.id);
+  res.json({ ok: true, active: !!active });
+});
+
+router.get('/login-logs', requireAdmin, (req, res) => {
+  const { username, success } = req.query;
+  let sql = 'SELECT * FROM login_logs WHERE 1=1';
+  const params = [];
+  if (username) {
+    sql += ' AND username = ?';
+    params.push(username);
+  }
+  if (success === '0' || success === '1') {
+    sql += ' AND success = ?';
+    params.push(Number(success));
+  }
+  sql += ' ORDER BY id DESC LIMIT 200';
+  const rows = db.prepare(sql).all(...params);
+  res.json({
+    logs: rows.map((r) => ({
+      id: r.id,
+      userId: r.user_id,
+      username: r.username,
+      ip: r.ip,
+      userAgent: r.user_agent,
+      success: !!r.success,
+      at: r.at,
+    })),
+  });
 });
 
 router.get('/users/:id', requireAdmin, (req, res) => {
   const u = db
     .prepare(
-      `SELECT id, username, role, bio, avatar_url, name, phone, postcode, address, address_detail, created_at
+      `SELECT id, username, role, bio, avatar_url, name, phone, postcode, address, address_detail, active, created_at
        FROM users WHERE id = ?`
     )
     .get(req.params.id);
@@ -44,6 +79,7 @@ router.get('/users/:id', requireAdmin, (req, res) => {
       postcode: u.postcode,
       address: u.address,
       addressDetail: u.address_detail,
+      active: u.active !== 0,
       createdAt: u.created_at,
     },
     orders: orders.map((o) => ({

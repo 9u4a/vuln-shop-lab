@@ -38,6 +38,9 @@ public class User {
     @Column(name = "address_detail")
     private String addressDetail;
 
+    @Column(nullable = false)
+    private boolean active = true;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -74,6 +77,9 @@ public class User {
 
     public String getAddressDetail() { return addressDetail; }
     public void setAddressDetail(String addressDetail) { this.addressDetail = addressDetail; }
+
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

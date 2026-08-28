@@ -7,6 +7,8 @@ import com.vulnlab.shop.entity.OrderItem;
 import com.vulnlab.shop.repository.FaqRepository;
 import com.vulnlab.shop.repository.NoticeRepository;
 import com.vulnlab.shop.repository.OrderItemRepository;
+import com.vulnlab.shop.entity.LoginLog;
+import com.vulnlab.shop.repository.LoginLogRepository;
 import com.vulnlab.shop.repository.OrderRepository;
 import com.vulnlab.shop.repository.ProductRepository;
 import com.vulnlab.shop.repository.UserRepository;
@@ -33,16 +35,19 @@ public class AdminController {
     private final OrderItemRepository orderItemRepository;
     private final FaqRepository faqRepository;
     private final NoticeRepository noticeRepository;
+    private final LoginLogRepository loginLogRepository;
 
     public AdminController(UserRepository userRepository, ProductRepository productRepository,
                             OrderRepository orderRepository, OrderItemRepository orderItemRepository,
-                            FaqRepository faqRepository, NoticeRepository noticeRepository) {
+                            FaqRepository faqRepository, NoticeRepository noticeRepository,
+                            LoginLogRepository loginLogRepository) {
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.faqRepository = faqRepository;
         this.noticeRepository = noticeRepository;
+        this.loginLogRepository = loginLogRepository;
     }
 
     private ResponseEntity<?> requireAdmin(HttpSession session) {
@@ -118,6 +123,41 @@ public class AdminController {
         target.setRole(role);
         userRepository.save(target);
         return ResponseEntity.ok(Map.of("ok", true));
+    }
+
+    @PutMapping("/users/{id}/active")
+    public ResponseEntity<?> updateActive(@PathVariable Long id, @RequestBody Map<String, Object> body, HttpSession session) {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        User target = userRepository.findById(id).orElse(null);
+        if (target == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "사용자를 찾을 수 없습니다."));
+        }
+        boolean active = Boolean.parseBoolean(String.valueOf(body.get("active")));
+        target.setActive(active);
+        userRepository.save(target);
+        return ResponseEntity.ok(Map.of("ok", true, "active", active));
+    }
+
+    @GetMapping("/login-logs")
+    public ResponseEntity<?> loginLogs(@RequestParam(required = false) String username,
+                                        @RequestParam(required = false) String success,
+                                        HttpSession session) {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        boolean hasUsername = username != null && !username.isBlank();
+        boolean hasSuccess = "0".equals(success) || "1".equals(success);
+        List<LoginLog> logs;
+        if (hasUsername && hasSuccess) {
+            logs = loginLogRepository.findTop200ByUsernameAndSuccessOrderByIdDesc(username, "1".equals(success));
+        } else if (hasUsername) {
+            logs = loginLogRepository.findTop200ByUsernameOrderByIdDesc(username);
+        } else if (hasSuccess) {
+            logs = loginLogRepository.findTop200BySuccessOrderByIdDesc("1".equals(success));
+        } else {
+            logs = loginLogRepository.findTop200ByOrderByIdDesc();
+        }
+        return ResponseEntity.ok(Map.of("logs", logs));
     }
 
     @GetMapping("/orders")

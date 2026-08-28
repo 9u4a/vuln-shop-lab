@@ -955,6 +955,9 @@ textarea { resize: vertical; min-height: 4.5rem; }
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+.badge-ok { background: var(--status-paid-bg); color: var(--status-paid); border-color: transparent; }
+.badge-danger { background: var(--status-cancelled-bg); color: var(--status-cancelled); border-color: transparent; }
+.access-log__ua { max-width: 320px; word-break: break-all; font-size: 0.78rem; color: var(--color-text-muted); }
 .status-chip {
   display: inline-block;
   border-radius: var(--radius-pill);
