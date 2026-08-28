@@ -26,14 +26,6 @@ public class FaqController {
         this.faqRepository = faqRepository;
     }
 
-    private ResponseEntity<?> requireAuth(HttpSession session) {
-        User user = (User) session.getAttribute("user");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그인이 필요합니다."));
-        }
-        return null;
-    }
-
     private ResponseEntity<?> requireAdmin(HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) {
@@ -75,7 +67,7 @@ public class FaqController {
 
     @PostMapping
     public ResponseEntity<?> create(@RequestBody Map<String, String> body, HttpSession session) {
-        ResponseEntity<?> denied = requireAuth(session);
+        ResponseEntity<?> denied = requireAdmin(session);
         if (denied != null) return denied;
         String question = body.getOrDefault("question", "").trim();
         String answer = body.getOrDefault("answer", "").trim();

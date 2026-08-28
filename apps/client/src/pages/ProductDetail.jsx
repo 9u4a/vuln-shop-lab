@@ -182,6 +182,7 @@ export default function ProductDetail() {
           </div>
 
           <div className="buy-box__actions">
+            <LikeButton product={product} className="buy-box__like" />
             <button onClick={handleAddToCart} className="btn btn-ghost btn-lg" disabled={soldOut}>
               {soldOut ? '품절' : '장바구니 담기'}
             </button>
@@ -189,7 +190,6 @@ export default function ProductDetail() {
               바로 구매
             </button>
           </div>
-          <LikeButton product={product} className="buy-box__like" />
         </div>
       </div>
 

@@ -31,13 +31,15 @@ public class DataSeeder implements CommandLineRunner {
     private final EventRepository eventRepository;
     private final ProductLikeRepository productLikeRepository;
     private final CouponRepository couponRepository;
+    private final QuestionRepository questionRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public DataSeeder(ProductRepository productRepository, UserRepository userRepository,
                       FaqRepository faqRepository, NoticeRepository noticeRepository,
                       ReviewRepository reviewRepository, OrderRepository orderRepository,
                       OrderItemRepository orderItemRepository, EventRepository eventRepository,
-                      ProductLikeRepository productLikeRepository, CouponRepository couponRepository) {
+                      ProductLikeRepository productLikeRepository, CouponRepository couponRepository,
+                      QuestionRepository questionRepository) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.faqRepository = faqRepository;
@@ -48,6 +50,7 @@ public class DataSeeder implements CommandLineRunner {
         this.eventRepository = eventRepository;
         this.productLikeRepository = productLikeRepository;
         this.couponRepository = couponRepository;
+        this.questionRepository = questionRepository;
     }
 
     @Override
@@ -55,6 +58,7 @@ public class DataSeeder implements CommandLineRunner {
         seedUsers();
         seedProducts();
         seedFaqs();
+        seedQuestions();
         seedNotices();
         seedEvents();
         seedReviews();
@@ -225,6 +229,38 @@ public class DataSeeder implements CommandLineRunner {
                     systemAdminId, systemAdminUsername)
         );
         faqRepository.saveAll(faqs);
+    }
+
+    private void seedQuestions() {
+        if (questionRepository.count() > 0) {
+            return;
+        }
+        Long user1 = userRepository.findByUsername("user1").map(User::getId).orElse(1L);
+        Long user2 = userRepository.findByUsername("user2").map(User::getId).orElse(1L);
+
+        Question answered = question(user1, "user1", "주문한 상품 배송이 언제 시작되나요?",
+                "어제 결제를 완료했는데 아직 배송 시작 알림이 없어서 문의드립니다.", false);
+        answered.setAnswer("안녕하세요. 결제 확인 후 영업일 기준 1일 내 순차 출고되고 있으며, 오늘 중 출고 예정입니다. 이용에 불편을 드려 죄송합니다.");
+        answered.setAnsweredBy("admin");
+        answered.setAnsweredAt(java.time.LocalDateTime.now());
+
+        questionRepository.saveAll(List.of(
+                answered,
+                question(user2, "user2", "사이즈 교환도 가능한가요?",
+                        "M 사이즈를 주문했는데 L로 교환하고 싶습니다. 절차가 궁금합니다.", false),
+                question(user1, "user1", "(비밀글) 결제 영수증 재발급 문의",
+                        "세금계산서 처리 때문에 영수증 재발급이 필요합니다. 계정 정보 확인 부탁드립니다.", true)
+        ));
+    }
+
+    private Question question(Long userId, String username, String title, String body, boolean secret) {
+        Question q = new Question();
+        q.setUserId(userId);
+        q.setUsername(username);
+        q.setTitle(title);
+        q.setBody(body);
+        q.setSecret(secret);
+        return q;
     }
 
     private Faq faq(String question, String answer, Long userId, String authorUsername) {

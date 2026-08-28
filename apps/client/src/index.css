@@ -644,18 +644,28 @@ textarea { resize: vertical; min-height: 4.5rem; }
 .like-btn.liked { color: var(--color-sale); }
 .like-btn:hover { color: var(--color-sale); }
 .like-btn__count { font-size: 0.8rem; font-variant-numeric: tabular-nums; }
-.product-card__like {
-  position: absolute;
-  top: var(--space-3);
-  right: var(--space-3);
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: var(--radius-pill);
-  padding: 0.25rem 0.5rem;
-  box-shadow: var(--shadow-sm);
+.product-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
 }
-.buy-box__actions { display: flex; gap: var(--space-3); }
+.product-card__actions .btn { flex: 1; min-width: 0; }
+.product-card__like {
+  flex: 0 0 auto;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+}
+.buy-box__actions { display: flex; align-items: stretch; gap: var(--space-3); }
 .buy-box__actions .btn { flex: 1; }
-.buy-box__like { align-self: center; margin-top: var(--space-1); }
+.buy-box__like {
+  flex: 0 0 auto;
+  justify-content: center;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+}
 .product-card__name {
   font-size: 0.92rem;
   font-weight: 500;
@@ -825,6 +835,24 @@ textarea { resize: vertical; min-height: 4.5rem; }
 .chip:hover { background: var(--color-subtle); color: var(--color-ink); }
 .chip.active { background: var(--color-ink); color: #fff; border-color: var(--color-ink); }
 
+/* 상태 칩(비인터랙티브) — Q&A 답변 여부 */
+.chip--done, .chip--wait {
+  cursor: default;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+}
+.chip--done { color: #0a7d4b; border-color: #b7e0c9; background: #eef8f2; }
+.chip--wait { color: var(--color-text-muted); }
+.chip--done:hover { color: #0a7d4b; background: #eef8f2; }
+.chip--wait:hover { color: var(--color-text-muted); background: var(--color-surface); }
+
+/* Q&A 게시판 */
+.qna-toolbar { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.qna-toolbar .search-row { flex: 1; }
+.qna-meta { display: inline-flex; align-items: center; gap: var(--space-3); }
+.qna-detail__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.qna-answer { border-left: 3px solid var(--color-ink); }
+
 .search-result-label { font-size: 0.9rem; color: var(--color-text-muted); margin-bottom: var(--space-5); }
 
 /* Product filter bar */
@@ -935,6 +963,46 @@ textarea { resize: vertical; min-height: 4.5rem; }
 .badge-ok { background: var(--status-paid-bg); color: var(--status-paid); border-color: transparent; }
 .badge-danger { background: var(--status-cancelled-bg); color: var(--status-cancelled); border-color: transparent; }
 .access-log__ua { max-width: 320px; word-break: break-all; font-size: 0.78rem; color: var(--color-text-muted); }
+
+/* FAQ 아코디언 게시판 */
+.faq-list { list-style: none; display: flex; flex-direction: column; }
+.faq-item { border-bottom: 1px solid var(--color-line); }
+.faq-item__q {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-1);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+.faq-item__q:hover { color: var(--color-ink); }
+.faq-item__question { flex: 1; font-weight: 500; }
+.faq-item__mark {
+  flex: 0 0 auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: var(--color-ink);
+  border-radius: var(--radius-sm);
+  background: var(--color-subtle);
+}
+.faq-item__mark--a { color: var(--color-text-muted); }
+.faq-item__toggle { flex: 0 0 auto; color: var(--color-text-muted); font-size: 1.1rem; }
+.faq-item__a {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-1) var(--space-5);
+  color: var(--color-text);
+  background: var(--color-subtle);
+}
 
 /* Notice / event list — 제목만 노출, 상세로 이동 */
 .post-list { display: flex; flex-direction: column; }
