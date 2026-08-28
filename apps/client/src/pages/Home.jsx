@@ -4,6 +4,7 @@ import { useBackend } from '../BackendContext.jsx';
 import { useSession } from '../SessionContext.jsx';
 import { fetchProducts } from '../api.js';
 import ProductCard from '../components/ProductCard.jsx';
+import EventPopups from '../components/EventPopups.jsx';
 import { SkeletonGrid } from '../components/Skeleton.jsx';
 
 const CATEGORIES = [
@@ -28,6 +29,8 @@ export default function Home() {
 
   return (
     <div className="page">
+      <EventPopups />
+
       <section className="hero">
         <h1>매일 쓰는 물건일수록, 신중하게</h1>
         <p>

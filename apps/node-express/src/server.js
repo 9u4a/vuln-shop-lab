@@ -12,6 +12,7 @@ const orderRoutes = require('./routes/orders');
 const adminRoutes = require('./routes/admin');
 const faqRoutes = require('./routes/faqs');
 const noticeRoutes = require('./routes/notices');
+const eventRoutes = require('./routes/events');
 const activityRoutes = require('./routes/activity');
 const { initMongo } = require('./mongo');
 
@@ -54,6 +55,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/faqs', faqRoutes);
 app.use('/api/notices', noticeRoutes);
+app.use('/api/events', eventRoutes);
 app.use('/api/activity', activityRoutes);
 
 initMongo().catch((err) => console.error('mongo init failed:', err.message));

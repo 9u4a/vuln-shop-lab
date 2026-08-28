@@ -82,6 +82,18 @@ db.exec(`
     body TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
+
+  CREATE TABLE IF NOT EXISTS events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    body TEXT,
+    image_url TEXT,
+    link_url TEXT,
+    active INTEGER NOT NULL DEFAULT 1,
+    starts_at TEXT,
+    ends_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
 `);
 
 for (const stmt of [
@@ -227,6 +239,44 @@ if (noticeCount === 0) {
     ]
   ];
   for (const row of notices) insertNotice.run(...row);
+}
+
+// 4.5 Seed Events (if missing)
+const eventCount = db.prepare('SELECT COUNT(*) AS count FROM events').get().count;
+if (eventCount === 0) {
+  const insertEvent = db.prepare(
+    'INSERT INTO events (title, body, image_url, link_url, active, starts_at, ends_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  );
+  const events = [
+    [
+      '여름 데스크 셋업 페어',
+      '<h3 style="margin-top:0">인기 아이템 최대 30% 할인</h3><p>키보드 · 모니터 · 조명까지, 지금 가장 많이 담는 데스크 셋업 아이템을 한정 수량 특가로 준비했습니다.</p><p><strong>8월 한정 · 재고 소진 시 조기 종료</strong></p>',
+      null,
+      '/products',
+      1,
+      null,
+      null,
+    ],
+    [
+      '신규 회원 웰컴 쿠폰',
+      '<p>지금 가입하면 <strong>첫 구매 5,000원 즉시 할인</strong> 쿠폰을 드려요.</p><p>가입 후 마이페이지에서 바로 확인하실 수 있습니다.</p>',
+      null,
+      '/signup',
+      1,
+      null,
+      null,
+    ],
+    [
+      '무료배송 위크',
+      '<p>이번 주 모든 주문 <strong>무료배송</strong> — 별도 쿠폰 없이 자동 적용됩니다.</p>',
+      null,
+      '/products',
+      1,
+      null,
+      null,
+    ],
+  ];
+  for (const row of events) insertEvent.run(...row);
 }
 
 // 5. Seed Reviews (if missing)

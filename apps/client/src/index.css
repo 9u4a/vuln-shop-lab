@@ -1103,6 +1103,83 @@ textarea { resize: vertical; min-height: 4.5rem; }
 }
 
 /* ------------------------------------------------------------------ */
+/* Event popups                                                       */
+/* ------------------------------------------------------------------ */
+.event-popups {
+  position: fixed;
+  top: calc(var(--header-h) + var(--space-8));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  width: min(1300px, calc(100vw - var(--space-8)));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: stretch;
+  gap: var(--space-6);
+  pointer-events: none;
+}
+.event-popup {
+  pointer-events: auto;
+  width: 400px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-pop);
+  overflow: hidden;
+  animation: toast-in 0.22s ease-out;
+}
+.event-popup__image { width: 100%; display: block; object-fit: cover; max-height: 280px; flex: none; }
+.event-popup__body { padding: var(--space-8); flex: 1 1 auto; }
+.event-popup__title { font-size: 1.5rem; margin-bottom: var(--space-4); }
+.event-popup__content { font-size: 1rem; line-height: 1.7; color: var(--color-text); }
+.event-popup__content :first-child { margin-top: 0; }
+.event-popup__content :last-child { margin-bottom: 0; }
+.event-popup__content h3 { font-size: 1.2rem; margin-bottom: var(--space-3); }
+.event-popup__body .btn { margin-top: var(--space-6); }
+.event-popup__foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--color-line);
+  background: var(--color-subtle);
+}
+.event-popup__dismiss, .event-popup__close {
+  border: none;
+  background: transparent;
+  padding: var(--space-4) var(--space-6);
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+.event-popup__dismiss:hover, .event-popup__close:hover { color: var(--color-ink); }
+.event-popup__close { font-weight: 600; }
+
+@media (max-width: 900px) {
+  .event-popups {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    transform: none;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 0;
+  }
+  .event-popup {
+    width: 100%;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    margin-top: -1px;
+  }
+  .event-popup__body { padding: var(--space-6); }
+  .event-popup__title { font-size: 1.25rem; }
+}
+
+/* ------------------------------------------------------------------ */
 /* Toss payment widgets                                               */
 /* ------------------------------------------------------------------ */
 #payment-method, #agreement { margin: var(--space-4) 0; }
