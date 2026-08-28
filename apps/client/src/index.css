@@ -70,6 +70,8 @@ body {
   line-height: 1.6;
   letter-spacing: -0.011em;
   font-size: 15px;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -160,6 +162,7 @@ img { max-width: 100%; }
   max-width: 360px;
   margin-left: auto;
   display: flex;
+  flex-direction: row;
   flex-wrap: nowrap;
   align-items: center;
   gap: var(--space-2);
@@ -186,12 +189,15 @@ img { max-width: 100%; }
   border: none;
   background: transparent;
   padding: 0;
-  font-size: 1.05rem;
   flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--color-text-muted);
   line-height: 1;
 }
 .site-header__search button:not(.btn):hover { color: var(--color-ink); }
+.site-header__search svg { display: block; }
 
 .site-header__actions { display: flex; align-items: center; gap: var(--space-3); }
 .icon-link {
