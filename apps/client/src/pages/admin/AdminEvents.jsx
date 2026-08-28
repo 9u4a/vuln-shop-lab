@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useBackend } from '../../BackendContext.jsx';
 import { fetchEventsManage, createEvent, updateEvent, deleteEvent } from '../../api.js';
 import AdminImageField from '../../components/AdminImageField.jsx';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
 const emptyEvent = {
   title: '',
@@ -56,6 +57,7 @@ export default function AdminEvents() {
   const [draft, setDraft] = useState(emptyEvent);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState(emptyEvent);
+  const [pendingId, setPendingId] = useState(null);
 
   function load() {
     setError(null);
@@ -154,7 +156,7 @@ export default function AdminEvents() {
                   <div className="admin-item-row__actions">
                     <button type="button" onClick={() => toggleActive(ev)}>{ev.active ? '비활성화' : '활성화'}</button>
                     <button type="button" onClick={() => startEdit(ev)}>수정</button>
-                    <button type="button" onClick={() => handleDelete(ev.id)}>삭제</button>
+                    <button type="button" onClick={() => setPendingId(ev.id)}>삭제</button>
                   </div>
                 </>
               )}
@@ -167,6 +169,13 @@ export default function AdminEvents() {
         <h2>이벤트 추가</h2>
         <EventForm value={draft} onChange={setDraft} onSubmit={handleCreate} submitLabel="이벤트 추가" />
       </section>
+
+      <ConfirmDialog
+        open={pendingId != null}
+        title="이벤트를 삭제하시겠어요?"
+        onConfirm={() => { handleDelete(pendingId); setPendingId(null); }}
+        onCancel={() => setPendingId(null)}
+      />
     </>
   );
 }

@@ -9,6 +9,7 @@ import { formatCurrency } from '../format.js';
 import { CATEGORY_LABELS } from '../data/categories.js';
 import LikeButton from '../components/LikeButton.jsx';
 import { ADMIN_ROLES } from '../components/navLinks.js';
+import ConfirmDialog from '../components/ConfirmDialog.jsx';
 
 function Stars({ value }) {
   const n = Math.max(0, Math.min(5, Math.round(Number(value) || 0)));
@@ -42,6 +43,7 @@ export default function ProductDetail() {
 
   const [quantity, setQuantity] = useState(1);
   const [selectedOption, setSelectedOption] = useState('');
+  const [pendingReview, setPendingReview] = useState(null);
 
   function loadReviews() {
     fetchReviews(backend.base, id).then((data) => setReviews(data.reviews));
@@ -97,7 +99,10 @@ export default function ProductDetail() {
     }
   }
 
-  async function handleDeleteReview(review) {
+  async function handleDeleteReview() {
+    const review = pendingReview;
+    setPendingReview(null);
+    if (!review) return;
     setError(null);
     try {
       await deleteReview(backend.base, id, review.id);
@@ -250,7 +255,7 @@ export default function ProductDetail() {
                   {user && canView && (
                     <div className="review-item__actions">
                       <button type="button" onClick={() => startEdit(r)}>수정</button>
-                      <button type="button" onClick={() => handleDeleteReview(r)}>삭제</button>
+                      <button type="button" onClick={() => setPendingReview(r)}>삭제</button>
                     </div>
                   )}
                 </>
@@ -286,6 +291,14 @@ export default function ProductDetail() {
           </p>
         )}
       </section>
+
+      <ConfirmDialog
+        open={!!pendingReview}
+        title="리뷰를 삭제하시겠어요?"
+        message="삭제한 리뷰는 되돌릴 수 없습니다."
+        onConfirm={handleDeleteReview}
+        onCancel={() => setPendingReview(null)}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useBackend } from '../../BackendContext.jsx';
 import { fetchCouponsManage, createCoupon, updateCoupon, deleteCoupon } from '../../api.js';
 import { formatCurrency } from '../../format.js';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
 const emptyCoupon = {
   code: '',
@@ -76,6 +77,7 @@ export default function AdminCoupons() {
   const [draft, setDraft] = useState(emptyCoupon);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState(emptyCoupon);
+  const [pendingId, setPendingId] = useState(null);
 
   function load() {
     setError(null);
@@ -170,7 +172,7 @@ export default function AdminCoupons() {
                   <div className="admin-item-row__actions">
                     <button type="button" onClick={() => toggleActive(c)}>{c.active ? '비활성화' : '활성화'}</button>
                     <button type="button" onClick={() => startEdit(c)}>수정</button>
-                    <button type="button" onClick={() => handleDelete(c.id)}>삭제</button>
+                    <button type="button" onClick={() => setPendingId(c.id)}>삭제</button>
                   </div>
                 </>
               )}
@@ -183,6 +185,13 @@ export default function AdminCoupons() {
         <h2>쿠폰 추가</h2>
         <CouponForm value={draft} onChange={setDraft} onSubmit={handleCreate} submitLabel="쿠폰 추가" />
       </section>
+
+      <ConfirmDialog
+        open={pendingId != null}
+        title="쿠폰을 삭제하시겠어요?"
+        onConfirm={() => { handleDelete(pendingId); setPendingId(null); }}
+        onCancel={() => setPendingId(null)}
+      />
     </>
   );
 }

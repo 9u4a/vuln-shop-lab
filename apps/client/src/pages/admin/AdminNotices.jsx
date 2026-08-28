@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useBackend } from '../../BackendContext.jsx';
 import { fetchNotices, createNoticeAdmin, updateNoticeAdmin, deleteNoticeAdmin } from '../../api.js';
 import AdminImageField from '../../components/AdminImageField.jsx';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
 const emptyNotice = { title: '', body: '', imageUrl: '' };
 
@@ -12,6 +13,7 @@ export default function AdminNotices() {
   const [error, setError] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState(emptyNotice);
+  const [pendingId, setPendingId] = useState(null);
 
   function load() {
     setError(null);
@@ -86,7 +88,7 @@ export default function AdminNotices() {
                 </div>
                 <div className="admin-item-row__actions">
                   <button type="button" onClick={() => startEdit(n)}>수정</button>
-                  <button type="button" onClick={() => handleDelete(n.id)}>삭제</button>
+                  <button type="button" onClick={() => setPendingId(n.id)}>삭제</button>
                 </div>
               </>
             )}
@@ -105,6 +107,13 @@ export default function AdminNotices() {
         <AdminImageField value={newNotice.imageUrl} onChange={(f) => setNewNotice({ ...newNotice, imageUrl: f })} />
         <button type="submit" className="btn btn-primary">공지사항 추가</button>
       </form>
+
+      <ConfirmDialog
+        open={pendingId != null}
+        title="공지사항을 삭제하시겠어요?"
+        onConfirm={() => { handleDelete(pendingId); setPendingId(null); }}
+        onCancel={() => setPendingId(null)}
+      />
     </section>
   );
 }

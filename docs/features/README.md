@@ -39,3 +39,4 @@
 | 31 | 이벤트 페이지 · 쿠폰 · 업로드 · 네비 | feature/events-coupons-uploads | 029 | 이벤트/쿠폰, 파일 업로드 전환, 한 줄 네비 |
 | 32 | Q&A 게시판 · FAQ 관리자화 · 버튼 배치 | feature/qna-faq-board | 003 | Q&A 문의, FAQ 게시판화 |
 | 33 | 주소 검색 서버화 · 푸터 보강 | feature/address-search-footer | — | 서버 주소 조회, 더미 74건, 사이트맵 |
+| 34 | 안정성·편의성 개선 | feature/ux-and-node-safety | — | 삭제 확인 모달, 이미지 폴백, 재고 경고, Node 크래시 방지 |

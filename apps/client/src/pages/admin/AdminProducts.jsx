@@ -7,6 +7,7 @@ import {
   uploadProductImageAdmin,
 } from '../../api.js';
 import { formatCurrency } from '../../format.js';
+import SafeImage from '../../components/SafeImage.jsx';
 
 const emptyProduct = {
   name: '',
@@ -31,11 +32,13 @@ function ProductRow({ product, uploadsBase, onUpload, onDelete }) {
     <tr>
       <td>
         {imageUrl ? (
-          <img
+          <SafeImage
             className="product-thumb"
             style={{ width: 48, height: 48 }}
             src={`${uploadsBase}/${imageUrl}`}
             alt={product.name}
+            placeholderClassName="product-thumb product-thumb-placeholder"
+            placeholderText="없음"
           />
         ) : (
           <div className="product-thumb product-thumb-placeholder" style={{ width: 48, height: 48, fontSize: '0.6rem' }}>없음</div>
@@ -72,6 +75,7 @@ export default function AdminProducts() {
   const [newProduct, setNewProduct] = useState(emptyProduct);
   const [error, setError] = useState(null);
   const [status, setStatus] = useState(null);
+  const [pendingId, setPendingId] = useState(null);
 
   function load() {
     setError(null);
@@ -148,7 +152,7 @@ export default function AdminProducts() {
                   product={p}
                   uploadsBase={backend.uploadsBase}
                   onUpload={handleUpload}
-                  onDelete={handleDeleteProduct}
+                  onDelete={setPendingId}
                 />
               ))}
             </tbody>
@@ -201,6 +205,14 @@ export default function AdminProducts() {
           <button type="submit" className="btn btn-primary">상품 추가</button>
         </form>
       </section>
+
+      <ConfirmDialog
+        open={pendingId != null}
+        title="상품을 삭제하시겠어요?"
+        message="삭제한 상품은 되돌릴 수 없습니다."
+        onConfirm={() => { handleDeleteProduct(pendingId); setPendingId(null); }}
+        onCancel={() => setPendingId(null)}
+      />
     </>
   );
 }

@@ -164,6 +164,9 @@ export default function Cart() {
                   >+</button>
                 </div>
                 <span className="line-item__price tnum">{formatCurrency(i.price * i.quantity)}</span>
+                {i.stock != null && i.quantity > i.stock && (
+                  <span className="line-item__stock-warn">재고 {i.stock}개 남음 — 수량을 확인해 주세요</span>
+                )}
                 <div className="line-item__actions">
                   <button onClick={() => removeItem(i.productId, i.option)}>삭제</button>
                 </div>

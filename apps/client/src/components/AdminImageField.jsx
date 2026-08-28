@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useBackend } from '../BackendContext.jsx';
 import { uploadImageAdmin } from '../api.js';
+import SafeImage from './SafeImage.jsx';
 
 // 관리자 폼용 이미지 파일 업로드 필드. 업로드 후 반환된 filename을 value로 onChange 한다.
 export default function AdminImageField({ label = '이미지', value, onChange }) {
@@ -29,7 +30,7 @@ export default function AdminImageField({ label = '이미지', value, onChange }
     <div className="admin-image-field">
       <span className="admin-image-field__label">{label} (선택)</span>
       <div className="admin-image-field__row">
-        {src && <img className="admin-image-field__preview" src={src} alt="" />}
+        {src && <SafeImage className="admin-image-field__preview" src={src} alt="" />}
         <input
           ref={inputRef}
           type="file"

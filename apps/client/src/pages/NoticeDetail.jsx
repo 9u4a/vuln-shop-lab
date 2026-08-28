@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useBackend } from '../BackendContext.jsx';
 import { fetchNotice } from '../api.js';
+import SafeImage from '../components/SafeImage.jsx';
 
 export default function NoticeDetail() {
   const { backend } = useBackend();
@@ -25,7 +26,7 @@ export default function NoticeDetail() {
           <h1>{notice.title}</h1>
           <p className="muted">{(notice.createdAt || '').slice(0, 10)}</p>
           {notice.imageUrl && (
-            <img className="notice-image" src={`${backend.uploadsBase}/${notice.imageUrl}`} alt={notice.title} />
+            <SafeImage className="notice-image" src={`${backend.uploadsBase}/${notice.imageUrl}`} alt={notice.title} />
           )}
           <p style={{ whiteSpace: 'pre-wrap', marginTop: 'var(--space-4)' }}>{notice.body}</p>
         </article>

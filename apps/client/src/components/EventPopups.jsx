@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackend } from '../BackendContext.jsx';
 import { fetchEvents } from '../api.js';
+import SafeImage from './SafeImage.jsx';
 
 const MAX_POPUPS = 3;
 const hideKey = (id) => `vulnshop_event_hide_${id}`;
@@ -52,7 +53,7 @@ export default function EventPopups() {
       {visible.map((event) => (
         <div key={event.id} className="event-popup">
           {event.imageUrl && (
-            <img className="event-popup__image" src={event.imageUrl} alt="" />
+            <SafeImage className="event-popup__image" src={`${backend.uploadsBase}/${event.imageUrl}`} alt="" />
           )}
           <div className="event-popup__body">
             <h3 className="event-popup__title">{event.title}</h3>

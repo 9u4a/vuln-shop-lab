@@ -4,6 +4,7 @@ import { useBackend } from '../BackendContext.jsx';
 import { fetchEvents } from '../api.js';
 import { SkeletonGrid } from '../components/Skeleton.jsx';
 import EmptyState from '../components/EmptyState.jsx';
+import SafeImage from '../components/SafeImage.jsx';
 
 export default function Events() {
   const { backend } = useBackend();
@@ -33,7 +34,7 @@ export default function Events() {
               <li key={e.id} className="event-card card">
                 <Link to={`/events/${e.id}`} className="event-card__link">
                   {img ? (
-                    <img className="event-card__img" src={img} alt={e.title} loading="lazy" />
+                    <SafeImage className="event-card__img" src={img} alt={e.title} loading="lazy" placeholderClassName="event-card__ph" placeholderText="🎁" />
                   ) : (
                     <span className="event-card__ph">🎁</span>
                   )}

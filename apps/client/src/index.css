@@ -609,6 +609,18 @@ textarea { resize: vertical; min-height: 4.5rem; }
   color: var(--color-text-muted);
   font-size: 0.8rem;
 }
+/* 공용 이미지 폴백 자리표시 (SafeImage) */
+.image-ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding: var(--space-4);
+  background: var(--color-subtle);
+  border-radius: var(--radius);
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
 .product-card__soldout {
   position: absolute;
   top: var(--space-3);
@@ -1262,6 +1274,9 @@ textarea { resize: vertical; min-height: 4.5rem; }
 }
 .modal-header { display: flex; align-items: center; justify-content: space-between; }
 .modal-header h2 { margin: 0; }
+.modal--confirm { max-width: 380px; }
+.confirm-actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
+.line-item__stock-warn { color: var(--color-danger); font-size: 0.78rem; font-weight: 500; }
 .modal-close {
   border: none;
   background: transparent;
