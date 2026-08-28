@@ -897,6 +897,14 @@ textarea { resize: vertical; min-height: 4.5rem; }
 .line-item__main { flex: 1 1 200px; display: flex; flex-direction: column; gap: var(--space-1); }
 .line-item__name { font-weight: 600; font-size: 0.95rem; }
 .line-item__meta { font-size: 0.82rem; color: var(--color-text-muted); }
+.line-item__option {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+.line-item__option select { width: auto; min-width: 6rem; padding: 0.2rem 0.4rem; font-size: 0.82rem; }
 .line-item__price { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .line-item__actions { display: flex; align-items: center; gap: var(--space-3); }
 

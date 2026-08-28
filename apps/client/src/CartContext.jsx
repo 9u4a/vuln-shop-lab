@@ -37,9 +37,30 @@ function CartProvider({ children }) {
         name: product.name,
         price: Number(product.price),
         option: option || null,
+        optionName: product.optionName || null,
+        optionValues: Array.isArray(product.optionValues) ? product.optionValues : [],
         quantity: (prev[key]?.quantity || 0) + quantity,
       },
     }));
+  }
+
+  // 장바구니 라인의 옵션을 변경한다. 대상 옵션 라인이 이미 있으면 수량을 합친다.
+  function changeOption(productId, oldOption, newOption) {
+    const oldKey = lineKey(productId, oldOption);
+    const newKey = lineKey(productId, newOption);
+    if (oldKey === newKey) return;
+    setItems((prev) => {
+      const line = prev[oldKey];
+      if (!line) return prev;
+      const next = { ...prev };
+      delete next[oldKey];
+      if (next[newKey]) {
+        next[newKey] = { ...next[newKey], quantity: next[newKey].quantity + line.quantity };
+      } else {
+        next[newKey] = { ...line, option: newOption };
+      }
+      return next;
+    });
   }
 
   function setQuantity(productId, option, quantity) {
@@ -72,7 +93,7 @@ function CartProvider({ children }) {
   const total = list.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items: list, total, addItem, setQuantity, removeItem, clear }}>
+    <CartContext.Provider value={{ items: list, total, addItem, setQuantity, changeOption, removeItem, clear }}>
       {children}
     </CartContext.Provider>
   );
