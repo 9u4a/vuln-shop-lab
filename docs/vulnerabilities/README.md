@@ -33,6 +33,7 @@
 | [VULN-020](VULN-020-xxe-catalog-import.md) | XML 상품 임포트 XXE | java | A05 Misconfiguration | High | 구현됨 |
 | [VULN-021](VULN-021-commons-text-1.9-text4shell.md) | 취약 의존성 `commons-text:1.9` (CVE-2022-42889 Text4Shell) | java | A06 Vulnerable Components | Critical | 구현됨 |
 | [VULN-022](VULN-022-nosql-injection-activity.md) | Mongo 기반 활동 피드 NoSQL 인젝션 | node | A03 Injection (NoSQL) | High | 구현됨 |
+| [VULN-023](VULN-023-stored-xss-event-popup.md) | 이벤트 팝업 본문 저장형 XSS (메인 페이지 전역 렌더) | both + client | A03 Injection (XSS) | High | 구현됨 |
 
 ## OWASP / CLAUDE.md 스코프 커버리지
 
@@ -43,7 +44,7 @@
 | Injection — SpEL/OGNL (Spring) | DONE | 002 |
 | Injection — NoSQL (Express) | DONE (Mongo 컨테이너) | 022 |
 | Broken Authentication / Session Management | DONE | 006 |
-| XSS — Stored | DONE | 008, 018 |
+| XSS — Stored | DONE | 008, 018, 023 |
 | XSS — Reflected | DONE | 016 |
 | XSS — DOM | DONE | 017 |
 | IDOR / Broken Access Control | DONE | 009, 011, 013, 014 |
@@ -57,3 +58,4 @@
 | CSRF | DONE | 014 |
 
 배치 013–022 완료 — CLAUDE.md 스코프의 모든 클래스가 최소 1개 구현 항목으로 커버된다.
+VULN-023은 이벤트 팝업 기능(`docs/features/25-event-popups.md`)과 함께 추가된 저장형 XSS.
