@@ -1,4 +1,4 @@
-# VULN-030 비밀 문의(Q&A) 접근제어 미흡 (본문이 상세 API에 그대로 노출)
+# VULN-003 비밀 문의(Q&A) 접근제어 미흡 (본문이 상세 API에 그대로 노출)
 
 - 대상 스택: node-express, java-spring (client 공통)
 - 심각도: Medium

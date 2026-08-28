@@ -12,7 +12,7 @@ place showed which OWASP scope classes were covered vs open.
 
 - `docs/vulnerabilities/README.md` rewritten as the live index: one row per VULN-001…022
   (implemented + planned), each linking to its doc, plus a scope-coverage matrix
-  (DONE / PLANNED per `CLAUDE.md` scope item). VULN-003 shown struck through (withdrawn).
+  (DONE / PLANNED per `CLAUDE.md` scope item).
 - `CLAUDE.md` "Vulnerability scope" section: NoSQLi noted as in-scope via a dedicated
   MongoDB feature; XXE, mass assignment, CSRF, business-logic/insecure-design added as
   explicit sub-items; a pointer to the README index/matrix added.

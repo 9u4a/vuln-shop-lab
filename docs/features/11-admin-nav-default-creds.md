@@ -6,7 +6,7 @@ Branch: `feature/admin-nav-default-creds` (built on `main`, after PR #9/#10/#11 
 
 - **Admin nav link restored, role-gated**: `Layout` in `App.jsx` shows `Admin` in the top nav again when `user.role` is `admin` or `system_admin` (`ADMIN_ROLES.includes(user.role)`), same condition already enforced server-side and by the `RequireRole` route guard on `/admin/*`. The previous feature branch had removed the link entirely; this restores the original show/hide-by-role behavior instead.
 - **Default `system_admin` account seeded on both stacks** (`username: 9u4a`, `password: 9u4a`): created once at startup if no user with that username exists yet (Node: `db.js`, bcryptjs `hashSync`; Java: `DataSeeder.seedDefaultAdmin()`, `BCryptPasswordEncoder`). Independent of the existing "first signup becomes system_admin" bootstrap in `auth.js`/`AuthService` — since this account already exists at first boot, that bootstrap path effectively never triggers on a fresh DB anymore (the first *human* signup becomes a plain `user`, which is correct once a system_admin already exists).
-- Not tracked as a vulnerability finding — this account is the project's own admin login for driving the demo app (nav, other features' manual verification, etc.), not a flaw discovered by testing, so classifying it as VULN-003 was withdrawn.
+- Not tracked as a vulnerability finding — this account is the project's own admin login for driving the demo app (nav, other features' manual verification, etc.), not a flaw discovered by testing.
 
 ## Current admin access control (for reference)
 

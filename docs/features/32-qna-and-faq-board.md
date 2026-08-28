@@ -42,7 +42,7 @@ answered_at, created_at`.
 | 메서드 | 경로 | 권한 | 설명 |
 |--------|------|------|------|
 | GET | `/api/qna` | 공개 | 목록(**제목만** + 답변여부/비밀여부/작성자/날짜), 제목 검색·페이지네이션 |
-| GET | `/api/qna/:id` | 공개 | 상세(본문/답변) — 비밀글도 본문 반환(**VULN-030**) |
+| GET | `/api/qna/:id` | 공개 | 상세(본문/답변) — 비밀글도 본문 반환(**VULN-003**) |
 | POST | `/api/qna` | 인증 | 문의 작성(title/body/secret) |
 | PUT | `/api/qna/:id/answer` | 관리자 | 답변 등록/수정 |
 | DELETE | `/api/qna/:id` | 작성자·관리자 | 삭제 |
@@ -60,9 +60,9 @@ answered_at, created_at`.
 
 ## 의도된 취약점
 
-- **VULN-030** 비밀 문의 접근제어 미흡 — `GET /api/qna/:id`가 비밀글 `body`를 소유권/세션 확인 없이
+- **VULN-003** 비밀 문의 접근제어 미흡 — `GET /api/qna/:id`가 비밀글 `body`를 소유권/세션 확인 없이
   반환, 마스킹은 클라이언트 전용(A01 Broken Access Control). 비밀 후기(VULN-026)와 동일 계열의 새 표면.
-  `docs/vulnerabilities/VULN-030-qna-secret-question-access-control.md`.
+  `docs/vulnerabilities/VULN-003-qna-secret-question-access-control.md`.
 
 ## 검증
 
@@ -71,5 +71,5 @@ answered_at, created_at`.
   - 목록: 제목만 + secret/answered 플래그 정상, 본문 미노출.
   - FAQ POST: 비인증 401 / 일반 사용자 403 / 관리자 201.
   - Q&A: 작성 201(인증) · 일반 사용자 답변 403 · 관리자 답변 200(q2 `answeredBy:admin` 반영).
-  - **VULN-030**: 비인증 `GET /qna/3`(비밀글) 응답에 `body` 원문 포함 확인(node·java 동일).
+  - **VULN-003**: 비인증 `GET /qna/3`(비밀글) 응답에 `body` 원문 포함 확인(node·java 동일).
   - (Java의 한글 본문 POST가 curl에서 400은 Windows CP949 인코딩 아티팩트 — ASCII 본문/브라우저 UTF-8은 정상.)
