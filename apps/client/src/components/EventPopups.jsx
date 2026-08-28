@@ -49,12 +49,8 @@ export default function EventPopups() {
 
   return (
     <div className="event-popups" role="dialog" aria-label="이벤트 안내">
-      {visible.map((event, i) => (
-        <div
-          key={event.id}
-          className="event-popup"
-          style={{ '--offset': i }}
-        >
+      {visible.map((event) => (
+        <div key={event.id} className="event-popup">
           {event.imageUrl && (
             <img className="event-popup__image" src={event.imageUrl} alt="" />
           )}
