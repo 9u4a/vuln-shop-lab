@@ -215,7 +215,7 @@ for (const u of seedUsers) {
     // Ensure all details are populated for existing users
     db.prepare(`
       UPDATE users SET
-        role = ?, name = ?, phone = ?, bio = ?, postcode = ?, address = ?, address_detail = ?
+        role = ?, name = ?, phone = ?, bio = ?, postcode = ?, address = ?, address_detail = ?, active = 1
       WHERE id = ?
     `).run(
       u.role,

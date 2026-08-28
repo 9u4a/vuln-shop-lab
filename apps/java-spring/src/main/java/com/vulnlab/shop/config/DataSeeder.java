@@ -143,6 +143,7 @@ public class DataSeeder implements CommandLineRunner {
         user.setPostcode(postcode);
         user.setAddress(address);
         user.setAddressDetail(addressDetail);
+        user.setActive(true);
         userRepository.save(user);
     }
 
