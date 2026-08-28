@@ -30,13 +30,14 @@ public class DataSeeder implements CommandLineRunner {
     private final OrderItemRepository orderItemRepository;
     private final EventRepository eventRepository;
     private final ProductLikeRepository productLikeRepository;
+    private final CouponRepository couponRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public DataSeeder(ProductRepository productRepository, UserRepository userRepository,
                       FaqRepository faqRepository, NoticeRepository noticeRepository,
                       ReviewRepository reviewRepository, OrderRepository orderRepository,
                       OrderItemRepository orderItemRepository, EventRepository eventRepository,
-                      ProductLikeRepository productLikeRepository) {
+                      ProductLikeRepository productLikeRepository, CouponRepository couponRepository) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.faqRepository = faqRepository;
@@ -46,6 +47,7 @@ public class DataSeeder implements CommandLineRunner {
         this.orderItemRepository = orderItemRepository;
         this.eventRepository = eventRepository;
         this.productLikeRepository = productLikeRepository;
+        this.couponRepository = couponRepository;
     }
 
     @Override
@@ -58,6 +60,33 @@ public class DataSeeder implements CommandLineRunner {
         seedReviews();
         seedOrders();
         seedLikes();
+        seedCoupons();
+    }
+
+    private void seedCoupons() {
+        if (couponRepository.count() > 0) {
+            return;
+        }
+        couponRepository.save(coupon("WELCOME5000", "신규 가입 웰컴 쿠폰",
+                "첫 구매 시 즉시 사용 가능한 5,000원 할인 쿠폰입니다.", "amount", 5000, 0, null));
+        couponRepository.save(coupon("SUMMER10", "여름맞이 10% 할인",
+                "3만원 이상 구매 시 10% 할인. 여름 데일리 웨어를 준비하세요.", "percent", 10, 30000, "2026-09-30T23:59:59Z"));
+        couponRepository.save(coupon("FREESHIP3000", "무료배송 쿠폰",
+                "배송비 3,000원 할인 쿠폰입니다.", "amount", 3000, 0, null));
+    }
+
+    private Coupon coupon(String code, String title, String description, String discountType,
+                          int discountValue, int minOrderAmount, String expiresAt) {
+        Coupon c = new Coupon();
+        c.setCode(code);
+        c.setTitle(title);
+        c.setDescription(description);
+        c.setDiscountType(discountType);
+        c.setDiscountValue(discountValue);
+        c.setMinOrderAmount(minOrderAmount);
+        c.setActive(true);
+        c.setExpiresAt(expiresAt);
+        return c;
     }
 
     private void seedLikes() {

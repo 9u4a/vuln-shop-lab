@@ -3,7 +3,7 @@ import { Link, NavLink, useNavigate, useSearchParams, useLocation } from 'react-
 import { useBackend } from '../BackendContext.jsx';
 import { useCart } from '../CartContext.jsx';
 import { useSession } from '../SessionContext.jsx';
-import { visibleNavLinks } from './navLinks.js';
+import { NAV_LINKS, ACCOUNT_LINKS, visibleLinks } from './navLinks.js';
 import { CATEGORIES } from '../data/categories.js';
 import SiteDrawer from './SiteDrawer.jsx';
 
@@ -17,7 +17,8 @@ export default function SiteHeader() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [term, setTerm] = useState('');
 
-  const links = visibleNavLinks(user);
+  const links = visibleLinks(NAV_LINKS, user);
+  const accountLinks = visibleLinks(ACCOUNT_LINKS, user);
   const activeCategory = location.pathname === '/products' ? searchParams.get('category') || '' : null;
   const cartCount = items.reduce((n, i) => n + i.quantity, 0);
 
@@ -53,6 +54,9 @@ export default function SiteHeader() {
           {user ? (
             <>
               <span>{user.username}님</span>
+              {accountLinks.map((l) => (
+                <Link key={l.to} to={l.to} className="link-plain">{l.label}</Link>
+              ))}
               <Link to="/mypage" className="link-plain">마이페이지</Link>
               <button
                 type="button"
@@ -85,6 +89,22 @@ export default function SiteHeader() {
         <Link to="/" className="site-header__brand">Vuln Shop</Link>
 
         <nav className="site-nav">
+          <Link
+            to="/products"
+            className={activeCategory === '' ? 'site-nav__link active' : 'site-nav__link'}
+          >
+            전체
+          </Link>
+          {CATEGORIES.map((c) => (
+            <Link
+              key={c.slug}
+              to={`/products?category=${c.slug}`}
+              className={activeCategory === c.slug ? 'site-nav__link active' : 'site-nav__link'}
+            >
+              {c.label}
+            </Link>
+          ))}
+          <span className="site-nav__divider" aria-hidden="true" />
           {links.map((l) => (
             <NavLink
               key={l.to}
@@ -118,26 +138,6 @@ export default function SiteHeader() {
           </Link>
         </div>
       </div>
-
-      <nav className="category-nav" aria-label="카테고리">
-        <div className="category-nav__inner">
-          <Link
-            to="/products"
-            className={activeCategory === '' ? 'category-nav__link active' : 'category-nav__link'}
-          >
-            전체
-          </Link>
-          {CATEGORIES.map((c) => (
-            <Link
-              key={c.slug}
-              to={`/products?category=${c.slug}`}
-              className={activeCategory === c.slug ? 'category-nav__link active' : 'category-nav__link'}
-            >
-              {c.label}
-            </Link>
-          ))}
-        </div>
-      </nav>
 
       <SiteDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </header>

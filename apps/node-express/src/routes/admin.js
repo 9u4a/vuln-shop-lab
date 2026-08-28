@@ -204,6 +204,14 @@ router.put('/products/:id', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
+// 공용 이미지 업로드 — 공지/이벤트 등에서 파일을 올린 뒤 반환된 filename을 imageUrl로 사용.
+router.post('/upload', requireAdmin, upload.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: '이미지 파일이 없거나 형식이 올바르지 않습니다.' });
+  }
+  res.status(201).json({ filename: req.file.filename });
+});
+
 router.post('/products/:id/image', requireAdmin, upload.single('image'), (req, res) => {
   const existing = db.prepare('SELECT id FROM products WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: '상품을 찾을 수 없습니다.' });

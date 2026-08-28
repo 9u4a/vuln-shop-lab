@@ -50,6 +50,14 @@ export default function Notices() {
       {notices.map((n) => (
         <section className="card" key={n.id}>
           <h2>{n.title}</h2>
+          {n.imageUrl && (
+            <img
+              className="notice-image"
+              src={`${backend.uploadsBase}/${n.imageUrl}`}
+              alt={n.title}
+              loading="lazy"
+            />
+          )}
           <p style={{ whiteSpace: 'pre-wrap' }}>{n.body}</p>
           <p className="muted">{n.createdAt}</p>
         </section>

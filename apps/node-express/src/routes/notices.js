@@ -9,6 +9,7 @@ function toNotice(row) {
     id: row.id,
     title: row.title,
     body: row.body,
+    imageUrl: row.image_url,
     createdAt: row.created_at,
   };
 }
@@ -36,7 +37,8 @@ router.post('/', requireAdmin, (req, res) => {
   if (!title || !body) {
     return res.status(400).json({ error: '제목과 내용은 필수입니다.' });
   }
-  const result = db.prepare('INSERT INTO notices (title, body) VALUES (?, ?)').run(title, body);
+  const imageUrl = req.body.imageUrl || null;
+  const result = db.prepare('INSERT INTO notices (title, body, image_url) VALUES (?, ?, ?)').run(title, body, imageUrl);
   const row = db.prepare('SELECT * FROM notices WHERE id = ?').get(result.lastInsertRowid);
   res.status(201).json({ notice: toNotice(row) });
 });
@@ -46,7 +48,8 @@ router.put('/:id', requireAdmin, (req, res) => {
   if (!existing) return res.status(404).json({ error: '공지사항을 찾을 수 없습니다.' });
   const title = req.body.title != null ? req.body.title.trim() : existing.title;
   const body = req.body.body != null ? req.body.body.trim() : existing.body;
-  db.prepare('UPDATE notices SET title = ?, body = ? WHERE id = ?').run(title, body, existing.id);
+  const imageUrl = req.body.imageUrl !== undefined ? (req.body.imageUrl || null) : existing.image_url;
+  db.prepare('UPDATE notices SET title = ?, body = ?, image_url = ? WHERE id = ?').run(title, body, imageUrl, existing.id);
   const row = db.prepare('SELECT * FROM notices WHERE id = ?').get(existing.id);
   res.json({ notice: toNotice(row) });
 });

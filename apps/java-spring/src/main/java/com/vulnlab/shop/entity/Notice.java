@@ -17,6 +17,9 @@ public class Notice {
     @Column(nullable = false, length = 4000)
     private String body;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -28,6 +31,9 @@ public class Notice {
 
     public String getBody() { return body; }
     public void setBody(String body) { this.body = body; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

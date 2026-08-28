@@ -2,6 +2,7 @@ package com.vulnlab.shop.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import org.hibernate.annotations.ColumnDefault;
 import java.time.LocalDateTime;
 
 @Entity
@@ -39,6 +40,7 @@ public class User {
     private String addressDetail;
 
     @Column(nullable = false)
+    @ColumnDefault("true")
     private boolean active = true;
 
     @Column(name = "created_at", nullable = false)

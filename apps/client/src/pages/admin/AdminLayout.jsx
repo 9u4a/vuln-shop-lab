@@ -10,6 +10,7 @@ const TABS = [
   { to: 'faq', label: 'FAQ' },
   { to: 'notices', label: '공지사항' },
   { to: 'events', label: '이벤트' },
+  { to: 'coupons', label: '쿠폰' },
 ];
 
 export default function AdminLayout() {

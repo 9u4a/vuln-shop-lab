@@ -265,6 +265,17 @@ public class AdminController {
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
+    // 공용 이미지 업로드 — 공지/이벤트 등에서 파일을 올린 뒤 반환된 filename을 imageUrl로 사용.
+    @PostMapping("/upload")
+    public ResponseEntity<?> upload(@RequestParam("image") MultipartFile file, HttpSession session) throws IOException {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        if (!Uploads.isAllowed(file)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "이미지 파일이 없거나 형식이 올바르지 않습니다."));
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("filename", Uploads.store(file)));
+    }
+
     @PostMapping("/products/{id}/image")
     public ResponseEntity<?> uploadProductImage(@PathVariable Long id, @RequestParam("image") MultipartFile file,
                                                  HttpSession session) throws IOException {

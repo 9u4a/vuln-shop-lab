@@ -1,6 +1,7 @@
 package com.vulnlab.shop.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.ColumnDefault;
 import java.time.LocalDateTime;
 
 @Entity
@@ -27,6 +28,7 @@ public class Review {
     private String imageUrl;
 
     @Column(nullable = false)
+    @ColumnDefault("false")
     private boolean secret = false;
 
     @Column(name = "created_at", nullable = false)

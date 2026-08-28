@@ -104,7 +104,29 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
     body TEXT NOT NULL,
+    image_url TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS coupons (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    discount_type TEXT NOT NULL DEFAULT 'amount',
+    discount_value INTEGER NOT NULL DEFAULT 0,
+    min_order_amount INTEGER NOT NULL DEFAULT 0,
+    active INTEGER NOT NULL DEFAULT 1,
+    expires_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS user_coupons (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    coupon_id INTEGER NOT NULL REFERENCES coupons(id),
+    used INTEGER NOT NULL DEFAULT 0,
+    claimed_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
   CREATE TABLE IF NOT EXISTS events (
@@ -140,6 +162,7 @@ for (const stmt of [
   'ALTER TABLE products ADD COLUMN option_values TEXT',
   'ALTER TABLE order_items ADD COLUMN option_value TEXT',
   'ALTER TABLE faqs ADD COLUMN user_id INTEGER REFERENCES users(id)',
+  'ALTER TABLE notices ADD COLUMN image_url TEXT',
   'ALTER TABLE reviews ADD COLUMN image_url TEXT',
   'ALTER TABLE reviews ADD COLUMN secret INTEGER NOT NULL DEFAULT 0',
 ]) {
@@ -323,6 +346,20 @@ if (eventCount === 0) {
     ],
   ];
   for (const row of events) insertEvent.run(...row);
+}
+
+// 4.7 Seed Coupons (if missing)
+const couponCount = db.prepare('SELECT COUNT(*) AS count FROM coupons').get().count;
+if (couponCount === 0) {
+  const insertCoupon = db.prepare(
+    'INSERT INTO coupons (code, title, description, discount_type, discount_value, min_order_amount, active, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  );
+  const coupons = [
+    ['WELCOME5000', '신규 가입 웰컴 쿠폰', '첫 구매 시 즉시 사용 가능한 5,000원 할인 쿠폰입니다.', 'amount', 5000, 0, 1, null],
+    ['SUMMER10', '여름맞이 10% 할인', '3만원 이상 구매 시 10% 할인. 여름 데일리 웨어를 준비하세요.', 'percent', 10, 30000, 1, '2026-09-30T23:59:59Z'],
+    ['FREESHIP3000', '무료배송 쿠폰', '배송비 3,000원 할인 쿠폰입니다.', 'amount', 3000, 0, 1, null],
+  ];
+  for (const row of coupons) insertCoupon.run(...row);
 }
 
 // 5. Seed Reviews (if missing)

@@ -23,6 +23,8 @@ import Orders from './pages/Orders.jsx';
 import OrderDetail from './pages/OrderDetail.jsx';
 import Faq from './pages/Faq.jsx';
 import Notices from './pages/Notices.jsx';
+import Events from './pages/Events.jsx';
+import Coupons from './pages/Coupons.jsx';
 import NotFound from './pages/NotFound.jsx';
 import Forbidden from './pages/Forbidden.jsx';
 import AdminLayout from './pages/admin/AdminLayout.jsx';
@@ -34,6 +36,7 @@ import AdminProducts from './pages/admin/AdminProducts.jsx';
 import AdminFaq from './pages/admin/AdminFaq.jsx';
 import AdminNotices from './pages/admin/AdminNotices.jsx';
 import AdminEvents from './pages/admin/AdminEvents.jsx';
+import AdminCoupons from './pages/admin/AdminCoupons.jsx';
 
 function Layout({ children }) {
   return (
@@ -60,6 +63,8 @@ export default function App() {
                 <Route path="/products/:id" element={<ProductDetail />} />
                 <Route path="/faq" element={<Faq />} />
                 <Route path="/notices" element={<Notices />} />
+                <Route path="/events" element={<Events />} />
+                <Route path="/coupons" element={<Coupons />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout/success" element={<CheckoutResult success />} />
                 <Route path="/checkout/fail" element={<CheckoutResult success={false} />} />
@@ -89,6 +94,7 @@ export default function App() {
                   <Route path="faq" element={<AdminFaq />} />
                   <Route path="notices" element={<AdminNotices />} />
                   <Route path="events" element={<AdminEvents />} />
+                  <Route path="coupons" element={<AdminCoupons />} />
                 </Route>
 
                 <Route path="/forbidden" element={<Forbidden />} />

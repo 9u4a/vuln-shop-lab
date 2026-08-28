@@ -240,18 +240,58 @@ export function fetchNotices(base, { q, page, pageSize } = {}) {
   return apiRequest(base, `/notices${query ? `?${query}` : ''}`);
 }
 
-export function createNoticeAdmin(base, title, body) {
+export function createNoticeAdmin(base, title, body, imageUrl) {
   return apiRequest(base, '/notices', {
     method: 'POST',
-    body: JSON.stringify({ title, body }),
+    body: JSON.stringify({ title, body, imageUrl: imageUrl || null }),
   });
 }
 
-export function updateNoticeAdmin(base, id, title, body) {
+export function updateNoticeAdmin(base, id, title, body, imageUrl) {
   return apiRequest(base, `/notices/${id}`, {
     method: 'PUT',
-    body: JSON.stringify({ title, body }),
+    body: JSON.stringify({ title, body, imageUrl: imageUrl ?? null }),
   });
+}
+
+// 공용 관리자 이미지 업로드 — 반환된 filename을 imageUrl로 사용.
+export async function uploadImageAdmin(base, file) {
+  const formData = new FormData();
+  formData.append('image', file);
+  const res = await fetch(`${base}/admin/upload`, { method: 'POST', credentials: 'include', body: formData });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error(data?.error || `요청에 실패했습니다 (${res.status})`);
+  }
+  return data;
+}
+
+export function fetchCoupons(base) {
+  return apiRequest(base, '/coupons');
+}
+
+export function fetchMyCoupons(base) {
+  return apiRequest(base, '/coupons/mine');
+}
+
+export function claimCoupon(base, id) {
+  return apiRequest(base, `/coupons/${id}/claim`, { method: 'POST' });
+}
+
+export function fetchCouponsManage(base) {
+  return apiRequest(base, '/coupons/manage');
+}
+
+export function createCoupon(base, coupon) {
+  return apiRequest(base, '/coupons', { method: 'POST', body: JSON.stringify(coupon) });
+}
+
+export function updateCoupon(base, id, coupon) {
+  return apiRequest(base, `/coupons/${id}`, { method: 'PUT', body: JSON.stringify(coupon) });
+}
+
+export function deleteCoupon(base, id) {
+  return apiRequest(base, `/coupons/${id}`, { method: 'DELETE' });
 }
 
 export function deleteNoticeAdmin(base, id) {
