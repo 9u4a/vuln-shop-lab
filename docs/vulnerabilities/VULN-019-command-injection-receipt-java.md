@@ -1,4 +1,4 @@
-# VULN-019 OS command injection in Java receipt generation
+# VULN-019 Java 영수증 생성 OS 커맨드 인젝션 (010의 java 짝)
 
 - 대상 스택: java-spring
 - 심각도: Critical

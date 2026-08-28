@@ -9,8 +9,9 @@
 | `apps/client/` | 공용 프런트엔드 — React + Vite |
 | `apps/node-express/` | 백엔드 API — Node.js + Express |
 | `apps/java-spring/` | 동일 시나리오 백엔드 API — Java + Spring Boot |
+| `apps/nginx/` | 웹서버 계층 — 빌드된 클라이언트 서빙 + `/api`·`/uploads` 리버스 프록시 |
 | `infra/` | 관제(Wazuh/ELK) 인프라 *(예정)* |
-| `docs/` | 취약점 명세 · 진단 결과 · 탐지 규칙 *(로컬 전용, git 미포함)* |
+| `docs/` | `vulnerabilities/`·`features/`(git 추적) + `findings/`·`detection/`(로컬 전용, git 미포함) |
 
 ## 빠른 시작
 
@@ -19,7 +20,8 @@ copy .env.example .env
 docker compose up --build
 ```
 
-- Client: http://localhost:5173 (홈 화면에서 대상 백엔드 전환)
+- Nginx(운영형 진입점): http://localhost:8090
+- Client(Vite 개발 서버, 핫리로드): http://localhost:5173 (홈 화면에서 대상 백엔드 전환)
 - Node/Express API: http://localhost:3000
 - Java/Spring API: http://localhost:8081
 

@@ -1,4 +1,4 @@
-# VULN-002 SpEL Injection in product sort
+# VULN-002 상품 정렬 파라미터 SpEL 인젝션
 
 - 대상 스택: java-spring
 - 심각도: Critical (RCE 가능)
@@ -40,4 +40,4 @@ sort=new java.util.Scanner(T(java.lang.Runtime).getRuntime().exec("id").getInput
 
 2026-08-25, `docker compose up --build` 후 로컬에서 재현: 위 페이로드로 `sortKeys`에 컨테이너 `HOSTNAME`(`05a1da218305`)이 그대로 노출되는 것을 확인 — 임의 정적 메서드 호출(따라서 임의 코드 실행 등가)이 가능함을 증명.
 
-## 조치 상태: 미조치
+## 조치 상태: 미조치 (의도된 취약점)

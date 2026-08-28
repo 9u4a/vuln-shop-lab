@@ -1,4 +1,4 @@
-# VULN-001 SQL Injection in product search/filter/sort
+# VULN-001 상품 검색/정렬 SQL 인젝션
 
 - 대상 스택: node-express
 - 심각도: Critical
@@ -44,4 +44,4 @@ GET /api/products?category=nonexistent' UNION SELECT id, username, password_hash
 
 2026-08-25, `docker compose up --build` 후 로컬에서 재현: 회원가입한 사용자(`noflag_node`, `victimuser`)의 실제 bcrypt 해시(`$2a$10$...`)가 위 페이로드로 `products` 응답에 그대로 노출되는 것을 확인.
 
-## 조치 상태: 미조치
+## 조치 상태: 미조치 (의도된 취약점)

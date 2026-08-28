@@ -1,4 +1,4 @@
-# VULN-012 Insecure deserialization in cart backup import
+# VULN-012 장바구니 임포트 Jackson 역직렬화
 
 - 대상 스택: java-spring
 - 심각도: Critical
@@ -24,5 +24,13 @@ POST /api/cart/import
 ```
 
 classpath에 존재하는 임의 클래스를 `@class`(배열 폼)로 지정해 인스턴스화 가능 — gadget 체인이 classpath에 존재하면 RCE로 이어짐. 현재 프로젝트엔 별도 gadget 라이브러리를 추가하지 않았으므로 실제 트리거는 인스턴스화 가능한 클래스 탐색이 필요.
+
+## 영향
+
+- 신뢰 경계 없는 타입 결정(CWE-502)으로 임의 클래스 인스턴스화 — 적절한 gadget 체인과 결합 시 RCE.
+
+## 증거 (재현 확인)
+
+(진단 단계에서 채움) — Phase 2(Burp 진단)에서 재현 예정.
 
 ## 조치 상태: 미조치 (의도된 취약점)

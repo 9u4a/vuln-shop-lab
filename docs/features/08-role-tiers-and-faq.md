@@ -1,31 +1,16 @@
-# Feature: Three-tier roles (user/admin/system_admin) + FAQ
+# 08. 역할 3단계(user/admin/system_admin) + FAQ
 
-Branch: `feature/role-tiers-and-faq`
+브랜치: `feature/role-tiers-and-faq`
 
-## What was added
+## 무엇을 만들었나
+- 역할 3단계(양 스택): 최초 가입자가 `system_admin`(기존 admin), 이후 `user`.
+  - `requireAdmin`은 `admin` 또는 `system_admin` 허용, 신규 `requireSystemAdmin`은 `PUT /api/admin/users/:id/role`(승격·강등)에만 적용 — 역할 변경은 system_admin 전용.
+  - java: 역할 상수·검사를 `security/Roles`로 추출해 컨트롤러 공유.
+- FAQ: `faqs` 테이블, `GET /api/faqs`(공개), `POST/PUT/DELETE`(requireAdmin). 클라이언트 `/faq` + 관리자 FAQ 관리.
 
-- **Role tiers**: `user` → `admin` → `system_admin`, both stacks.
-  - Bootstrap: first registered user now gets `system_admin` (was `admin`); everyone after is `user`.
-  - `requireAdmin` (Node middleware / per-controller helper in Java) now accepts `admin` **or** `system_admin`.
-  - New `requireSystemAdmin` gate, applied only to `PUT /api/admin/users/:id/role` — promoting/demoting users (including granting `system_admin` itself) is `system_admin`-only. Everything else admin-level (products CRUD, FAQ CRUD, viewing users/orders) stays open to both `admin` and `system_admin`.
-  - Java: extracted role constants/checks into `com.vulnlab.shop.security.Roles` so both `AdminController` and the new `FaqController` share one definition instead of duplicating string checks.
-- **FAQ**: new `faqs` table (`question`, `answer`, `created_at`).
-  - `GET /api/faqs` — public, no auth.
-  - `POST/PUT/DELETE /api/faqs` — `requireAdmin` (both stacks).
-  - Client: public `/faq` page (nav-linked), and an "FAQ" management section in the Admin page (list + delete + create form) alongside Users/Orders/Products.
-- Client: Admin page now shows the current user's role badge, hides the role-change `<select>` entirely for plain `admin`s (with a note that only System Admins can change roles), and the role dropdown itself includes `system_admin` as an assignable value for `system_admin` viewers. Nav's "Admin" link now checks for `admin` OR `system_admin` (was hardcoded to `admin` only, which would've hidden the link from the very account that just got renamed to `system_admin`).
+## 설계 판단
+- "콘텐츠 관리(admin)"와 "권한 통제(system_admin)"를 분리 — 일반 admin이 스스로/타인을 승격할 수 있으면 계층 의미가 사라진다.
+- 역할은 로그인 시점에 세션 캐시되므로 승격·강등은 재로그인 후 반영(테스트 시 버그로 오인 주의).
 
-## Why this split
-
-- Matches the request directly: separate "manages storefront content" (admin) from "controls who has power" (system_admin) — a regular admin being able to promote themselves or anyone else to system_admin would defeat the point of having the tier at all.
-- Session caches the role at login time (same as before this change), so a promoted/demoted user only sees the new role after logging in again — noted here since it's easy to mistake for a bug during testing.
-
-## Verified
-
-Fresh DB (`docker compose down -v && up --build`), both backends:
-- First signup → `system_admin`; second signup → `user`.
-- Second user (`user` role) attempting the role-change endpoint → `403`.
-- `system_admin` promotes second user to `admin` → `200`; after re-login (session refresh) their token reflects `admin`.
-- As `admin`: `POST /api/faqs` → `201`; `PUT /api/admin/users/:id/role` → still `403` (system_admin only).
-- Anonymous `POST /api/faqs` → `401`; `GET /api/faqs` → `200` with no auth.
-- Client `/faq` route serves `200`.
+## 이후 변경
+- FAQ 작성 권한은 12에서 전체 로그인 사용자로 개방됐다가, 32에서 다시 관리자 전용 게시판으로 환원. Q&A 문의 게시판은 32에서 별도 신설.

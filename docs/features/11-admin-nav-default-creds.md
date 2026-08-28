@@ -1,21 +1,11 @@
-# Feature: Restore Admin nav link for admin/system_admin, seed default admin account
+# 11. 관리자 네비 복구 + 기본 관리자 계정 시드
 
-Branch: `feature/admin-nav-default-creds` (built on `main`, after PR #9/#10/#11 merged)
+브랜치: `feature/admin-nav-default-creds`
 
-## What was added
+## 무엇을 만들었나
+- 관리자 네비 링크 복구(역할 게이트): `user.role`이 `admin`/`system_admin`일 때만 표시(`ADMIN_ROLES.includes`) — 서버 검사·`RequireRole` 가드와 동일 조건. 10에서 완전히 숨겼던 것을 원래의 역할 기반 표시로 되돌림.
+- 기본 `system_admin` 계정 시드(양 스택, `9u4a`/`9u4a`): 기동 시 동일 username이 없으면 1회 생성(node `db.js` bcryptjs, java `DataSeeder`). 이 계정이 이미 존재하므로 "최초 가입자=system_admin" 부트스트랩은 사실상 발동하지 않음(첫 사람 가입자는 `user`).
 
-- **Admin nav link restored, role-gated**: `Layout` in `App.jsx` shows `Admin` in the top nav again when `user.role` is `admin` or `system_admin` (`ADMIN_ROLES.includes(user.role)`), same condition already enforced server-side and by the `RequireRole` route guard on `/admin/*`. The previous feature branch had removed the link entirely; this restores the original show/hide-by-role behavior instead.
-- **Default `system_admin` account seeded on both stacks** (`username: 9u4a`, `password: 9u4a`): created once at startup if no user with that username exists yet (Node: `db.js`, bcryptjs `hashSync`; Java: `DataSeeder.seedDefaultAdmin()`, `BCryptPasswordEncoder`). Independent of the existing "first signup becomes system_admin" bootstrap in `auth.js`/`AuthService` — since this account already exists at first boot, that bootstrap path effectively never triggers on a fresh DB anymore (the first *human* signup becomes a plain `user`, which is correct once a system_admin already exists).
-- Not tracked as a vulnerability finding — this account is the project's own admin login for driving the demo app (nav, other features' manual verification, etc.), not a flaw discovered by testing, so classifying it as VULN-003 was withdrawn.
-
-## Current admin access control (for reference)
-
-- **Node**: `middleware/auth.js` — `requireAuth` (any session), `requireAdmin` (`role` in `{admin, system_admin}`), `requireSystemAdmin` (`role === system_admin`). Applied per-route in `admin.js`, `faqs.js`, `notices.js`.
-- **Java**: equivalent role checks via `Roles.isAdminOrAbove` / `Roles.isSystemAdmin`, enforced in controllers.
-- **Client**: `RequireRole` wraps the `/admin/*` route tree and redirects to `/forbidden` if the logged-in user's role isn't allowed — this is the actual access control. The nav link is purely a visibility affordance on top of it; hiding/showing it never changes what a direct URL visit can reach (verified in the previous feature's testing that `/admin` still 403s a plain `user` regardless of link visibility).
-
-## Verified
-
-Fresh volumes, `docker compose up --build`, both backends via curl: `POST /auth/login` with `9u4a`/`9u4a` → `200`, `role: system_admin`, on both stacks.
-
-In the browser (Node backend): logged in as `9u4a` → nav shows `Products / Notices / Cart / My Orders / FAQ / Admin` → clicked into `/admin/settings` → "Signed in as SYSTEM_ADMIN", overview shows `Users: 1` (only the seeded account, confirming it's not a duplicate of any manual signup).
+## 설계 판단
+- 이 계정은 데모 앱 운용용 자체 관리자 로그인이며 테스트로 발견된 결함이 아니므로 취약점으로 추적하지 않음.
+- 실제 접근 제어는 `RequireRole`(클라)·서버 역할 검사이며, 네비 링크는 표시용 — 링크를 숨겨도 직접 URL 접근은 여전히 403.

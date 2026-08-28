@@ -1,6 +1,6 @@
-# Event popups (관리자 게시 + 메인 페이지 팝업)
+# 25. 이벤트 팝업 (관리자 게시 · 메인 페이지 팝업)
 
-Branch: `feature/event-popups`
+브랜치: `feature/event-popups` · 관련 취약점: VULN-023
 
 관리자가 이벤트를 게시하면 메인 페이지(`/`) 접속 시 팝업으로 노출되는 기능. 실제 한국
 쇼핑몰의 "오늘 하루 보지 않기" 팝업 UX를 따른다. 더미 이벤트 3건 시드 포함.
@@ -49,14 +49,8 @@ Branch: `feature/event-popups`
 2. 신규 회원 웰컴 쿠폰 (`/signup`)
 3. 무료배송 위크 (`/products`)
 
-## 검증
+## 이후 변경
 
-- Node: `node -c` (events.js / server.js / db.js). Java: `docker compose build java-spring`.
-- Client: `npm run build` 무오류.
-- `docker compose down -v` 클린 리빌드 후 이벤트 API 스모크 **20/20 통과** (양 스택):
-  public GET, admin manage(+anon 401), create, 저장형 XSS body 원문 노출, active 토글 시
-  public 목록에서 제외, delete.
-- 브라우저: `/` 접속 시 팝업 3개 스택 노출, "오늘 하루 보지 않기" 후 새로고침해도 안 뜸,
-  `/admin/events` 에서 생성·토글·삭제.
+이벤트 본문 렌더는 이후 `/events` 목록·상세 페이지로 확장(31) — 목록은 제목만, 본문은 상세로 분리.
 
 관련 취약점: `docs/vulnerabilities/VULN-023-stored-xss-event-popup.md`

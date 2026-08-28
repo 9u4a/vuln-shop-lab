@@ -1,4 +1,4 @@
-# VULN-004 SSRF via order webhook URL
+# VULN-004 주문 webhook URL SSRF
 
 - 대상 스택: node-express, java-spring (동일)
 - 심각도: High
@@ -40,4 +40,4 @@ POST /api/orders
 
 2026-08-25, 로컬 재현: `webhookUrl`을 `http://localhost:3000/api/session`(자기 자신의 다른 엔드포인트)으로 지정 후 주문 확인 → 서버 로그에 아웃바운드 요청이 실제로 발생함을 확인 (요청 실패 시에도 `console.error`로 델리버리 시도 자체는 로그에 남음).
 
-## 조치 상태: 미조치 (의도된 취약점 — 조치하지 않음)
+## 조치 상태: 미조치 (의도된 취약점)

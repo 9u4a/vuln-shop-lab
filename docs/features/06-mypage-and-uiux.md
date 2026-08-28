@@ -1,22 +1,15 @@
-# Feature: My Page (password change) & UI/UX overhaul
+# 06. 마이페이지(비밀번호 변경) · UI/UX 정비
 
-Branch: `feature/mypage-and-uiux`
+브랜치: `feature/mypage-and-uiux`
 
-## What was added
+## 무엇을 만들었나
+- 비밀번호 변경: `PUT /api/profile/password`(양 스택) — `currentPassword`+`newPassword`(8자+), 현재 비밀번호 해시 검증 후 변경, 불일치 401.
+- 마이페이지(`/profile`): 계정 / 프로필 정보 / 비밀번호 변경 3개 섹션으로 재구성.
+- 네비 정비: 라벨형 상단바(상품·장바구니·주문·관리자) + 우측 계정 영역(마이페이지·로그아웃).
+- 전역 UI: `index.css`를 CSS 변수 토큰(색/여백/라운드) + 버튼 시스템(`btn*`)·카드·페이지 헤더·배지로 재작성, 전 페이지 일괄 적용.
 
-- **Password change**: `PUT /api/profile/password` on both backends — requires `currentPassword` + `newPassword` (min 8 chars), verifies the current password against the stored hash before updating, rejects with `401` on mismatch.
-- **My Page** (`/profile`, renamed from "My Profile"): now three sections — Account (avatar + username/role), Profile info (bio), Change password — instead of one flat form.
-- **Nav overhaul**: proper sticky topbar with a labeled `main-nav` (Products, Cart with item count, My Orders, Admin) instead of a flat list of links; account area on the right shows a greeting plus explicit "My Page"/"Logout" (or "Login"/"Sign up") buttons rather than folding the profile link into "Hi, username".
-- **Global UI/UX pass**: `index.css` rewritten with CSS custom properties (color/spacing/radius tokens), a real button system (`btn`, `btn-primary`, `btn-ghost`, `btn-sm`), card containers, consistent page header pattern (`page` / `page-header`), badges for status/role, and responsive tweaks. Applied consistently across Home, Login, Signup, Products, ProductDetail, Cart, Orders, OrderDetail, Admin, Profile — not just the new page.
+## 설계 판단
+- 단일 `index.css`로 페이지 간 시각적 일관성 확보, 이후 페이지 제작 비용 절감.
 
-## Why
-
-- Password change was the one basic account action missing; without it "정보 수정" only covered bio/avatar.
-- The old nav buried account access behind a username link and had no visual hierarchy (all plain text links). The new topbar makes every route reachable and the active page/current backend obvious at a glance.
-- A single shared `index.css` pass (rather than per-page inline styling) keeps every page visually consistent and makes future pages cheap to build correctly.
-
-## Verified
-
-Via `docker compose up --build`, on both backends:
-- Password change: wrong current password → `401`; correct change → `200`; old password stops working, new password logs in successfully.
-- All client routes (`/`, `/products`, `/cart`, `/login`, `/signup`, `/orders`, `/profile`, `/admin`) still serve `200`.
+## 이후 변경
+- `/mypage`로 재분할 + 비밀번호 재인증 게이트 추가(10). CSS 토큰 체계는 스토어프론트 리디자인(24)에서 전면 재작성.

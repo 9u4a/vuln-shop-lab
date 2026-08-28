@@ -1,4 +1,4 @@
-# VULN-020 XXE in XML catalog import
+# VULN-020 XML 상품 임포트 XXE
 
 - 대상 스택: java-spring
 - 심각도: High

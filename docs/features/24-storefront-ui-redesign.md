@@ -1,121 +1,18 @@
-# Storefront UI/UX redesign (minimal-premium)
+# 24. 스토어프론트 UI/UX 리디자인 (미니멀 프리미엄)
 
-Branch: `feature/storefront-ui-redesign`
+브랜치: `feature/storefront-ui-redesign`
 
-The client had complete functionality but a "generic admin dashboard" look — grey page, blue
-buttons, bordered cards, system font, no footer/hero/header-search, one mobile breakpoint.
-This pass restyles the storefront and account pages to a minimal-premium Korean commerce tone
-(near-monochrome, Pretendard, image-first cards, generous whitespace). `/admin` inherits the
-new tokens only — no structural changes there.
+## 무엇을 만들었나
+기능은 완성돼 있으나 "범용 관리자 대시보드" 룩이던 클라이언트를 미니멀 프리미엄 한국 커머스 톤(니어 모노크롬·Pretendard·이미지 우선 카드)으로 재스타일. `/admin`은 토큰만 상속.
 
-## Direction (chosen by repo owner)
+- 디자인 시스템: `index.css` 재작성 — 토큰(`--color-ink` 등)·라운드·그림자·타입 스케일·`tabular-nums` 가격·1200px 컨테이너·3단 반응형(1024/768/480). 레거시 셀렉터 유지로 미수정 페이지도 자동 재스타일. Pretendard를 **npm 번들**(외부 CDN 금지, 격리 랩 안전).
+- 레이아웃 셸: `SiteHeader`(유틸 바 + 메인 바 + 검색 + 장바구니, ≤768px 햄버거), `SiteDrawer`(좌측 슬라이드, 라우트 변경 시 자동 닫힘), `SiteFooter`(4열, 더미 회사 정보 + 의도적 취약 데모 고지), `navLinks.js`(공유 네비 정의).
+- 재사용 컴포넌트: `ProductCard`(이미지 우선)·`Skeleton`/`SkeletonGrid`·`EmptyState`·`StatusChip`.
+- 페이지: `Home`(히어로+카테고리 타일+추천), `Products`(칩 필터+정렬 툴바), `ProductDetail`(2열 PDP+수량 스테퍼+별점), `Cart`(2열+요약 박스), 그 외 `EmptyState`/상태 화면 처리. 로그인/가입은 중앙 카드.
+- 후속(같은 브랜치): 관리자 사용성 — 사용자/주문 상세 확장(`GET /api/admin/users/:id`·`/orders/:id`), FAQ/공지 인라인 편집, 상품 이미지 업로드 UI, 관리자 통계 카드·`.admin-table`.
 
-- Visual: minimal premium (29CM / 무신사), near-black palette
-- Scope: storefront + account pages. `/admin` = token inheritance only
-- Font: **Pretendard bundled via npm** (`pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css`) — no external CDN, safe for the isolated Docker lab
-- New structure: home hero + category tiles + featured products; site footer; header search; mobile drawer nav
+## 설계 판단
+- 의도된 취약점은 전부 보존: `Products`의 `q` 라벨(VULN-017), 리뷰 본문 렌더(VULN-008), 영수증 도구(VULN-010/011/016/019), java `/cart/import`(VULN-012).
 
-## What changed
-
-### Design system
-- `src/index.css` rewritten — new token set (`--color-ink` near-black primary, `--color-line`,
-  status-accent tokens), tighter radii, shadow-light surfaces, larger type scale, `tabular-nums`
-  for prices, 1200px container, 3-step responsive breakpoints (1024 / 768 / 480).
-- Legacy selectors kept working (`.card` `.btn*` `.badge` `.product-grid` `form` `label`
-  `input` `.muted` `.error` `.status-ok` `.specs-table` `.admin-subnav` `.modal*` `.pagination`
-  `.toast*` `.profile-summary` `.avatar*` `.backend-cards` `.address-*`) so unedited pages
-  (incl. all of `/admin`, Faq, Notices, Pagination) restyle automatically.
-- `src/main.jsx` imports the Pretendard dynamic-subset stylesheet.
-
-### Layout shell
-- `components/SiteHeader.jsx` — utility bar (backend segmented toggle + account links),
-  main bar (brand, desktop nav, pill search → `/products?q=`, cart icon with live count),
-  hamburger ≤768px. Replaces the inline `Layout` header in `App.jsx`.
-- `components/SiteDrawer.jsx` — left slide-in panel: nav links + account actions + backend
-  toggle. Auto-closes on route change; locks body scroll while open. No `alert/confirm`.
-- `components/SiteFooter.jsx` — 4-column footer, all-dummy company info + a one-line notice
-  that the site is an intentionally vulnerable demo.
-- `components/navLinks.js` — shared nav definition + `visibleNavLinks(user)` (auth/admin gating),
-  exports `ADMIN_ROLES` (now imported by `App.jsx`).
-
-### Reusable components
-- `components/ProductCard.jsx` — image-first card (square media, brand caption, name, price,
-  sold-out badge, add-to-cart → toast). Used by Home + Products.
-- `components/Skeleton.jsx` — `Skeleton` + `SkeletonGrid` shimmer loaders.
-- `components/EmptyState.jsx` — emoji + title + description + optional CTA.
-- `components/StatusChip.jsx` — order-status string → Korean label + colored chip.
-
-### Pages
-- `Home.jsx` — rebuilt: hero (CSS-gradient, no external image), 3 category tiles
-  (`/products?category=`), featured-products grid (`fetchProducts` → first 8, skeleton while
-  loading). Backend indicator kept as read-only text in the hero (the switcher itself moved
-  to the header).
-- `Products.jsx` — category chip filters + sort select toolbar (replacing the free-text
-  category input), `ProductCard` grid, `SkeletonGrid` + `EmptyState`. `q` search label still
-  rendered via `dangerouslySetInnerHTML` (intentional XSS — VULN-017 area), `sortKeys` debug
-  output kept.
-- `ProductDetail.jsx` — two-column PDP (gallery + sticky buy box), qty stepper, star ratings.
-  Review body still `dangerouslySetInnerHTML` (intentional — VULN-008). Add-to-cart toast.
-- `Cart.jsx` — two-column (line list + sticky summary box), qty steppers, `EmptyState`.
-  Toss widget mount view and `backendKey === 'java'` cart-import textarea (VULN-012) preserved.
-- `OrderDetail.jsx` — `StatusChip` in header, `line-list` items, receipt tools card
-  (memo → generate, print link, filename → download `<pre>`) preserved as-is (VULN-010/011/016/019).
-- `Orders.jsx` / `CheckoutResult.jsx` / `NotFound.jsx` / `Forbidden.jsx` — `EmptyState` /
-  status-screen treatment.
-- `Login.jsx` / `Signup.jsx` — centered `auth-wrap` card. `AddressSearchModal` restyled via
-  the shared `.modal*` rules.
-- `mypage/MyPageProfile.jsx` — activity list gets `.activity-list`; rest inherits tokens.
-- `Faq.jsx` / `Notices.jsx` — `white-space: pre-wrap` on multi-paragraph bodies; otherwise
-  token inheritance.
-
-### HTML shell
-- `index.html` — `lang="ko"`, new title/description, `theme-color`, `public/favicon.svg`
-  (monogram). New `apps/client/public/`.
-- `apps/client/package.json` + lockfile — `pretendard`.
-
-## Preserved (not touched)
-
-`src/api.js`, all four contexts, `RequireAuth`/`RequireRole`, `src/format.js`,
-`vite.config.js`, `pages/admin/*`, every backend, `docker-compose.yml`, `apps/nginx/*`.
-All routes, route params and query params (`q`, `category`, `sort`, `page`, `pageSize`)
-unchanged. Backend switcher still functional (now a header segmented control + drawer toggle).
-All intentional vulnerabilities left intact.
-
-## Follow-up: admin usability + CSS fixes (same branch)
-
-- **CSS fixes** — the broad `button:not(.btn):not(…)` reset out-specified `.chip.active`
-  (selected category chip rendered white-on-white); reset is now `button:not([class])`,
-  and `.segmented` / `.site-header__search` buttons use `:not(.btn)`. Hardened the header
-  search pill so the submit button can't wrap below the input.
-- **Admin user detail** — `GET /api/admin/users/:id` (both stacks) returns the user profile
-  + their orders. `AdminUsers` is now a table; clicking a row expands a detail panel with
-  profile fields and an order list (each links to the order detail).
-- **Admin order detail** — `GET /api/admin/orders/:id` (both stacks) returns the order
-  (with `username`, `tossOrderId`) + line items (with `productName`). `AdminOrders` is a
-  table; row click expands items + total. Deep-linkable via `/admin/orders?open=<id>`.
-- **FAQ / notice editing** — backend `PUT /faqs/:id` and `PUT /notices/:id` already existed
-  on both stacks; added `updateFaqAdmin` / `updateNoticeAdmin` to `api.js` and inline edit
-  forms to `AdminFaq` / `AdminNotices`.
-- **Product image upload** — verified working on both stacks (`POST /admin/products/:id/image`).
-  `AdminProducts` reworked into a table with a clear "이미지 업로드" button per row (hidden
-  file input) and a full add-product form.
-- **Admin UI/UX** — `AdminSettings` overview is now a stat-card grid; new `.admin-table`,
-  `.admin-detail`, `.admin-stat`, `.admin-item-row` styles; all admin pages use consistent
-  cards/tables. `/admin` was token-inherit only in pass 1 — this makes it first-class.
-
-New `api.js`: `fetchAdminUser`, `fetchAdminOrder`, `updateFaqAdmin`, `updateNoticeAdmin`.
-Backend files touched: `apps/node-express/src/routes/admin.js`,
-`apps/java-spring/.../controller/AdminController.java` (added `OrderItemRepository`).
-
-## Verification
-
-- `apps/client`: `npm run build` clean (Pretendard dynamic subset bundled).
-- `docker compose up -d --build client nginx` + `docker compose restart nginx`:
-  - `http://localhost:8090/` renders new shell, `lang="ko"`, favicon 200.
-  - `/api/{node,java}/products` 200; login both stacks 200; SPA route fallback (`/products`) 200.
-- Manual browser pass (owner): home hero/tiles/featured, header search → `/products?q=`,
-  chip filters + sort, add-to-cart toast + header badge, PDP two-column, cart summary +
-  checkout, orders status chips, receipt tools, login/signup + address modal, mobile drawer
-  open/close + auto-close on nav, `/admin/*` renders unbroken.
-- Intentional-vuln regression: `?q=<img onerror>` label, review `<b>` render, receipt `../`
-  download, Java `/cart/import` — all still function.
+## 이후 변경
+- 여기서 만든 2단 네비(별도 `.category-nav` 바)는 31에서 한 줄로 통합됨.

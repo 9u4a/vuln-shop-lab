@@ -1,26 +1,18 @@
-# Feature: Product Search, Category Filter & Sort (deliberately vulnerable)
+# 05. 상품 검색 · 카테고리 필터 · 정렬 (의도적 취약)
 
-Branch: `feature/search-filters`
+브랜치: `feature/search-filters` · 관련 취약점: VULN-001, VULN-002
 
-Unlike features 01-04, this one is **intentionally unsafe** per direct instruction — no safe-then-later-vuln-injection split. Both new vulnerabilities are documented immediately per `CLAUDE.md`'s convention: `docs/vulnerabilities/VULN-001-*.md` and `VULN-002-*.md`.
+## 무엇을 만들었나
+- `GET /api/products`가 기존 `q`에 더해 `category`·`sort`를 받음.
+- 클라이언트 `Products`: 카테고리 필터 + 정렬 드롭다운, `sort` 활성 시 상품별 `sortKey` 디버그 줄 노출(java 익스플로잇 표면 — "디버그 필드를 남긴" 현실적 버그 재현).
 
-## What was added
+## 의도된 취약점
+- **VULN-001 (node)**: `q`/`category`/`sort`를 파라미터 바인딩 없이 SQL에 직접 결합 — UNION SELECT로 타 테이블 덤프.
+- **VULN-002 (java)**: `sort`를 SpEL 표현식으로 평가해 결과를 `sortKeys`에 반환 — `T(...)` 타입 참조로 임의 정적 메서드 호출(RCE 원시).
 
-- `GET /api/products` now accepts `category` and `sort` in addition to the existing `q`.
-- Client `Products` page: category text filter + sort dropdown (Name/Price), plus a `sortKey` debug line per product when `sort` is active (this is the Java exploit surface, shown deliberately since it mirrors a realistic "left the debug field in" bug).
+## 설계 판단
+- 이 기능은 지시에 따라 처음부터 의도적으로 취약하게 구현하고 즉시 문서화. CTF식 flag는 두지 않음 — 한 번의 SQLi로 flag 테이블이 통째로 덤프돼 특정 취약점 증명이 되지 않기 때문(`CLAUDE.md`의 증거 원칙).
+- 상세 페이로드·영향은 VULN 문서에만 기록(중복 금지).
 
-## The vulnerabilities
-
-- **VULN-001 (node-express)**: `q`/`category`/`sort` are concatenated directly into the SQL string (no parameter binding) — classic SQL injection, exploitable via UNION SELECT to dump other tables.
-- **VULN-002 (java-spring)**: `sort` is parsed and evaluated as a full Spring Expression Language (SpEL) expression against each `Product`, with the evaluated value echoed back in a `sortKeys` response field — exploitable via `T(...)` type references for arbitrary static method calls (RCE via `Runtime.exec` is the same primitive, documented but not executed).
-
-No CTF-style flag for either — a shared flags table would be trivially dumped by VULN-001 alone regardless of which bug was actually being tested, so it doesn't prove anything vuln-specific. See `CLAUDE.md`'s "Proof of exploitation" convention: each vuln doc records evidence that could only come from that exact bug.
-
-Full detail, exact payloads, and impact are in the VULN docs — not duplicated here per the project's "don't repeat what's in docs" rule.
-
-## Verified
-
-Via `docker compose up --build`, through the client's Vite proxy:
-- Normal usage still works: `?category=accessories&sort=price` returns filtered/sorted results correctly on both backends.
-- VULN-001: UNION payload against `category` dumps real bcrypt password hashes from `users` — see the VULN doc for the exact payload and result.
-- VULN-002: `sort=T(System).getenv('HOSTNAME')` returns the container's real hostname in `sortKeys` — proves arbitrary static-method invocation (the same primitive reaches any env var, including real secrets like `TOSS_SECRET_KEY`, and `Runtime.exec`).
+## 이후 변경
+- 의류 전환(26)에서 필터 파라미터 `gender/color/material`이 추가되며 VULN-001/005 인젝션 표면이 확장됨.

@@ -1,4 +1,4 @@
-# VULN-009 IDOR: review update/delete without ownership check
+# VULN-009 리뷰 수정/삭제 IDOR (소유권 미검증)
 
 - 대상 스택: node-express, java-spring
 - 심각도: Medium
@@ -19,5 +19,13 @@ DELETE /api/products/1/reviews/5
 ```
 
 로그인한 아무 계정으로 다른 사용자가 작성한 `reviewId`를 지정해 호출 — 200/204 응답과 함께 타인 리뷰가 수정/삭제됨.
+
+## 영향
+
+- 임의 사용자가 타인의 리뷰를 무단 수정·삭제 가능 — 콘텐츠 위·변조 및 삭제(무결성 훼손).
+
+## 증거 (재현 확인)
+
+(진단 단계에서 채움) — Phase 2(Burp 진단)에서 재현 예정.
 
 ## 조치 상태: 미조치 (의도된 취약점)

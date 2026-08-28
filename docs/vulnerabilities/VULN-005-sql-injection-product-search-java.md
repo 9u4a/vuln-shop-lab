@@ -1,4 +1,4 @@
-# VULN-005 SQL Injection in product search/filter (java-spring)
+# VULN-005 상품 검색/필터 SQL 인젝션 (001의 java 짝)
 
 - 대상 스택: java-spring
 - 심각도: Critical
@@ -30,5 +30,13 @@ GET /api/products?category=x' UNION SELECT id,name,description,price,image_url,c
 ```
 
 `products`는 이제 15컬럼(id,name,description,price,image_url,category,brand,sku,**gender,color,material**,stock,option_name,option_values,created_at)이므로, 컬럼 수를 맞춘 UNION 페이로드로 `users` 테이블(패스워드 해시 포함)을 덤프할 수 있다.
+
+## 영향
+
+- 모든 사용자의 bcrypt 해시(`password_hash`)를 포함한 임의 테이블 전체 덤프 가능. 같은 원리로 이 앱 DB의 다른 테이블도 추출 가능(일반화된 정보 유출). VULN-001(node)과 동일한 영향의 java 버전.
+
+## 증거 (재현 확인)
+
+(진단 단계에서 채움) — Phase 2(Burp 진단)에서 재현 예정. node 짝(VULN-001)은 2026-08-25 재현 확인됨.
 
 ## 조치 상태: 미조치 (의도된 취약점)

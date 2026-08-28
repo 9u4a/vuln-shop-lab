@@ -1,4 +1,4 @@
-# VULN-022 NoSQL injection in the Mongo-backed activity feed
+# VULN-022 Mongo 기반 활동 피드 NoSQL 인젝션
 
 - 대상 스택: node-express (MongoDB)
 - 심각도: High

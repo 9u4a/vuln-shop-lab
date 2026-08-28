@@ -1,4 +1,4 @@
-# VULN-015 Business logic: negative/zero order quantity → total manipulation
+# VULN-015 주문 수량 음수/0 → 결제액 조작
 
 - 대상 스택: node-express, java-spring (동일)
 - 심각도: High

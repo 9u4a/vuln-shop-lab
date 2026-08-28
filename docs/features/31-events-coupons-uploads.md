@@ -1,6 +1,6 @@
-# Events page · Coupons · Image uploads · Nav cleanup
+# 31. 이벤트 페이지 · 쿠폰 · 이미지 업로드 · 네비 정리
 
-Branch: `feature/events-coupons-uploads` (base: `feature/admin-access-logs`)
+브랜치: `feature/events-coupons-uploads` · 관련 취약점: VULN-029 (+ VULN-018 표면 확장)
 
 사용자 요청 후속 배치: 사용자용 이벤트 메뉴/페이지, 쿠폰 기능(발급·내 쿠폰함·관리자 관리),
 공지/이벤트 이미지를 URL 대신 파일 업로드로, 2단 메뉴 바를 한 줄로 정리, Java `9u4a` 계정
@@ -63,12 +63,7 @@ Phase 5에서 추가한 `users.active`(및 `reviews.secret`) NOT NULL 컬럼에 
 - 표면 확장(신규 ID 없음): 공용 업로드가 Content-Type만 신뢰(VULN-018), 이벤트 본문이 `/events`
   페이지에도 HTML 렌더(VULN-023).
 
-## 검증
+> 공지/이벤트 이미지가 공용 업로드(`/api/admin/upload`)로 전환되며 VULN-018 표면이,
+> 이벤트 본문이 `/events` 페이지에도 렌더되며 VULN-023 표면이 확장됨(신규 ID 없음).
 
-- node `node -c`, java `docker compose build`, client `npm run build` 무오류.
-- 클린 재시드 후 양 스택 **동일 결과**:
-  - `9u4a` 로그인 200(양 스택).
-  - 쿠폰 3건 목록, `claim` 2회 → 내 쿠폰함 2건(VULN-029 중복 발급).
-  - 공용 업로드 → `filename` 반환, 공지 `imageUrl`로 저장·조회(ASCII 본문 기준; 한글은 브라우저
-    UTF-8에서 정상, curl CP949는 400).
-  - `/admin/upload`로 올린 `.html`이 `/uploads/*`에서 `text/html`로 서빙(VULN-018 확장).
+문서: `docs/vulnerabilities/VULN-029-coupon-claim-no-dedup.md`.

@@ -1,6 +1,6 @@
-# Reviews media & secret (후기 사진 업로드 · 비밀글)
+# 28. 후기 사진 업로드 · 비밀글
 
-Branch: `feature/reviews-media-secret` (base: `feature/product-likes`)
+브랜치: `feature/reviews-media-secret` · 관련 취약점: VULN-025, VULN-026
 
 상품 후기에 사진 첨부와 비밀글(작성자·관리자만 열람) 기능을 추가한다.
 
@@ -36,15 +36,6 @@ Branch: `feature/reviews-media-secret` (base: `feature/product-likes`)
   이미지로 위장 업로드 시 앱 오리진에서 실행되는 **저장형 XSS**(VULN-018의 리뷰판 트윈).
 - **VULN-026** 비밀 후기 마스킹이 클라이언트에서만 이뤄지고, 목록 API가 `body/imageUrl`을
   모두 반환 → API 직접 호출로 비밀 후기 열람(Broken Access Control).
-
-## 검증
-
-- node `node -c`, java `docker compose build`, client `npm run build` 무오류.
-- 클린 재시드 후 양 스택 **동일 결과**:
-  - 사진 첨부 + `secret=true` 후기 생성(응답 `imageUrl`, `secret:true`).
-  - VULN-025: `<script>` 내용을 `image/png`로 위장 업로드 → `<uuid>.html`이
-    `/uploads/{node,java}/<uuid>.html`에서 `HTTP 200 / text/html`로 서빙.
-  - VULN-026: 시드 비밀 후기 본문이 `GET /products/1/reviews` 응답에 그대로 포함.
 
 관련 취약점: `docs/vulnerabilities/VULN-025-unrestricted-review-image-upload.md`,
 `docs/vulnerabilities/VULN-026-broken-access-control-secret-review.md`

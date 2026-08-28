@@ -13,7 +13,7 @@
 |----|------|------|-----------|--------|------|
 | [VULN-001](VULN-001-sql-injection-product-search-node.md) | 상품 검색/정렬 SQL 인젝션 | node | A03 Injection | Critical | 구현됨 |
 | [VULN-002](VULN-002-spel-injection-product-sort-java.md) | 상품 정렬 파라미터 SpEL 인젝션 | java | A03 Injection | Critical | 구현됨 |
-| VULN-003 | ~~기본 관리자 계정~~ | — | — | — | 철회 (데모용 픽스처, 취약점 아님) |
+| [VULN-003](VULN-003-qna-secret-question-access-control.md) | 비밀 문의(Q&A) 본문 상세 API 노출 (클라이언트 마스킹만) | both + client | A01 Broken Access Control | Medium | 구현됨 |
 | [VULN-004](VULN-004-order-webhook-ssrf.md) | 주문 webhook URL SSRF | both | A10 SSRF | High | 구현됨 |
 | [VULN-005](VULN-005-sql-injection-product-search-java.md) | 상품 검색/필터 SQL 인젝션 (001의 java 짝) | java | A03 Injection | Critical | 구현됨 |
 | [VULN-006](VULN-006-session-fixation-no-lockout.md) | 세션 고정 + 로그인 시도 제한 없음 | both | A07 Auth Failures | Medium | 구현됨 (문서형) |
@@ -40,7 +40,6 @@
 | [VULN-027](VULN-027-order-option-not-validated.md) | 주문 옵션 값 미검증 (제공 옵션과 대조 없음) | both | A04 Insecure Design | Low | 구현됨 |
 | [VULN-028](VULN-028-stored-xss-login-log-user-agent.md) | 접속 로그 User-Agent 저장형 XSS (관리자 대상) | both + client | A03 Injection (XSS) | High | 구현됨 |
 | [VULN-029](VULN-029-coupon-claim-no-dedup.md) | 쿠폰 중복 발급 (claim 한도/중복 검증 없음) | both | A04 Insecure Design | Low | 구현됨 |
-| [VULN-030](VULN-030-qna-secret-question-access-control.md) | 비밀 문의(Q&A) 본문 상세 API 노출 (클라이언트 마스킹만) | both + client | A01 Broken Access Control | Medium | 구현됨 |
 
 ## OWASP / CLAUDE.md 스코프 커버리지
 
@@ -54,7 +53,7 @@
 | XSS — Stored | DONE | 008, 018, 023, 025, 028 |
 | XSS — Reflected | DONE | 016 |
 | XSS — DOM | DONE | 017 |
-| IDOR / Broken Access Control | DONE | 009, 011, 013, 014, 024, 026, 030 |
+| IDOR / Broken Access Control | DONE | 003, 009, 011, 013, 014, 024, 026 |
 | Security Misconfiguration | DONE | 007, 018, 020, 025 |
 | Insecure Deserialization (Java) | DONE | 012 |
 | XXE | DONE | 020 |
@@ -71,8 +70,11 @@ VULN-025·026은 후기 사진 업로드/비밀글 기능(`docs/features/28-revi
 VULN-027은 장바구니 옵션 변경 기능(`docs/features/29-cart-option-edit.md`)에서 드러난 주문 옵션 미검증.
 VULN-028은 관리자 접속 로그/사용자 활성화 기능(`docs/features/30-admin-access-logs.md`)과 함께 추가된 로그 뷰어 저장형 XSS.
 VULN-029는 쿠폰 기능(`docs/features/31-events-coupons-uploads.md`)과 함께 추가된 쿠폰 중복 발급.
-VULN-030은 Q&A 문의 게시판(`docs/features/32-qna-and-faq-board.md`)과 함께 추가된 비밀 문의 상세 노출
+VULN-003은 Q&A 문의 게시판(`docs/features/32-qna-and-faq-board.md`)과 함께 추가된 비밀 문의 상세 노출
 (비밀 후기 VULN-026과 동일 계열, 새 표면).
 같은 배치에서 공지/이벤트 이미지 업로드가 공용 업로드 엔드포인트로 전환되며 VULN-018 표면이,
 이벤트 본문이 `/events` 페이지에도 렌더되며 VULN-023 표면이 확장됨(신규 ID 없음).
 의류 카탈로그(`docs/features/26-apparel-catalog.md`)에서 상품 필터 파라미터 추가로 VULN-001/005 SQLi 표면이 확장됨(신규 ID 없음).
+
+번호 주의: VULN-003은 원래 "기본 관리자 계정"으로 잡았다가 취약점이 아니라 철회된 번호이며, 빈 번호를
+없애기 위해 마지막 항목을 옮겨 재사용했다(구 VULN-030 — 그 이전 커밋 이력에는 030으로 기록되어 있다).

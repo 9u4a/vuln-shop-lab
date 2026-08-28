@@ -1,4 +1,4 @@
-# VULN-008 Stored XSS in product review body
+# VULN-008 상품 리뷰 본문 저장형 XSS
 
 - 대상 스택: node-express, java-spring (client 공통)
 - 심각도: High
@@ -20,5 +20,9 @@ POST /api/products/1/reviews
 ## 영향
 
 - 세션 쿠키/토큰 탈취, 관리자 세션 하이재킹, 임의 API 호출(피해자 권한으로) 등.
+
+## 증거 (재현 확인)
+
+(진단 단계에서 채움) — Phase 2(Burp 진단)에서 재현 예정.
 
 ## 조치 상태: 미조치 (의도된 취약점)

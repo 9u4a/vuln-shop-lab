@@ -1,4 +1,4 @@
-# VULN-018 Unrestricted file upload (content-type trust) → stored XSS on app origin
+# VULN-018 파일 업로드 Content-Type 신뢰 → 앱 오리진 저장형 XSS
 
 - 대상 스택: node-express, java-spring (동일)
 - 심각도: High

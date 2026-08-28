@@ -1,6 +1,6 @@
-# Product likes (좋아요/찜 · 위시리스트 · 바로 구매)
+# 27. 상품 좋아요/찜 · 위시리스트 · 바로 구매
 
-Branch: `feature/product-likes` (base: `feature/apparel-catalog`)
+브랜치: `feature/product-likes` · 관련 취약점: VULN-024
 
 상품 찜(좋아요) 기능과 찜한 상품 목록(위시리스트)을 추가한다. 상품 목록/상세에 좋아요 수와
 좋아요순 정렬을 노출하고, 상세에는 "바로 구매" 동선을 더한다.
@@ -44,10 +44,6 @@ java는 `Product`의 `@Transient likeCount/liked`를 `ProductController`에서 �
 `userId`로 **타인의 위시리스트를 열람(IDOR)**. A01 Broken Access Control.
 문서: `docs/vulnerabilities/VULN-024-idor-wishlist-userid.md`.
 
-## 검증
+## 이후 변경
 
-- node `node -c`, java `docker compose build`, client `npm run build` 무오류.
-- 클린 재시드 후 양 스택 **동일 결과**:
-  - `sort=likes` 상위: 크루넥 티셔츠(3) > 와이드 슬랙스(2) > 캔버스 토트백(1), user1은 `liked=true`.
-  - 내 위시리스트 3건 → 상품2 토글 후 4건.
-  - IDOR: user1 세션으로 `GET /api/likes?userId=4` → user2 위시리스트 3건 노출.
+좋아요/장바구니/바로구매 버튼은 이후 상품 카드·상세에서 한 줄로 재배치됨(32).
