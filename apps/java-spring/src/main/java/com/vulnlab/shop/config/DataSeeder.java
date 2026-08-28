@@ -28,12 +28,13 @@ public class DataSeeder implements CommandLineRunner {
     private final ReviewRepository reviewRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final EventRepository eventRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public DataSeeder(ProductRepository productRepository, UserRepository userRepository,
                       FaqRepository faqRepository, NoticeRepository noticeRepository,
                       ReviewRepository reviewRepository, OrderRepository orderRepository,
-                      OrderItemRepository orderItemRepository) {
+                      OrderItemRepository orderItemRepository, EventRepository eventRepository) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.faqRepository = faqRepository;
@@ -41,6 +42,7 @@ public class DataSeeder implements CommandLineRunner {
         this.reviewRepository = reviewRepository;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
+        this.eventRepository = eventRepository;
     }
 
     @Override
@@ -49,6 +51,7 @@ public class DataSeeder implements CommandLineRunner {
         seedProducts();
         seedFaqs();
         seedNotices();
+        seedEvents();
         seedReviews();
         seedOrders();
     }
@@ -176,6 +179,33 @@ public class DataSeeder implements CommandLineRunner {
         n.setTitle(title);
         n.setBody(body);
         return n;
+    }
+
+    private void seedEvents() {
+        if (eventRepository.count() > 0) {
+            return;
+        }
+        List<Event> events = List.of(
+                event("여름 데스크 셋업 페어",
+                      "<h3 style=\"margin-top:0\">인기 아이템 최대 30% 할인</h3><p>키보드 · 모니터 · 조명까지, 지금 가장 많이 담는 데스크 셋업 아이템을 한정 수량 특가로 준비했습니다.</p><p><strong>8월 한정 · 재고 소진 시 조기 종료</strong></p>",
+                      "/products"),
+                event("신규 회원 웰컴 쿠폰",
+                      "<p>지금 가입하면 <strong>첫 구매 5,000원 즉시 할인</strong> 쿠폰을 드려요.</p><p>가입 후 마이페이지에서 바로 확인하실 수 있습니다.</p>",
+                      "/signup"),
+                event("무료배송 위크",
+                      "<p>이번 주 모든 주문 <strong>무료배송</strong> — 별도 쿠폰 없이 자동 적용됩니다.</p>",
+                      "/products")
+        );
+        eventRepository.saveAll(events);
+    }
+
+    private Event event(String title, String body, String linkUrl) {
+        Event e = new Event();
+        e.setTitle(title);
+        e.setBody(body);
+        e.setLinkUrl(linkUrl);
+        e.setActive(true);
+        return e;
     }
 
     private void seedReviews() {
