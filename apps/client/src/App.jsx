@@ -5,6 +5,7 @@ import { SessionProvider } from './SessionContext.jsx';
 import { ToastProvider } from './ToastContext.jsx';
 import SiteHeader from './components/SiteHeader.jsx';
 import SiteFooter from './components/SiteFooter.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 import { ADMIN_ROLES } from './components/navLinks.js';
 import RequireAuth from './RequireAuth.jsx';
 import RequireRole from './RequireRole.jsx';
@@ -46,7 +47,7 @@ function Layout({ children }) {
   return (
     <div className="app-shell">
       <SiteHeader />
-      <main className="content">{children}</main>
+      <main className="content"><ErrorBoundary>{children}</ErrorBoundary></main>
       <SiteFooter />
     </div>
   );

@@ -16,6 +16,7 @@ export default function Cart() {
   const [pendingNote, setPendingNote] = useState(null);
   const [pendingPayment, setPendingPayment] = useState(null);
   const [widgetsReady, setWidgetsReady] = useState(false);
+  const [busy, setBusy] = useState(false);
   const widgetsRef = useRef(null);
   const [backupJson, setBackupJson] = useState('');
   const [backupResult, setBackupResult] = useState(null);
@@ -56,6 +57,8 @@ export default function Cart() {
   }, [pendingPayment]);
 
   async function handleCheckout() {
+    if (busy) return;
+    setBusy(true);
     setError(null);
     setPendingNote(null);
     try {
@@ -69,10 +72,14 @@ export default function Cart() {
       setPendingPayment({ orderId, tossOrderId, amount });
     } catch (err) {
       setError(err.message);
+    } finally {
+      setBusy(false);
     }
   }
 
   async function handlePay() {
+    if (busy) return;
+    setBusy(true);
     setError(null);
     try {
       await widgetsRef.current.requestPayment({
@@ -83,6 +90,7 @@ export default function Cart() {
       });
     } catch (err) {
       setError(err.message);
+      setBusy(false);
     }
   }
 
@@ -98,7 +106,7 @@ export default function Cart() {
           <div id="payment-method" />
           <div id="agreement" />
           <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
-            <button disabled={!widgetsReady} onClick={handlePay} className="btn btn-primary">결제하기</button>
+            <button disabled={!widgetsReady || busy} onClick={handlePay} className="btn btn-primary">{busy ? '처리 중...' : '결제하기'}</button>
             <button onClick={() => setPendingPayment(null)} className="btn btn-ghost">취소</button>
           </div>
         </section>
@@ -178,8 +186,8 @@ export default function Cart() {
             <div className="summary-box__row"><span>상품금액</span><span className="tnum">{formatCurrency(total)}</span></div>
             <div className="summary-box__row"><span>배송비</span><span>무료</span></div>
             <div className="summary-box__row summary-box__row--total"><span>결제 예상금액</span><span className="tnum">{formatCurrency(total)}</span></div>
-            <button disabled={items.length === 0} onClick={handleCheckout} className="btn btn-primary btn-block btn-lg">
-              결제하기
+            <button disabled={items.length === 0 || busy} onClick={handleCheckout} className="btn btn-primary btn-block btn-lg">
+              {busy ? '처리 중...' : '결제하기'}
             </button>
           </div>
         </div>

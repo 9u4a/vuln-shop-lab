@@ -1,6 +1,7 @@
 package com.vulnlab.shop.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.ColumnDefault;
 import java.time.LocalDateTime;
 
 @Entity
@@ -22,6 +23,7 @@ public class LoginLog {
     private String userAgent;
 
     @Column(nullable = false)
+    @ColumnDefault("false")
     private boolean success = false;
 
     @Column(name = "at", nullable = false)

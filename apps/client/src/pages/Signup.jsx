@@ -19,6 +19,7 @@ export default function Signup() {
   const [form, setForm] = useState(emptyForm);
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [error, setError] = useState(null);
+  const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
 
   function update(field) {
@@ -32,12 +33,15 @@ export default function Signup() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (busy) return;
+    setBusy(true);
     setError(null);
     try {
       await signup(backend.base, form);
       navigate('/login');
     } catch (err) {
       setError(err.message);
+      setBusy(false);
     }
   }
 
@@ -74,7 +78,7 @@ export default function Signup() {
           <label>상세주소
             <input value={form.addressDetail} onChange={update('addressDetail')} placeholder="동, 호 등 (선택)" />
           </label>
-          <button type="submit" className="btn btn-primary">계정 생성</button>
+          <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? '생성 중...' : '계정 생성'}</button>
         </form>
         <p className="muted">이미 계정이 있으신가요? <Link to="/login">로그인</Link></p>
       </section>
