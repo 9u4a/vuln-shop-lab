@@ -40,3 +40,4 @@
 | 32 | Q&A 게시판 · FAQ 관리자화 · 버튼 배치 | feature/qna-faq-board | 003 | Q&A 문의, FAQ 게시판화 |
 | 33 | 주소 검색 서버화 · 푸터 보강 | feature/address-search-footer | — | 서버 주소 조회, 더미 74건, 사이트맵 |
 | 34 | 안정성·편의성 개선 | feature/ux-and-node-safety | — | 삭제 확인 모달, 이미지 폴백, 재고 경고, Node 크래시 방지 |
+| 35 | 안정성 강화 | feature/stability-hardening | — | ErrorBoundary, 에러 처리, 헬스체크·restart, nginx gzip, 개발 스크립트 |

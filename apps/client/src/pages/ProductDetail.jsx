@@ -28,6 +28,7 @@ export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
+  const [loadError, setLoadError] = useState(null);
   const [imgBroken, setImgBroken] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [rating, setRating] = useState(5);
@@ -51,15 +52,18 @@ export default function ProductDetail() {
 
   useEffect(() => {
     setProduct(null);
+    setLoadError(null);
     setImgBroken(false);
     setQuantity(1);
     setSelectedOption('');
-    fetchProduct(backend.base, id).then((data) => {
-      setProduct(data.product);
-      if (data.product.optionValues && data.product.optionValues.length > 0) {
-        setSelectedOption(data.product.optionValues[0]);
-      }
-    });
+    fetchProduct(backend.base, id)
+      .then((data) => {
+        setProduct(data.product);
+        if (data.product.optionValues && data.product.optionValues.length > 0) {
+          setSelectedOption(data.product.optionValues[0]);
+        }
+      })
+      .catch((err) => setLoadError(err.message));
     loadReviews();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backend.base, id]);
@@ -122,6 +126,14 @@ export default function ProductDetail() {
     navigate('/cart');
   }
 
+  if (loadError) {
+    return (
+      <div className="page">
+        <p><Link to="/products" className="muted">&larr; 상품 목록으로</Link></p>
+        <p className="error">{loadError}</p>
+      </div>
+    );
+  }
   if (!product) return <p className="muted">불러오는 중...</p>;
 
   const hasOptions = product.optionValues && product.optionValues.length > 0;

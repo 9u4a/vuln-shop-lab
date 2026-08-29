@@ -2,6 +2,7 @@ services:
   node-express:
     build: ./apps/node-express
     container_name: vulnshop-node
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
@@ -9,24 +10,39 @@ services:
       TOSS_SECRET_KEY: ${TOSS_SECRET_KEY:-}
       MONGO_URL: mongodb://mongo:27017
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     volumes:
       - node_data:/app/data
       - node_uploads:/app/uploads
     networks:
       - vulnshop-net
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/session',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   mongo:
     image: mongo:7
     container_name: vulnshop-mongo
+    restart: unless-stopped
     volumes:
       - mongo_data:/data/db
     networks:
       - vulnshop-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   java-spring:
     build: ./apps/java-spring
     container_name: vulnshop-java
+    restart: unless-stopped
     ports:
       - "8081:8081"
     environment:
@@ -36,10 +52,17 @@ services:
       - java_uploads:/app/uploads
     networks:
       - vulnshop-net
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
 
   client:
     build: ./apps/client
     container_name: vulnshop-client
+    restart: unless-stopped
     ports:
       - "5173:5173"
     environment:
@@ -47,8 +70,10 @@ services:
       JAVA_BACKEND_URL: http://java-spring:8081
       VITE_TOSS_CLIENT_KEY: ${TOSS_CLIENT_KEY:-}
     depends_on:
-      - node-express
-      - java-spring
+      node-express:
+        condition: service_healthy
+      java-spring:
+        condition: service_healthy
     networks:
       - vulnshop-net
 
@@ -59,11 +84,14 @@ services:
       args:
         VITE_TOSS_CLIENT_KEY: ${TOSS_CLIENT_KEY:-}
     container_name: vulnshop-nginx
+    restart: unless-stopped
     ports:
       - "8090:80"
     depends_on:
-      - node-express
-      - java-spring
+      node-express:
+        condition: service_healthy
+      java-spring:
+        condition: service_healthy
     networks:
       - vulnshop-net
 

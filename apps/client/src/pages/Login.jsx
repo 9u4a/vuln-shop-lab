@@ -12,10 +12,13 @@ export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
+  const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (busy) return;
+    setBusy(true);
     setError(null);
     try {
       const data = await login(backend.base, username, password);
@@ -24,6 +27,7 @@ export default function Login() {
       navigate('/');
     } catch (err) {
       setError(err.message);
+      setBusy(false);
     }
   }
 
@@ -40,7 +44,7 @@ export default function Login() {
           <label>비밀번호
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </label>
-          <button type="submit" className="btn btn-primary">로그인</button>
+          <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? '로그인 중...' : '로그인'}</button>
         </form>
         <p className="muted">계정이 없으신가요? <Link to="/signup">회원가입</Link></p>
       </section>

@@ -15,13 +15,26 @@ const SEED_ACTIVITY = [
   { username: 'user3', action: 'search', detail: '모니터 암 듀얼', at: '2026-08-24T16:40:00Z' },
 ];
 
-async function initMongo() {
-  await client.connect();
-  activityCollection = client.db('vulnshop').collection('activity');
-  const count = await activityCollection.countDocuments();
-  if (count === 0) {
-    await activityCollection.insertMany(SEED_ACTIVITY.map((d) => ({ ...d })));
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function initMongo(retries = 10, delayMs = 3000) {
+  for (let attempt = 1; attempt <= retries; attempt += 1) {
+    try {
+      await client.connect();
+      activityCollection = client.db('vulnshop').collection('activity');
+      const count = await activityCollection.countDocuments();
+      if (count === 0) {
+        await activityCollection.insertMany(SEED_ACTIVITY.map((d) => ({ ...d })));
+      }
+      console.log('mongo connected');
+      return;
+    } catch (err) {
+      activityCollection = null;
+      console.error(`mongo connect attempt ${attempt}/${retries} failed:`, err.message);
+      if (attempt < retries) await sleep(delayMs);
+    }
   }
+  console.error('mongo connect gave up — activity feed disabled until restart');
 }
 
 function getActivityCollection() {

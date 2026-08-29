@@ -23,13 +23,24 @@ export default function Products() {
   const inStock = searchParams.get('inStock') || '';
   const [products, setProducts] = useState(null);
   const [sortKeys, setSortKeys] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
+    let active = true;
     setProducts(null);
-    fetchProducts(backend.base, { q, category, sort, gender, color, material, minPrice, maxPrice, inStock }).then((data) => {
-      setProducts(data.products);
-      setSortKeys(data.sortKeys || null);
-    });
+    setError(null);
+    fetchProducts(backend.base, { q, category, sort, gender, color, material, minPrice, maxPrice, inStock })
+      .then((data) => {
+        if (!active) return;
+        setProducts(data.products);
+        setSortKeys(data.sortKeys || null);
+      })
+      .catch((err) => {
+        if (!active) return;
+        setError(err.message);
+        setProducts([]);
+      });
+    return () => { active = false; };
   }, [backend.base, q, category, sort, gender, color, material, minPrice, maxPrice, inStock]);
 
   function updateParams(next) {
@@ -135,15 +146,17 @@ export default function Products() {
         <button type="submit" className="btn btn-primary btn-sm">검색</button>
       </form>
 
+      {error && <p className="error">{error}</p>}
+
       {sortKeys && <p className="muted">sortKeys: {JSON.stringify(sortKeys)}</p>}
 
-      {products !== null && (
+      {products !== null && !error && (
         <p className="muted" style={{ marginBottom: 'var(--space-3)' }}>{products.length}개 상품</p>
       )}
 
       {products === null ? (
         <SkeletonGrid count={8} />
-      ) : products.length === 0 ? (
+      ) : error ? null : products.length === 0 ? (
         <EmptyState
           emoji="🔍"
           title="검색 결과가 없어요"
