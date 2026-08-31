@@ -859,8 +859,8 @@ textarea { resize: vertical; min-height: 4.5rem; }
 .chip--wait:hover { color: var(--color-text-muted); background: var(--color-surface); }
 
 /* Q&A 게시판 */
-.qna-toolbar { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
-.qna-toolbar .search-row { flex: 1; }
+.qna-toolbar { display: flex; align-items: stretch; gap: var(--space-3); flex-wrap: wrap; }
+.qna-toolbar .search-row { flex: 1; margin-bottom: 0; min-width: 240px; }
 .qna-meta { display: inline-flex; align-items: center; gap: var(--space-3); }
 .qna-detail__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
 .qna-answer { border-left: 3px solid var(--color-ink); }
@@ -891,11 +891,16 @@ textarea { resize: vertical; min-height: 4.5rem; }
 .search-row {
   display: flex;
   flex-direction: row;
+  align-items: stretch;
   gap: var(--space-2);
   max-width: 440px;
   margin-bottom: var(--space-8);
 }
-.search-row input { flex: 1; }
+.search-row input { flex: 1; min-width: 0; }
+/* 검색창 옆 버튼과 Q&A 툴바 버튼의 높이를 입력창과 동일하게 맞춘다 */
+.search-row .btn,
+.qna-toolbar .btn { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; }
+.qna-toolbar { align-items: stretch; }
 
 .pagination { display: flex; gap: var(--space-1); flex-wrap: wrap; justify-content: center; margin: var(--space-8) 0; }
 
@@ -1028,6 +1033,10 @@ textarea { resize: vertical; min-height: 4.5rem; }
 }
 .post-list__title { font-weight: 500; color: var(--color-text); }
 .post-list__title:hover { color: var(--color-ink); }
+.post-list__link { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.post-list__link:hover { text-decoration: none; }
+.post-list__link:hover .post-list__title { color: var(--color-ink); }
+.post-list__thumb { width: 48px; height: 48px; object-fit: cover; border-radius: var(--radius-sm); flex: 0 0 auto; }
 .post-list__date { font-size: 0.82rem; color: var(--color-text-muted); white-space: nowrap; }
 
 /* Events page (카드 → 상세) */
@@ -1277,6 +1286,16 @@ textarea { resize: vertical; min-height: 4.5rem; }
 .modal--confirm { max-width: 380px; }
 .confirm-actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
 .line-item__stock-warn { color: var(--color-danger); font-size: 0.78rem; font-weight: 500; }
+
+/* 회원가입 약관 동의 */
+.agree-box { border: 1px solid var(--color-line); border-radius: var(--radius); padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-2); margin: var(--space-4) 0; }
+.agree-box__all { display: flex; align-items: center; gap: var(--space-2); padding-bottom: var(--space-2); border-bottom: 1px solid var(--color-line); }
+.agree-box__item { display: flex; align-items: center; gap: var(--space-2); font-size: 0.88rem; color: var(--color-text); }
+.agree-box input[type="checkbox"] { width: auto; }
+
+/* 약관 문서 페이지 */
+.terms-doc h3 { margin-top: var(--space-5); font-size: 0.98rem; }
+.terms-doc p { color: var(--color-text); margin-top: var(--space-2); }
 .modal-close {
   border: none;
   background: transparent;

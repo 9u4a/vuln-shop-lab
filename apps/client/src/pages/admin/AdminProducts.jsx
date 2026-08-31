@@ -8,6 +8,7 @@ import {
 } from '../../api.js';
 import { formatCurrency } from '../../format.js';
 import SafeImage from '../../components/SafeImage.jsx';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
 const emptyProduct = {
   name: '',

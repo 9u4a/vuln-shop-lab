@@ -42,8 +42,9 @@ export default function EventPopups() {
     close(id);
   }
 
+  // 팝업은 노출기간(시작·종료)이 설정된 이벤트만 — 기간 없는 더미/상시 이벤트는 목록엔 있어도 팝업엔 안 뜬다
   const visible = events
-    .filter((e) => !closed.has(e.id) && !isHiddenToday(e.id))
+    .filter((e) => e.startsAt && e.endsAt && !closed.has(e.id) && !isHiddenToday(e.id))
     .slice(0, MAX_POPUPS);
 
   if (visible.length === 0) return null;
