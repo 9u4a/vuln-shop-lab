@@ -3,6 +3,7 @@ import { useBackend } from '../../BackendContext.jsx';
 import { fetchCouponsManage, createCoupon, updateCoupon, deleteCoupon } from '../../api.js';
 import { formatCurrency } from '../../format.js';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import Modal from '../../components/Modal.jsx';
 import Pagination from '../../components/Pagination.jsx';
 
 const emptyCoupon = {
@@ -156,50 +157,44 @@ export default function AdminCoupons() {
       <section className="card">
         <div className="admin-toolbar">
           <h2>쿠폰 <span className="muted">({coupons.length})</span></h2>
-          <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowForm((v) => !v)}>
-            {showForm ? '취소' : '+ 쿠폰 추가'}
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}>
+            + 쿠폰 추가
           </button>
         </div>
         <p className="muted">활성 쿠폰은 사용자 쿠폰 페이지에서 발급받을 수 있습니다.</p>
         {error && <p className="error">{error}</p>}
         {status && <p className="status-ok">{status}</p>}
 
-        {showForm && (
-          <div className="admin-create-form">
-            <CouponForm value={draft} onChange={setDraft} onSubmit={handleCreate} submitLabel="쿠폰 추가" />
-          </div>
-        )}
-
         <div>
           {paged.map((c) => (
             <div key={c.id} className="admin-item-row">
-              {editingId === c.id ? (
-                <div style={{ flex: 1 }}>
-                  <CouponForm value={editForm} onChange={setEditForm} onSubmit={handleSaveEdit} submitLabel="저장" onCancel={() => setEditingId(null)} />
-                </div>
-              ) : (
-                <>
-                  <div className="admin-item-row__body">
-                    <strong>{c.title} <span className="badge">{c.code}</span></strong>
-                    <span className="muted">
-                      {label(c)} 할인 · {c.active ? '활성' : '비활성'}
-                      {c.minOrderAmount > 0 && ` · ${formatCurrency(c.minOrderAmount)} 이상`}
-                      {c.expiresAt && ` · ~${c.expiresAt.slice(0, 10)}`}
-                    </span>
-                  </div>
-                  <div className="admin-item-row__actions">
-                    <button type="button" onClick={() => toggleActive(c)}>{c.active ? '비활성화' : '활성화'}</button>
-                    <button type="button" onClick={() => startEdit(c)}>수정</button>
-                    <button type="button" onClick={() => setPendingId(c.id)}>삭제</button>
-                  </div>
-                </>
-              )}
+              <div className="admin-item-row__body">
+                <strong>{c.title} <span className="badge">{c.code}</span></strong>
+                <span className="muted">
+                  {label(c)} 할인 · {c.active ? '활성' : '비활성'}
+                  {c.minOrderAmount > 0 && ` · ${formatCurrency(c.minOrderAmount)} 이상`}
+                  {c.expiresAt && ` · ~${c.expiresAt.slice(0, 10)}`}
+                </span>
+              </div>
+              <div className="admin-item-row__actions">
+                <button type="button" onClick={() => toggleActive(c)}>{c.active ? '비활성화' : '활성화'}</button>
+                <button type="button" onClick={() => startEdit(c)}>수정</button>
+                <button type="button" onClick={() => setPendingId(c.id)}>삭제</button>
+              </div>
             </div>
           ))}
         </div>
 
         <Pagination page={page} pageSize={PAGE_SIZE} total={coupons.length} onChange={setPage} />
       </section>
+
+      <Modal open={showForm} title="쿠폰 추가" onClose={() => setShowForm(false)} wide>
+        <CouponForm value={draft} onChange={setDraft} onSubmit={handleCreate} submitLabel="쿠폰 추가" onCancel={() => setShowForm(false)} />
+      </Modal>
+
+      <Modal open={editingId != null} title="쿠폰 수정" onClose={() => setEditingId(null)} wide>
+        <CouponForm value={editForm} onChange={setEditForm} onSubmit={handleSaveEdit} submitLabel="저장" onCancel={() => setEditingId(null)} />
+      </Modal>
 
       <ConfirmDialog
         open={pendingId != null}

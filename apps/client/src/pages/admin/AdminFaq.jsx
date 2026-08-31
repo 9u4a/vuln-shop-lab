@@ -90,36 +90,34 @@ export default function AdminFaq() {
       <div>
         {paged.map((f) => (
           <div key={f.id} className="admin-item-row">
-            {editingId === f.id ? (
-              <form onSubmit={handleSaveEdit} style={{ flex: 1, maxWidth: 'none' }}>
-                <label>질문
-                  <input value={editForm.question} onChange={(e) => setEditForm({ ...editForm, question: e.target.value })} required />
-                </label>
-                <label>답변
-                  <textarea value={editForm.answer} onChange={(e) => setEditForm({ ...editForm, answer: e.target.value })} rows="3" required />
-                </label>
-                <div className="admin-item-row__actions">
-                  <button type="submit" className="btn btn-primary btn-sm">저장</button>
-                  <button type="button" onClick={() => setEditingId(null)}>취소</button>
-                </div>
-              </form>
-            ) : (
-              <>
-                <div className="admin-item-row__body">
-                  <strong>Q. {f.question}</strong>
-                  <span className="muted" style={{ whiteSpace: 'pre-wrap' }}>A. {f.answer}</span>
-                </div>
-                <div className="admin-item-row__actions">
-                  <button type="button" onClick={() => startEdit(f)}>수정</button>
-                  <button type="button" onClick={() => setPendingId(f.id)}>삭제</button>
-                </div>
-              </>
-            )}
+            <div className="admin-item-row__body">
+              <strong>Q. {f.question}</strong>
+              <span className="muted" style={{ whiteSpace: 'pre-wrap' }}>A. {f.answer}</span>
+            </div>
+            <div className="admin-item-row__actions">
+              <button type="button" onClick={() => startEdit(f)}>수정</button>
+              <button type="button" onClick={() => setPendingId(f.id)}>삭제</button>
+            </div>
           </div>
         ))}
       </div>
 
       <Pagination page={page} pageSize={PAGE_SIZE} total={faqs.length} onChange={setPage} />
+
+      <Modal open={editingId != null} title="FAQ 수정" onClose={() => setEditingId(null)}>
+        <form onSubmit={handleSaveEdit} style={{ maxWidth: 'none' }}>
+          <label>질문
+            <input value={editForm.question} onChange={(e) => setEditForm({ ...editForm, question: e.target.value })} required />
+          </label>
+          <label>답변
+            <textarea value={editForm.answer} onChange={(e) => setEditForm({ ...editForm, answer: e.target.value })} rows="3" required />
+          </label>
+          <div className="admin-item-row__actions">
+            <button type="submit" className="btn btn-primary btn-sm">저장</button>
+            <button type="button" onClick={() => setEditingId(null)}>취소</button>
+          </div>
+        </form>
+      </Modal>
 
       <ConfirmDialog
         open={pendingId != null}
