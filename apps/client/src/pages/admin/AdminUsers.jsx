@@ -2,11 +2,15 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackend } from '../../BackendContext.jsx';
 import { useSession } from '../../SessionContext.jsx';
-import { fetchAdminUsers, fetchAdminUser, updateUserRole, toggleUserActive } from '../../api.js';
+import { fetchAdminUsers, fetchAdminUser, updateUserRole, toggleUserActive, updateAdminUser } from '../../api.js';
 import { formatCurrency } from '../../format.js';
 import StatusChip from '../../components/StatusChip.jsx';
+import Modal from '../../components/Modal.jsx';
+import Pagination from '../../components/Pagination.jsx';
 
 const ROLES = ['user', 'admin', 'system_admin'];
+const PAGE_SIZE = 10;
+const emptyEdit = { name: '', phone: '', postcode: '', address: '', addressDetail: '', bio: '' };
 
 export default function AdminUsers() {
   const { backend } = useBackend();
@@ -14,9 +18,12 @@ export default function AdminUsers() {
   const isSystemAdmin = user?.role === 'system_admin';
   const [users, setUsers] = useState([]);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
   const [openId, setOpenId] = useState(null);
   const [detail, setDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [edit, setEdit] = useState(emptyEdit);
+  const [saveStatus, setSaveStatus] = useState(null);
 
   function load() {
     setError(null);
@@ -24,20 +31,22 @@ export default function AdminUsers() {
   }
 
   useEffect(load, [backend.base]);
-  useEffect(() => { setOpenId(null); setDetail(null); }, [backend.base]);
+  useEffect(() => { setOpenId(null); setDetail(null); setPage(1); }, [backend.base]);
 
-  async function toggle(id) {
-    if (openId === id) {
-      setOpenId(null);
-      setDetail(null);
-      return;
-    }
+  const paged = users.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  async function openDetail(id) {
     setOpenId(id);
     setDetail(null);
+    setSaveStatus(null);
     setDetailLoading(true);
     try {
       const d = await fetchAdminUser(backend.base, id);
       setDetail(d);
+      setEdit({
+        name: d.user.name || '', phone: d.user.phone || '', postcode: d.user.postcode || '',
+        address: d.user.address || '', addressDetail: d.user.addressDetail || '', bio: d.user.bio || '',
+      });
     } catch (e) {
       setError(e.message);
     } finally {
@@ -45,74 +54,60 @@ export default function AdminUsers() {
     }
   }
 
+  function closeModal() { setOpenId(null); setDetail(null); }
+
   async function handleToggleActive(userId, active) {
     setError(null);
     try {
       await toggleUserActive(backend.base, userId, active);
       load();
-    } catch (err) {
-      setError(err.message);
-    }
+      if (openId === userId) setDetail((d) => ({ ...d, user: { ...d.user, active } }));
+    } catch (err) { setError(err.message); }
   }
 
   async function handleRoleChange(userId, role) {
     try {
       await updateUserRole(backend.base, userId, role);
       load();
-      if (openId === userId) {
-        const d = await fetchAdminUser(backend.base, userId);
-        setDetail(d);
-      }
-    } catch (err) {
-      setError(err.message);
-    }
+      if (openId === userId) setDetail((d) => ({ ...d, user: { ...d.user, role } }));
+    } catch (err) { setError(err.message); }
   }
+
+  async function handleSaveProfile(e) {
+    e.preventDefault();
+    setSaveStatus(null);
+    try {
+      await updateAdminUser(backend.base, openId, edit);
+      setSaveStatus('저장되었습니다.');
+      setDetail((d) => ({ ...d, user: { ...d.user, ...edit } }));
+      load();
+    } catch (err) { setSaveStatus(err.message); }
+  }
+
+  const setField = (f) => (e) => setEdit((v) => ({ ...v, [f]: e.target.value }));
 
   return (
     <section className="card">
       <h2>사용자 <span className="muted">({users.length})</span></h2>
       {error && <p className="error">{error}</p>}
-      {!isSystemAdmin && <p className="muted">권한 변경은 시스템 관리자만 가능합니다. 행을 눌러 상세 정보를 볼 수 있습니다.</p>}
+      <p className="muted">행을 눌러 상세 정보를 보고 프로필을 수정할 수 있습니다.{!isSystemAdmin && ' 권한 변경은 시스템 관리자만 가능합니다.'}</p>
 
       <div className="admin-table__wrap">
         <table className="admin-table">
           <thead>
-            <tr>
-              <th>ID</th>
-              <th>아이디</th>
-              <th>이름</th>
-              <th>권한</th>
-              <th>상태</th>
-              <th>가입일</th>
-            </tr>
+            <tr><th>ID</th><th>아이디</th><th>이름</th><th>권한</th><th>상태</th><th>가입일</th></tr>
           </thead>
           <tbody>
-            {users.map((u) => (
-              <tr key={u.id} className="row-toggle" onClick={() => toggle(u.id)}>
+            {paged.map((u) => (
+              <tr key={u.id} className="row-toggle" onClick={() => openDetail(u.id)}>
                 <td>{u.id}</td>
                 <td>{u.username}</td>
                 <td>{u.name || '-'}</td>
-                <td onClick={(e) => e.stopPropagation()}>
-                  {isSystemAdmin ? (
-                    <select value={u.role} onChange={(e) => handleRoleChange(u.id, e.target.value)}>
-                      {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-                    </select>
-                  ) : (
-                    <span className="badge">{u.role}</span>
-                  )}
-                </td>
-                <td onClick={(e) => e.stopPropagation()}>
+                <td><span className="badge">{u.role}</span></td>
+                <td>
                   <span className={u.active === false ? 'badge badge-danger' : 'badge badge-ok'}>
                     {u.active === false ? '비활성' : '활성'}
                   </span>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    style={{ marginLeft: 'var(--space-2)' }}
-                    onClick={() => handleToggleActive(u.id, u.active === false)}
-                  >
-                    {u.active === false ? '활성화' : '비활성화'}
-                  </button>
                 </td>
                 <td>{(u.createdAt || u.created_at || '').slice(0, 10)}</td>
               </tr>
@@ -121,38 +116,65 @@ export default function AdminUsers() {
         </table>
       </div>
 
-      {openId != null && (
-        <div className="admin-detail">
-          {detailLoading && <p className="muted">불러오는 중...</p>}
-          {detail && (
-            <>
-              <dl>
-                <dt>아이디</dt><dd>{detail.user.username}</dd>
-                <dt>이름</dt><dd>{detail.user.name || '-'}</dd>
-                <dt>전화</dt><dd>{detail.user.phone || '-'}</dd>
-                <dt>우편번호</dt><dd>{detail.user.postcode || '-'}</dd>
-                <dt>주소</dt><dd>{[detail.user.address, detail.user.addressDetail].filter(Boolean).join(' ') || '-'}</dd>
-                <dt>자기소개</dt><dd>{detail.user.bio || '-'}</dd>
-                <dt>가입일</dt><dd>{detail.user.createdAt || '-'}</dd>
-              </dl>
-              <h4>주문 내역 ({detail.orders.length})</h4>
-              {detail.orders.length === 0 ? (
-                <p className="muted">주문이 없습니다.</p>
-              ) : (
-                <ul className="order-list">
-                  {detail.orders.map((o) => (
-                    <li key={o.id} className="order-row">
-                      <Link to={`/admin/orders?open=${o.id}`} className="order-row__id">주문 #{o.id}</Link>
-                      <StatusChip status={o.status} />
-                      <span className="order-row__amount tnum">{formatCurrency(o.totalAmount)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </>
-          )}
-        </div>
-      )}
+      <Pagination page={page} pageSize={PAGE_SIZE} total={users.length} onChange={setPage} />
+
+      <Modal open={openId != null} title="사용자 상세" onClose={closeModal} wide>
+        {detailLoading && <p className="muted">불러오는 중...</p>}
+        {detail && (
+          <>
+            <div className="admin-modal__grid">
+              <div>
+                <p className="muted">아이디</p>
+                <p><strong>{detail.user.username}</strong></p>
+              </div>
+              <div>
+                <p className="muted">권한</p>
+                {isSystemAdmin ? (
+                  <select value={detail.user.role} onChange={(e) => handleRoleChange(detail.user.id, e.target.value)}>
+                    {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                ) : <span className="badge">{detail.user.role}</span>}
+              </div>
+              <div>
+                <p className="muted">상태</p>
+                <span className={detail.user.active === false ? 'badge badge-danger' : 'badge badge-ok'}>
+                  {detail.user.active === false ? '비활성' : '활성'}
+                </span>
+                <button type="button" className="btn btn-ghost btn-sm" style={{ marginLeft: 'var(--space-2)' }}
+                  onClick={() => handleToggleActive(detail.user.id, detail.user.active === false)}>
+                  {detail.user.active === false ? '활성화' : '비활성화'}
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleSaveProfile}>
+              <label>이름<input value={edit.name} onChange={setField('name')} /></label>
+              <label>전화<input value={edit.phone} onChange={setField('phone')} /></label>
+              <label>우편번호<input value={edit.postcode} onChange={setField('postcode')} /></label>
+              <label>주소<input value={edit.address} onChange={setField('address')} /></label>
+              <label>상세주소<input value={edit.addressDetail} onChange={setField('addressDetail')} /></label>
+              <label>자기소개<textarea value={edit.bio} onChange={setField('bio')} rows="2" /></label>
+              {saveStatus && <p className={saveStatus === '저장되었습니다.' ? 'status-ok' : 'error'}>{saveStatus}</p>}
+              <button type="submit" className="btn btn-primary">프로필 저장</button>
+            </form>
+
+            <h4>주문 내역 ({detail.orders.length})</h4>
+            {detail.orders.length === 0 ? (
+              <p className="muted">주문이 없습니다.</p>
+            ) : (
+              <ul className="order-list">
+                {detail.orders.map((o) => (
+                  <li key={o.id} className="order-row">
+                    <Link to={`/admin/orders?open=${o.id}`} className="order-row__id" onClick={closeModal}>주문 #{o.id}</Link>
+                    <StatusChip status={o.status} />
+                    <span className="order-row__amount tnum">{formatCurrency(o.totalAmount)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+      </Modal>
     </section>
   );
 }

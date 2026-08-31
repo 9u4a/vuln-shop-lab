@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
 import { CATEGORIES } from '../data/categories.js';
+import { useSession } from '../SessionContext.jsx';
 
 export default function SiteFooter() {
+  const { user } = useSession();
   return (
     <footer className="site-footer">
       <div className="site-footer__inner">
@@ -44,9 +46,9 @@ export default function SiteFooter() {
         <div>
           <h4>이용안내</h4>
           <ul>
-            <li><Link to="/notices">이용약관</Link></li>
-            <li><Link to="/notices">개인정보 처리방침</Link></li>
-            <li><Link to="/orders">주문 내역</Link></li>
+            <li><Link to="/terms">이용약관</Link></li>
+            <li><Link to="/terms">개인정보 처리방침</Link></li>
+            {user && <li><Link to="/orders">주문 내역</Link></li>}
           </ul>
         </div>
       </div>

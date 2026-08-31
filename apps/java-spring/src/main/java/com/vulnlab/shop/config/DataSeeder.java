@@ -438,6 +438,11 @@ public class DataSeeder implements CommandLineRunner {
                       "<p>이번 주 모든 주문 <strong>무료배송</strong> — 별도 쿠폰 없이 자동 적용됩니다.</p>",
                       "/products")
         ));
+        // 큐레이트 3건에 노출기간 부여 → 이 3건만 팝업으로 뜬다(더미는 기간 없음 → 팝업 제외)
+        for (Event e : events) {
+            e.setStartsAt("2026-08-01T00:00:00Z");
+            e.setEndsAt("2026-12-31T23:59:59Z");
+        }
         // 대량 더미 이벤트 생성(활성/비활성 순환)
         List<String> eTitles = List.of("가을 신상 프리뷰", "주말 타임세일", "브랜드 위크", "리뷰 이벤트", "친구 초대 혜택", "멤버십 더블 적립", "시즌 오프 클리어런스", "단독 특가전");
         for (int n = 0; events.size() < 60; n++) {

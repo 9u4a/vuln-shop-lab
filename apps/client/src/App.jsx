@@ -23,6 +23,7 @@ import CheckoutResult from './pages/CheckoutResult.jsx';
 import Orders from './pages/Orders.jsx';
 import OrderDetail from './pages/OrderDetail.jsx';
 import Faq from './pages/Faq.jsx';
+import Terms from './pages/Terms.jsx';
 import Qna from './pages/Qna.jsx';
 import QnaDetail from './pages/QnaDetail.jsx';
 import Notices from './pages/Notices.jsx';
@@ -67,6 +68,7 @@ export default function App() {
                 <Route path="/products" element={<Products />} />
                 <Route path="/products/:id" element={<ProductDetail />} />
                 <Route path="/faq" element={<Faq />} />
+                <Route path="/terms" element={<Terms />} />
                 <Route path="/qna" element={<Qna />} />
                 <Route path="/qna/:id" element={<QnaDetail />} />
                 <Route path="/notices" element={<Notices />} />

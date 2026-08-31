@@ -3,6 +3,7 @@ import { useBackend } from '../../BackendContext.jsx';
 import { fetchEventsManage, createEvent, updateEvent, deleteEvent } from '../../api.js';
 import AdminImageField from '../../components/AdminImageField.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import Pagination from '../../components/Pagination.jsx';
 
 const emptyEvent = {
   title: '',
@@ -58,6 +59,9 @@ export default function AdminEvents() {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState(emptyEvent);
   const [pendingId, setPendingId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   function load() {
     setError(null);
@@ -66,12 +70,15 @@ export default function AdminEvents() {
 
   useEffect(load, [backend.base]);
 
+  const paged = events.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   async function handleCreate(e) {
     e.preventDefault();
     setStatus(null);
     try {
       await createEvent(backend.base, draft);
       setDraft(emptyEvent);
+      setShowForm(false);
       setStatus('이벤트가 추가되었습니다.');
       load();
     } catch (err) {
@@ -124,13 +131,24 @@ export default function AdminEvents() {
   return (
     <>
       <section className="card">
-        <h2>이벤트 <span className="muted">({events.length})</span></h2>
-        <p className="muted">활성 이벤트는 메인 페이지 접속 시 팝업으로 노출됩니다.</p>
+        <div className="admin-toolbar">
+          <h2>이벤트 <span className="muted">({events.length})</span></h2>
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowForm((v) => !v)}>
+            {showForm ? '취소' : '+ 이벤트 추가'}
+          </button>
+        </div>
+        <p className="muted">노출기간(시작·종료)이 설정된 활성 이벤트만 메인 팝업으로 노출됩니다.</p>
         {error && <p className="error">{error}</p>}
         {status && <p className="status-ok">{status}</p>}
 
+        {showForm && (
+          <div className="admin-create-form">
+            <EventForm value={draft} onChange={setDraft} onSubmit={handleCreate} submitLabel="이벤트 추가" />
+          </div>
+        )}
+
         <div>
-          {events.map((ev) => (
+          {paged.map((ev) => (
             <div key={ev.id} className="admin-item-row">
               {editingId === ev.id ? (
                 <div style={{ flex: 1 }}>
@@ -163,11 +181,8 @@ export default function AdminEvents() {
             </div>
           ))}
         </div>
-      </section>
 
-      <section className="card">
-        <h2>이벤트 추가</h2>
-        <EventForm value={draft} onChange={setDraft} onSubmit={handleCreate} submitLabel="이벤트 추가" />
+        <Pagination page={page} pageSize={PAGE_SIZE} total={events.length} onChange={setPage} />
       </section>
 
       <ConfirmDialog

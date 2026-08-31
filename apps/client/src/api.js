@@ -166,6 +166,20 @@ export function updateUserRole(base, userId, role) {
   });
 }
 
+export function updateAdminUser(base, userId, patch) {
+  return apiRequest(base, `/admin/users/${userId}`, {
+    method: 'PUT',
+    body: JSON.stringify(patch),
+  });
+}
+
+export function updateOrderStatus(base, orderId, status) {
+  return apiRequest(base, `/admin/orders/${orderId}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({ status }),
+  });
+}
+
 export function toggleUserActive(base, userId, active) {
   return apiRequest(base, `/admin/users/${userId}/active`, {
     method: 'PUT',

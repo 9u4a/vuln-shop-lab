@@ -20,7 +20,13 @@ export default function Signup() {
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [agree, setAgree] = useState({ terms: false, privacy: false, marketing: false });
   const navigate = useNavigate();
+
+  const allAgreed = agree.terms && agree.privacy && agree.marketing;
+  function toggleAll(checked) {
+    setAgree({ terms: checked, privacy: checked, marketing: checked });
+  }
 
   function update(field) {
     return (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
@@ -34,6 +40,10 @@ export default function Signup() {
   async function handleSubmit(e) {
     e.preventDefault();
     if (busy) return;
+    if (!agree.terms || !agree.privacy) {
+      setError('필수 약관(이용약관·개인정보 수집·이용)에 동의해 주세요.');
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -78,6 +88,24 @@ export default function Signup() {
           <label>상세주소
             <input value={form.addressDetail} onChange={update('addressDetail')} placeholder="동, 호 등 (선택)" />
           </label>
+          <div className="agree-box">
+            <label className="agree-box__all">
+              <input type="checkbox" checked={allAgreed} onChange={(e) => toggleAll(e.target.checked)} />
+              <strong>약관에 전체 동의합니다</strong>
+            </label>
+            <label className="agree-box__item">
+              <input type="checkbox" checked={agree.terms} onChange={(e) => setAgree((a) => ({ ...a, terms: e.target.checked }))} />
+              <span>[필수] <Link to="/terms" target="_blank">이용약관</Link>에 동의</span>
+            </label>
+            <label className="agree-box__item">
+              <input type="checkbox" checked={agree.privacy} onChange={(e) => setAgree((a) => ({ ...a, privacy: e.target.checked }))} />
+              <span>[필수] <Link to="/terms" target="_blank">개인정보 수집·이용</Link>에 동의</span>
+            </label>
+            <label className="agree-box__item">
+              <input type="checkbox" checked={agree.marketing} onChange={(e) => setAgree((a) => ({ ...a, marketing: e.target.checked }))} />
+              <span>[선택] 마케팅 정보 수신에 동의</span>
+            </label>
+          </div>
           <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? '생성 중...' : '계정 생성'}</button>
         </form>
         <p className="muted">이미 계정이 있으신가요? <Link to="/login">로그인</Link></p>

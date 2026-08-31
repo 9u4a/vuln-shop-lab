@@ -110,6 +110,25 @@ public class AdminController {
         return ResponseEntity.ok(Map.of("user", target, "orders", orders));
     }
 
+    // 관리자 사용자 프로필 수정 — 화이트리스트 필드만(역할/비밀번호/활성은 별도 엔드포인트)
+    @PutMapping("/users/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        User target = userRepository.findById(id).orElse(null);
+        if (target == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "사용자를 찾을 수 없습니다."));
+        }
+        if (body.containsKey("name")) target.setName(body.get("name"));
+        if (body.containsKey("phone")) target.setPhone(body.get("phone"));
+        if (body.containsKey("postcode")) target.setPostcode(body.get("postcode"));
+        if (body.containsKey("address")) target.setAddress(body.get("address"));
+        if (body.containsKey("addressDetail")) target.setAddressDetail(body.get("addressDetail"));
+        if (body.containsKey("bio")) target.setBio(body.get("bio"));
+        userRepository.save(target);
+        return ResponseEntity.ok(Map.of("ok", true));
+    }
+
     @PutMapping("/users/{id}/role")
     public ResponseEntity<?> updateRole(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
         ResponseEntity<?> denied = requireSystemAdmin(session);
@@ -205,6 +224,25 @@ public class AdminController {
                 })
                 .toList();
         return ResponseEntity.ok(Map.of("order", orderMap, "items", items));
+    }
+
+    private static final java.util.List<String> ORDER_STATUSES = java.util.List.of("pending", "paid", "failed", "cancelled");
+
+    @PutMapping("/orders/{id}/status")
+    public ResponseEntity<?> updateOrderStatus(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        String status = body.get("status");
+        if (status == null || !ORDER_STATUSES.contains(status)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "상태는 " + String.join(", ", ORDER_STATUSES) + " 중 하나여야 합니다."));
+        }
+        Order order = orderRepository.findById(id).orElse(null);
+        if (order == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "주문을 찾을 수 없습니다."));
+        }
+        order.setStatus(status);
+        orderRepository.save(order);
+        return ResponseEntity.ok(Map.of("ok", true, "status", status));
     }
 
     @PostMapping("/products")

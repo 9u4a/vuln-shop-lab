@@ -91,6 +91,25 @@ router.get('/users/:id', requireAdmin, (req, res) => {
   });
 });
 
+// 관리자 사용자 프로필 수정 — 화이트리스트 필드만(역할/비밀번호/활성은 별도 엔드포인트)
+router.put('/users/:id', requireAdmin, (req, res) => {
+  const existing = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
+  if (!existing) return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
+  const { name, phone, postcode, address, addressDetail, bio } = req.body;
+  db.prepare(
+    `UPDATE users SET name = ?, phone = ?, postcode = ?, address = ?, address_detail = ?, bio = ? WHERE id = ?`
+  ).run(
+    name ?? existing.name,
+    phone ?? existing.phone,
+    postcode ?? existing.postcode,
+    address ?? existing.address,
+    addressDetail ?? existing.address_detail,
+    bio ?? existing.bio,
+    existing.id
+  );
+  res.json({ ok: true });
+});
+
 router.put('/users/:id/role', requireSystemAdmin, (req, res) => {
   const { role } = req.body;
   if (!['user', 'admin', 'system_admin'].includes(role)) {
@@ -145,6 +164,18 @@ router.get('/orders/:id', requireAdmin, (req, res) => {
       optionValue: i.option_value,
     })),
   });
+});
+
+// 주문 상태 변경
+const ORDER_STATUSES = ['pending', 'paid', 'failed', 'cancelled'];
+router.put('/orders/:id/status', requireAdmin, (req, res) => {
+  const { status } = req.body;
+  if (!ORDER_STATUSES.includes(status)) {
+    return res.status(400).json({ error: `상태는 ${ORDER_STATUSES.join(', ')} 중 하나여야 합니다.` });
+  }
+  const result = db.prepare('UPDATE orders SET status = ? WHERE id = ?').run(status, req.params.id);
+  if (result.changes === 0) return res.status(404).json({ error: '주문을 찾을 수 없습니다.' });
+  res.json({ ok: true, status });
 });
 
 router.post('/products', requireAdmin, (req, res) => {
