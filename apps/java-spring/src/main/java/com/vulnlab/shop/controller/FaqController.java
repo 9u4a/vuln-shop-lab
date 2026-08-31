@@ -12,12 +12,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/faqs")
+@Tag(name = "FAQ", description = "FAQ 조회(공개) 및 관리(관리자 전용 오퍼레이션 포함)")
 public class FaqController {
 
     private final FaqRepository faqRepository;

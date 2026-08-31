@@ -12,12 +12,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/notices")
+@Tag(name = "공지사항", description = "공지 조회(공개) 및 관리(관리자 전용 오퍼레이션 포함)")
 public class NoticeController {
 
     private final NoticeRepository noticeRepository;

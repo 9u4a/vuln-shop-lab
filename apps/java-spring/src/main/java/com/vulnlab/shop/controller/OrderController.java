@@ -10,6 +10,11 @@ import com.vulnlab.shop.repository.OrderRepository;
 import com.vulnlab.shop.repository.PointTransactionRepository;
 import com.vulnlab.shop.repository.ProductRepository;
 import com.vulnlab.shop.repository.UserRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -34,6 +39,8 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/orders")
+@Tag(name = "주문", description = "주문 생성·조회·결제확인·영수증 (로그인 필요)")
+@SecurityRequirement(name = "sessionCookie")
 public class OrderController {
 
     @Value("${app.toss.secret-key:}")
@@ -67,6 +74,7 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그인이 필요합니다."));
     }
 
+    @Operation(summary = "내 주문 목록")
     @GetMapping
     public ResponseEntity<?> list(HttpSession session) {
         User user = currentUser(session);
@@ -74,6 +82,7 @@ public class OrderController {
         return ResponseEntity.ok(Map.of("orders", orderRepository.findByUserId(user.getId())));
     }
 
+    @Operation(summary = "주문 상세 (주문 + 항목)")
     @GetMapping("/{id}")
     public ResponseEntity<?> detail(@PathVariable Long id, HttpSession session) {
         User user = currentUser(session);
@@ -86,6 +95,7 @@ public class OrderController {
         return ResponseEntity.ok(Map.of("order", order, "items", items));
     }
 
+    @Operation(summary = "주문 생성", description = "{ items: [{ productId, quantity, optionValue }], pointsUsed, webhookUrl }")
     @SuppressWarnings("unchecked")
     @PostMapping
     public ResponseEntity<?> create(@RequestBody Map<String, Object> body, HttpSession session) {
@@ -152,6 +162,7 @@ public class OrderController {
                 .body(Map.of("orderId", order.getId(), "tossOrderId", order.getTossOrderId(), "amount", total));
     }
 
+    @Operation(summary = "결제 확인", description = "{ paymentKey, amount }. TOSS_SECRET_KEY 미설정 시 501.")
     @PostMapping("/{id}/confirm")
     public ResponseEntity<?> confirm(@PathVariable Long id, @RequestBody Map<String, Object> body, HttpSession session) throws Exception {
         User user = currentUser(session);
@@ -200,6 +211,7 @@ public class OrderController {
 
     private static final Path RECEIPTS_DIR = Paths.get("receipts");
 
+    @Operation(summary = "영수증 파일 생성", description = "{ note } 선택. 서버에 receipt_<id>.txt 생성 후 파일명 반환.")
     @PostMapping("/{id}/receipt")
     public ResponseEntity<?> generateReceipt(@PathVariable Long id,
                                              @RequestBody(required = false) Map<String, Object> body,
@@ -223,6 +235,8 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("filename", filename));
     }
 
+    @Operation(summary = "인쇄용 영수증 (HTML)")
+    @ApiResponse(responseCode = "200", content = @Content(mediaType = MediaType.TEXT_HTML_VALUE))
     @GetMapping(value = "/{id}/receipt/print", produces = MediaType.TEXT_HTML_VALUE)
     @ResponseBody
     public ResponseEntity<?> printReceipt(@PathVariable Long id,
@@ -244,6 +258,8 @@ public class OrderController {
         return ResponseEntity.ok().contentType(MediaType.TEXT_HTML).body(html);
     }
 
+    @Operation(summary = "영수증 파일 다운로드 (text/plain)")
+    @ApiResponse(responseCode = "200", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE))
     @GetMapping("/receipt/{filename}")
     public ResponseEntity<?> downloadReceipt(@PathVariable String filename, HttpSession session) throws Exception {
         User user = currentUser(session);

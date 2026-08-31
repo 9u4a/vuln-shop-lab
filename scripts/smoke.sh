@@ -33,6 +33,13 @@ done
 echo "== node 전용 (Mongo 활동 피드) =="
 check "node activity(401)" "$BASE/api/node/activity"         401
 
+echo "== API 문서 (의도적 노출, VULN-034) =="
+check "api-docs index"     "$BASE/api-docs"                            200
+check "node swagger ui"    "$BASE/api-docs/node/"                      200
+check "node openapi.json"  "$BASE/api-docs/node/openapi.json"          200
+check "java swagger ui"    "$BASE/api-docs/java/swagger-ui/index.html" 200
+check "java openapi"       "$BASE/api-docs/java/v3/api-docs"           200
+
 echo
 if [ "$fail" = "0" ]; then
   echo "SMOKE PASS"

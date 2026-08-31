@@ -2,6 +2,7 @@ package com.vulnlab.shop.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.io.ClassPathResource;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,6 +16,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/addresses")
+@Tag(name = "주소 검색", description = "우편번호·주소 조회")
 public class AddressController {
 
     private final List<Map<String, String>> addresses;

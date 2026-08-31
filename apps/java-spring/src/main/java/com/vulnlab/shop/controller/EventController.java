@@ -7,6 +7,7 @@ import com.vulnlab.shop.security.Roles;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -15,6 +16,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/events")
+@Tag(name = "이벤트", description = "이벤트 조회(공개) 및 관리(관리자 전용 오퍼레이션 포함)")
 public class EventController {
 
     private final EventRepository eventRepository;

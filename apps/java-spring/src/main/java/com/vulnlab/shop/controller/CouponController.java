@@ -9,6 +9,7 @@ import com.vulnlab.shop.security.Roles;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/coupons")
+@Tag(name = "쿠폰", description = "쿠폰 조회·발급(로그인) 및 관리(관리자 전용 오퍼레이션 포함)")
 public class CouponController {
 
     private final CouponRepository couponRepository;

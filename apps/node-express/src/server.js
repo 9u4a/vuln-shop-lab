@@ -6,6 +6,9 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 
+const swaggerUi = require('swagger-ui-express');
+const openapiSpec = require('./openapi');
+
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
 const profileRoutes = require('./routes/profile');
@@ -52,6 +55,21 @@ app.use(
 );
 
 app.use('/uploads', express.static(uploadDir));
+
+// OpenAPI 문서 (내비게이션에 링크되지 않음, URL 직접 접근으로만 도달).
+app.get('/api-docs/node/openapi.json', (req, res) => res.json(openapiSpec));
+app.get('/api-docs/node', (req, res, next) => {
+  if (req.path === '/api-docs/node') return res.redirect(302, '/api-docs/node/');
+  next();
+});
+app.use(
+  '/api-docs/node',
+  swaggerUi.serve,
+  swaggerUi.setup(openapiSpec, {
+    customSiteTitle: 'Vuln Shop API — node-express',
+    swaggerOptions: { withCredentials: true, displayRequestDuration: true, persistAuthorization: true },
+  })
+);
 
 app.get('/api/session', (req, res) => {
   res.json({ user: req.session.user || null });

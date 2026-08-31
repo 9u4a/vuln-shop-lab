@@ -12,6 +12,7 @@ import com.vulnlab.shop.vuln.CallbackFetcher;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/restock")
+@Tag(name = "재입고 알림", description = "품절 상품 재입고 알림 신청 및 관리자 발송")
 public class RestockController {
 
     private final RestockSubscriptionRepository restockRepository;

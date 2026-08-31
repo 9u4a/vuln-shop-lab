@@ -3,6 +3,8 @@ package com.vulnlab.shop.controller;
 import com.vulnlab.shop.entity.User;
 import com.vulnlab.shop.repository.PointTransactionRepository;
 import com.vulnlab.shop.repository.UserRepository;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +14,8 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/points")
+@Tag(name = "포인트", description = "적립금 잔액·원장 조회 (로그인 필요)")
+@SecurityRequirement(name = "sessionCookie")
 public class PointController {
 
     private final UserRepository userRepository;

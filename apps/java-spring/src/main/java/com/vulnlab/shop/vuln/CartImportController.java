@@ -2,6 +2,7 @@ package com.vulnlab.shop.vuln;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,6 +14,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/cart")
+@Tag(name = "장바구니", description = "장바구니 백업 JSON 임포트")
 public class CartImportController {
 
     @PostMapping("/import")

@@ -4,6 +4,8 @@ import com.vulnlab.shop.entity.LoginLog;
 import com.vulnlab.shop.entity.User;
 import com.vulnlab.shop.repository.LoginLogRepository;
 import com.vulnlab.shop.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
@@ -15,6 +17,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "인증", description = "회원가입·로그인·로그아웃 (세션 쿠키)")
 public class AuthController {
 
     private final AuthService authService;
@@ -25,6 +28,7 @@ public class AuthController {
         this.loginLogRepository = loginLogRepository;
     }
 
+    @Operation(summary = "회원가입", description = "username, password, name, phone, postcode, address 필수. addressDetail, referralCode 선택.")
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody Map<String, String> body) {
         String username = body.get("username");
@@ -51,6 +55,7 @@ public class AuthController {
         return s == null || s.isBlank();
     }
 
+    @Operation(summary = "로그인", description = "{ username, password } 본문. 성공 시 세션 쿠키(JSESSIONID) 발급.")
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> body, HttpSession session,
                                     HttpServletRequest request) {
@@ -77,6 +82,7 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("user", user));
     }
 
+    @Operation(summary = "로그아웃", description = "세션 무효화")
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpSession session) {
         session.invalidate();
