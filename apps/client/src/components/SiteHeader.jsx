@@ -4,7 +4,6 @@ import { useBackend } from '../BackendContext.jsx';
 import { useCart } from '../CartContext.jsx';
 import { useSession } from '../SessionContext.jsx';
 import { NAV_LINKS, ACCOUNT_LINKS, visibleLinks } from './navLinks.js';
-import { CATEGORIES } from '../data/categories.js';
 import SiteDrawer from './SiteDrawer.jsx';
 
 export default function SiteHeader() {
@@ -93,17 +92,8 @@ export default function SiteHeader() {
             to="/products"
             className={activeCategory === '' ? 'site-nav__link active' : 'site-nav__link'}
           >
-            전체
+            상품
           </Link>
-          {CATEGORIES.map((c) => (
-            <Link
-              key={c.slug}
-              to={`/products?category=${c.slug}`}
-              className={activeCategory === c.slug ? 'site-nav__link active' : 'site-nav__link'}
-            >
-              {c.label}
-            </Link>
-          ))}
           <span className="site-nav__divider" aria-hidden="true" />
           {links.map((l) => (
             <NavLink

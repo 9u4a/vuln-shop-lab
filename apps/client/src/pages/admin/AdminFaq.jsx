@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useBackend } from '../../BackendContext.jsx';
 import { fetchFaqs, createFaq, updateFaqAdmin, deleteFaqAdmin } from '../../api.js';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import Modal from '../../components/Modal.jsx';
 import Pagination from '../../components/Pagination.jsx';
 
 const emptyFaq = { question: '', answer: '' };
@@ -68,14 +69,14 @@ export default function AdminFaq() {
     <section className="card">
       <div className="admin-toolbar">
         <h2>FAQ <span className="muted">({faqs.length})</span></h2>
-        <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? '취소' : '+ FAQ 추가'}
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}>
+          + FAQ 추가
         </button>
       </div>
       {error && <p className="error">{error}</p>}
 
-      {showForm && (
-        <form onSubmit={handleCreate} className="admin-create-form">
+      <Modal open={showForm} title="FAQ 추가" onClose={() => setShowForm(false)}>
+        <form onSubmit={handleCreate} style={{ maxWidth: 'none' }}>
           <label>질문
             <input value={newFaq.question} onChange={(e) => setNewFaq({ ...newFaq, question: e.target.value })} required />
           </label>
@@ -84,7 +85,7 @@ export default function AdminFaq() {
           </label>
           <button type="submit" className="btn btn-primary">FAQ 추가</button>
         </form>
-      )}
+      </Modal>
 
       <div>
         {paged.map((f) => (

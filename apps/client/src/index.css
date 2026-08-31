@@ -1290,6 +1290,7 @@ textarea { resize: vertical; min-height: 4.5rem; }
 .modal--confirm { max-width: 380px; }
 .modal--wide { max-width: 640px; max-height: 85vh; }
 .modal-body { overflow-y: auto; }
+.admin-detail__image { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); }
 .confirm-actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
 .admin-modal__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin-bottom: var(--space-4); }
 .admin-modal__grid p { margin: 0; }
