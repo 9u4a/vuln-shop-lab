@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,6 +33,7 @@ public class DataSeeder implements CommandLineRunner {
     private final ProductLikeRepository productLikeRepository;
     private final CouponRepository couponRepository;
     private final QuestionRepository questionRepository;
+    private final LoginLogRepository loginLogRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public DataSeeder(ProductRepository productRepository, UserRepository userRepository,
@@ -39,7 +41,7 @@ public class DataSeeder implements CommandLineRunner {
                       ReviewRepository reviewRepository, OrderRepository orderRepository,
                       OrderItemRepository orderItemRepository, EventRepository eventRepository,
                       ProductLikeRepository productLikeRepository, CouponRepository couponRepository,
-                      QuestionRepository questionRepository) {
+                      QuestionRepository questionRepository, LoginLogRepository loginLogRepository) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.faqRepository = faqRepository;
@@ -51,7 +53,20 @@ public class DataSeeder implements CommandLineRunner {
         this.productLikeRepository = productLikeRepository;
         this.couponRepository = couponRepository;
         this.questionRepository = questionRepository;
+        this.loginLogRepository = loginLogRepository;
     }
+
+    // 결정적 순환 선택 헬퍼 + 대량 더미 생성용 공용 데이터
+    private static <T> T pick(List<T> arr, int i) {
+        return arr.get(((i % arr.size()) + arr.size()) % arr.size());
+    }
+    private static final List<String> SURNAMES = List.of("김", "이", "박", "최", "정", "강", "조", "윤", "장", "임", "한", "오", "서", "신", "권", "황", "안", "송", "전", "홍");
+    private static final List<String> GIVEN = List.of("민준", "서연", "도윤", "하은", "시우", "지우", "예준", "수아", "주원", "지민", "건우", "유진", "현우", "채원", "지호", "다은", "우진", "서윤", "선우", "예은");
+    private static final List<String> CITIES = List.of("서울특별시 강남구", "서울특별시 마포구", "부산광역시 해운대구", "대구광역시 수성구", "인천광역시 연수구", "광주광역시 서구", "대전광역시 유성구", "경기도 성남시 분당구", "경기도 수원시 영통구", "강원특별자치도 춘천시");
+    private static final List<String> ROADS = List.of("테헤란로", "월드컵북로", "센텀중앙로", "달구벌대로", "컨벤시아대로", "상무중앙로", "대학로", "판교역로", "광교중앙로", "중앙로");
+    private static final List<String> BRANDS = List.of("Basiclab", "Urban", "Maison");
+    private static final List<String> GENDERS = List.of("공용", "남성", "여성");
+    private static final List<String> COLORS = List.of("화이트", "블랙", "그레이", "네이비", "베이지", "카키", "브라운", "아이보리", "차콜", "인디고");
 
     @Override
     public void run(String... args) throws IOException {
@@ -65,6 +80,7 @@ public class DataSeeder implements CommandLineRunner {
         seedOrders();
         seedLikes();
         seedCoupons();
+        seedLoginLogs();
     }
 
     private void seedCoupons() {
@@ -77,6 +93,16 @@ public class DataSeeder implements CommandLineRunner {
                 "3만원 이상 구매 시 10% 할인. 여름 데일리 웨어를 준비하세요.", "percent", 10, 30000, "2026-09-30T23:59:59Z"));
         couponRepository.save(coupon("FREESHIP3000", "무료배송 쿠폰",
                 "배송비 3,000원 할인 쿠폰입니다.", "amount", 3000, 0, null));
+        // 대량 더미 쿠폰 생성(정액/정률 순환, 고유 코드)
+        for (int n = 0; n < 57; n++) {
+            boolean isPercent = n % 2 == 0;
+            String code = String.format("PROMO%04d", n + 1);
+            int value = isPercent ? 5 + (n % 3) * 5 : (1 + n % 5) * 1000;
+            String title = isPercent ? value + "% 할인 쿠폰" : value + "원 할인 쿠폰";
+            Coupon c = coupon(code, title, "기간 한정 프로모션 쿠폰입니다.", isPercent ? "percent" : "amount", value, (n % 3) * 10000, null);
+            if (n % 9 == 0) c.setActive(false);
+            couponRepository.save(c);
+        }
     }
 
     private Coupon coupon(String code, String title, String description, String discountType,
@@ -111,8 +137,27 @@ public class DataSeeder implements CommandLineRunner {
                 {2, 0}, {2, 4},           // user3
         };
         Long[] userIds = {user1Id, user2Id, user3Id};
+        java.util.Set<String> seen = new java.util.HashSet<>();
         for (int[] like : likes) {
-            productLikeRepository.save(new ProductLike(userIds[like[0]], products.get(like[1]).getId()));
+            Long uid = userIds[like[0]];
+            Long pid = products.get(like[1]).getId();
+            if (seen.add(uid + ":" + pid)) {
+                productLikeRepository.save(new ProductLike(uid, pid));
+            }
+        }
+        // 대량 더미 좋아요 생성(상품 × 사용자 순환)
+        List<Long> lkUsers = userRepository.findAll().stream().filter(u -> Roles.USER.equals(u.getRole())).map(User::getId).toList();
+        int made = 0;
+        for (int pi = 0; pi < products.size() && made < 90; pi++) {
+            int likesPerProduct = 1 + (pi % 3);
+            for (int k = 0; k < likesPerProduct && made < 90; k++) {
+                Long uid = pick(lkUsers, pi * 3 + k);
+                Long pid = products.get(pi).getId();
+                if (seen.add(uid + ":" + pid)) {
+                    productLikeRepository.save(new ProductLike(uid, pid));
+                    made++;
+                }
+            }
         }
     }
 
@@ -127,6 +172,16 @@ public class DataSeeder implements CommandLineRunner {
                 "깔끔하고 세련된 데스크테리어를 좋아하는 이영희입니다.", "10003", "서울특별시 종로구 데모대로 56", "2층");
         seedUser("user3", "user3", Roles.USER, "박민수", "010-5555-6666",
                 "가성비 좋고 성능 확실한 스마트 오피스 제품을 선호하는 박민수입니다.", "10005", "서울특별시 영등포구 더미길 90", "반지하 B01호");
+
+        // 대량 더미 사용자(user4..user60)
+        for (int n = 4; n <= 60; n++) {
+            String username = "user" + n;
+            String name = pick(SURNAMES, n) + pick(GIVEN, n * 3);
+            String phone = String.format("010-%04d-%04d", 1000 + (n * 7) % 9000, 1000 + (n * 13) % 9000);
+            String address = pick(CITIES, n) + " " + pick(ROADS, n) + " " + (10 + n % 90);
+            seedUser(username, username, Roles.USER, name, phone, name + "의 데모 계정입니다.",
+                    String.valueOf(10000 + n), address, (100 + n % 900) + "호");
+        }
     }
 
     private void seedUser(String username, String rawPassword, String role, String name, String phone,
@@ -160,7 +215,7 @@ public class DataSeeder implements CommandLineRunner {
         String bag = seedImage("apparel-bag.svg");
         String hat = seedImage("apparel-hat.svg");
         String acc = seedImage("apparel-acc.svg");
-        List<Product> seed = List.of(
+        List<Product> seed = new ArrayList<>(List.of(
                 // 상의 (top)
                 product("베이식 크루넥 티셔츠", "매일 입기 좋은 20수 싱글 코튼 크루넥 티셔츠입니다. 적당한 두께감과 부드러운 촉감으로 사계절 데일리로 활용하기 좋습니다.", "19000",
                         top, "top", "Basiclab", "TOP-001", "공용", "화이트", "코튼", 120, "사이즈", "S,M,L,XL"),
@@ -198,7 +253,33 @@ public class DataSeeder implements CommandLineRunner {
                         acc, "acc", "Maison", "ACC-001", "여성", "실버", "스테인리스", 80, "색상", "Silver,Gold"),
                 product("가죽 벨트", "견고한 소가죽 벨트. 캐주얼과 슬랙스 모두에 어울리는 브라운 컬러입니다.", "32000",
                         acc, "acc", "Basiclab", "ACC-002", "남성", "브라운", "레더", 55, "사이즈", "M,L,XL")
+        ));
+        // 대량 더미 상품 생성(카테고리 순환으로 60종까지)
+        record Cat(String slug, String img, String prefix, List<String> items, String opt, List<String> mats, int start) {}
+        List<Cat> cats = List.of(
+                new Cat("top", top, "TOP", List.of("크루넥 티셔츠", "헨리넥 티셔츠", "피케 폴로", "스트라이프 셔츠", "린넨 셔츠", "후드 집업", "라운드 니트", "카라 니트"), "S,M,L,XL", List.of("코튼", "린넨", "울", "폴리에스터"), 4),
+                new Cat("bottom", bottom, "BOT", List.of("테이퍼드 슬랙스", "와이드 데님", "슬림 치노", "카고 팬츠", "트랙 팬츠", "숏 팬츠", "코듀로이 팬츠"), "28,30,32,34", List.of("코튼", "데님", "폴리에스터", "코듀로이"), 4),
+                new Cat("bag", bag, "BAG", List.of("에코 토트백", "미니 크로스백", "데일리 백팩", "메신저백", "더플백", "웨이스트백"), "Free", List.of("캔버스", "나일론", "레더", "폴리에스터"), 3),
+                new Cat("hat", hat, "HAT", List.of("볼캡", "버킷햇", "니트 비니", "베레모", "스트로우햇"), "Free", List.of("코튼", "아크릴", "울", "스트로우"), 3),
+                new Cat("acc", acc, "ACC", List.of("체인 목걸이", "가죽 벨트", "실버 링", "머플러", "양말 세트", "선글라스"), "Free", List.of("스테인리스", "레더", "실버", "아크릴"), 2)
         );
+        int[] seq = new int[cats.size()];
+        for (int i = 0; i < cats.size(); i++) seq[i] = cats.get(i).start();
+        for (int n = 0; seed.size() < 60; n++) {
+            int ci = n % cats.size();
+            Cat c = cats.get(ci);
+            seq[ci]++;
+            String item = pick(c.items(), n);
+            int price = 15000 + ((n * 3137) % 80) * 1000;
+            int stock = (n % 11 == 0) ? 0 : 20 + (n * 7) % 130;
+            String optName = c.slug().equals("bag") || c.slug().equals("hat") || c.slug().equals("acc") ? "옵션" : "사이즈";
+            seed.add(product(
+                    pick(BRANDS, n) + " " + item,
+                    item + " 상품입니다. 데일리로 활용하기 좋은 " + pick(c.mats(), n) + " 소재의 " + pick(COLORS, n) + " 컬러 아이템입니다.",
+                    String.valueOf(price), c.img(), c.slug(), pick(BRANDS, n),
+                    String.format("%s-%03d", c.prefix(), seq[ci]),
+                    pick(GENDERS, n), pick(COLORS, n), pick(c.mats(), n), stock, optName, c.opt()));
+        }
         productRepository.saveAll(seed);
     }
 
@@ -211,7 +292,7 @@ public class DataSeeder implements CommandLineRunner {
         Long systemAdminId = userRepository.findByUsername("9u4a").map(User::getId).orElse(1L);
         String systemAdminUsername = "9u4a";
 
-        List<Faq> faqs = List.of(
+        List<Faq> faqs = new ArrayList<>(List.of(
                 faq("배송 기간은 얼마나 걸리나요?",
                     "결제 완료 후 서울 및 수도권 지역은 대개 영업일 기준 1~2일 내에 배송되며, 도서산간 지역은 2~4일 정도 소요될 수 있습니다. 택배사 사정에 따라 다소 변동될 수 있습니다.",
                     adminId, adminUsername),
@@ -227,7 +308,28 @@ public class DataSeeder implements CommandLineRunner {
                 faq("개인정보 보호 및 보안 관련 정책이 어떻게 되나요?",
                     "저희는 회원님의 모든 패스워드를 최신 암호화 알고리즘(BCrypt)으로 처리하여 철저하게 보호하고 있으며, 결제 정보 등 주요 데이터 역시 안전한 보안 프레임워크를 통해 철저하게 관리되고 있으니 안심하셔도 됩니다.",
                     systemAdminId, systemAdminUsername)
+        ));
+        // 대량 더미 FAQ 생성(주제 순환)
+        List<String[]> topics = List.of(
+                new String[]{"배송", "배송비는 얼마인가요", "3만원 이상 구매 시 무료이며, 미만은 3,000원이 부과됩니다."},
+                new String[]{"배송", "해외 배송도 되나요", "현재는 국내 배송만 지원하고 있으며 해외 배송은 준비 중입니다."},
+                new String[]{"교환/반품", "단순 변심 반품 시 배송비는", "단순 변심의 경우 왕복 배송비가 고객 부담으로 발생합니다."},
+                new String[]{"교환/반품", "교환은 몇 번까지 가능한가요", "동일 상품 기준 1회 교환이 가능하며 재고 상황에 따라 다를 수 있습니다."},
+                new String[]{"결제", "무통장 입금도 가능한가요", "토스페이먼츠 계좌이체로 대체되며 가상계좌 입금이 지원됩니다."},
+                new String[]{"결제", "해외 카드로 결제되나요", "일부 해외 발급 카드는 결제가 제한될 수 있습니다."},
+                new String[]{"회원", "아이디를 변경할 수 있나요", "아이디는 변경이 불가하며 탈퇴 후 재가입이 필요합니다."},
+                new String[]{"회원", "휴면 계정은 어떻게 되나요", "1년 이상 미접속 시 휴면 전환되며 재로그인으로 해제됩니다."},
+                new String[]{"쿠폰", "쿠폰은 중복 사용되나요", "주문당 1장의 쿠폰만 적용 가능합니다."},
+                new String[]{"상품", "재입고 알림을 받고 싶어요", "품절 상품 상세에서 재입고 알림을 신청할 수 있습니다."}
         );
+        Long[] authors = {adminId, systemAdminId};
+        String[] authorNames = {adminUsername, systemAdminUsername};
+        for (int n = 0; faqs.size() < 60; n++) {
+            String[] t = pick(topics, n);
+            int round = n / topics.size() + 1;
+            int a = n % 2;
+            faqs.add(faq("[" + t[0] + "] " + t[1] + "? (" + round + ")", t[2], authors[a], authorNames[a]));
+        }
         faqRepository.saveAll(faqs);
     }
 
@@ -244,13 +346,28 @@ public class DataSeeder implements CommandLineRunner {
         answered.setAnsweredBy("admin");
         answered.setAnsweredAt(java.time.LocalDateTime.now());
 
-        questionRepository.saveAll(List.of(
+        List<Question> questions = new ArrayList<>(List.of(
                 answered,
                 question(user2, "user2", "사이즈 교환도 가능한가요?",
                         "M 사이즈를 주문했는데 L로 교환하고 싶습니다. 절차가 궁금합니다.", false),
                 question(user1, "user1", "(비밀글) 결제 영수증 재발급 문의",
                         "세금계산서 처리 때문에 영수증 재발급이 필요합니다. 계정 정보 확인 부탁드립니다.", true)
         ));
+        // 대량 더미 Q&A 생성(답변완료/미답변/비밀글 순환)
+        List<User> qUsers = userRepository.findAll().stream().filter(u -> Roles.USER.equals(u.getRole())).toList();
+        List<String> qTitles = List.of("배송 조회는 어디서 하나요", "주문 취소하고 싶어요", "색상 문의드립니다", "재입고 예정일이 궁금해요", "쿠폰 적용이 안돼요", "사이즈 추천 부탁드려요", "영수증 발급 요청", "주소 변경 가능한가요", "적립금은 어떻게 쓰나요", "상품 상세 사이즈표 문의");
+        for (int n = 0; n < 57 && !qUsers.isEmpty(); n++) {
+            User u = pick(qUsers, n);
+            boolean secret = n % 7 == 0;
+            Question q = question(u.getId(), u.getUsername(), pick(qTitles, n) + " (" + (n + 1) + ")", "문의 내용입니다. 확인 후 안내 부탁드립니다.", secret);
+            if (n % 3 == 0) {
+                q.setAnswer("안녕하세요. 문의 주신 내용 확인하여 순차적으로 안내드리고 있습니다. 감사합니다.");
+                q.setAnsweredBy("admin");
+                q.setAnsweredAt(java.time.LocalDateTime.now());
+            }
+            questions.add(q);
+        }
+        questionRepository.saveAll(questions);
     }
 
     private Question question(Long userId, String username, String title, String body, boolean secret) {
@@ -276,7 +393,7 @@ public class DataSeeder implements CommandLineRunner {
         if (noticeRepository.count() > 0) {
             return;
         }
-        List<Notice> notices = List.of(
+        List<Notice> notices = new ArrayList<>(List.of(
                 notice("[공지] 신규 회원 가입 환영 적립금 웰컴 이벤트 안내",
                        "안녕하세요. Vulnlab Shop에 오신 것을 진심으로 환영합니다!\n\n현재 신규 가입하신 모든 회원님들께 첫 구매 시 즉시 사용 가능한 풍성한 웰컴 할인 혜택을 제공하고 있습니다. 마이페이지에서 가입 직후 확인해 보세요.\n앞으로도 더 합리적이고 프리미엄한 오피스 가젯과 테크 액세서리들로 보답하겠습니다.\n감사합니다."),
                 notice("[공지] 개인정보 처리방침 일부 개정 예정 공지",
@@ -285,7 +402,17 @@ public class DataSeeder implements CommandLineRunner {
                        "안정적이고 강력한 결제 보안 환경을 제공하기 위해 PG 결제 시스템의 정기 정밀 정검이 아래와 같이 예정되어 있습니다.\n\n- 점검 시간: 2026년 8월 30일(일요일) 새벽 02:00 ~ 04:00 (약 2시간)\n- 작업 영향: 점검 시간 동안 간헐적으로 신용카드 및 토스페이 결제 승인 오류 또는 결제 지연이 발생할 수 있습니다.\n\n사용자 여러분의 너른 양해를 부탁드리며, 점검 시간 전에 필요한 주문을 완료해 주시면 더욱 매끄러운 이용이 가능합니다. 감사합니다."),
                 notice("[안내] 하절기 기상 악화(태풍)로 인한 일부 지역 배송 지연 안내",
                        "최근 한반도를 통과하는 강력한 하절기 태풍의 영향으로 인하여, 남부 지방 및 제주/도서 지역으로의 택배 배송 배차가 일부 지연되고 있습니다.\n\n- 지연 예상 지역: 부산, 울산, 경남, 전남 전체 및 제주 특별자치도\n- 예상 지연 일수: 기존 배송일보다 약 1~2영업일 지연 예상\n\n상품을 기다리시는 고객님들께 심려를 끼쳐드려 대단히 죄송하며, 기상 특보가 해제되는 대로 신속하고 안전하게 배송이 재개될 수 있도록 물류팀에서 최선을 다하겠습니다.")
-        );
+        ));
+        // 대량 더미 공지 생성(카테고리 순환)
+        List<String[]> kinds = List.of(
+                new String[]{"공지", "신규 입점 브랜드 안내"}, new String[]{"이벤트", "주간 특가 상품 안내"},
+                new String[]{"점검", "시스템 정기 점검 안내"}, new String[]{"안내", "배송 정책 변경 안내"},
+                new String[]{"공지", "고객센터 운영시간 변경"});
+        for (int n = 0; notices.size() < 60; n++) {
+            String[] k = pick(kinds, n);
+            notices.add(notice("[" + k[0] + "] " + k[1] + " (" + (n + 1) + ")",
+                    "안녕하세요. Vulnlab Shop입니다.\n\n" + k[1] + " 관련하여 안내드립니다. 자세한 내용은 본문을 확인해 주세요.\n\n감사합니다."));
+        }
         noticeRepository.saveAll(notices);
     }
 
@@ -300,7 +427,7 @@ public class DataSeeder implements CommandLineRunner {
         if (eventRepository.count() > 0) {
             return;
         }
-        List<Event> events = List.of(
+        List<Event> events = new ArrayList<>(List.of(
                 event("여름 데스크 셋업 페어",
                       "<h3 style=\"margin-top:0\">인기 아이템 최대 30% 할인</h3><p>키보드 · 모니터 · 조명까지, 지금 가장 많이 담는 데스크 셋업 아이템을 한정 수량 특가로 준비했습니다.</p><p><strong>8월 한정 · 재고 소진 시 조기 종료</strong></p>",
                       "/products"),
@@ -310,7 +437,15 @@ public class DataSeeder implements CommandLineRunner {
                 event("무료배송 위크",
                       "<p>이번 주 모든 주문 <strong>무료배송</strong> — 별도 쿠폰 없이 자동 적용됩니다.</p>",
                       "/products")
-        );
+        ));
+        // 대량 더미 이벤트 생성(활성/비활성 순환)
+        List<String> eTitles = List.of("가을 신상 프리뷰", "주말 타임세일", "브랜드 위크", "리뷰 이벤트", "친구 초대 혜택", "멤버십 더블 적립", "시즌 오프 클리어런스", "단독 특가전");
+        for (int n = 0; events.size() < 60; n++) {
+            String title = pick(eTitles, n) + " (" + (n + 1) + ")";
+            Event e = event(title, "<h3 style=\"margin-top:0\">" + title + "</h3><p>지금 참여하고 다양한 혜택을 받아보세요. 기간 한정으로 진행됩니다.</p>", "/products");
+            if (n % 5 == 0) e.setActive(false);
+            events.add(e);
+        }
         eventRepository.saveAll(events);
     }
 
@@ -354,8 +489,29 @@ public class DataSeeder implements CommandLineRunner {
                         review(p7, user3Id, 5, "조거팬츠 밴딩이 편하고 카키 색이 코디하기 좋습니다. 집에서도 밖에서도 자주 입게 되네요.")
                 );
                 // 데모용: user2가 상품1에 남긴 후기(인덱스 1)를 비밀글로 표시
-                reviews.get(1).setSecret(true);
-                reviewRepository.saveAll(reviews);
+                List<Review> curated = new ArrayList<>(reviews);
+                curated.get(1).setSecret(true);
+
+                // 대량 더미 후기 생성(상품 전반 × 사용자 순환)
+                List<Long> rvUsers = userRepository.findAll().stream().filter(u -> Roles.USER.equals(u.getRole())).map(User::getId).toList();
+                List<String> body = List.of(
+                        "가격 대비 만족스러워요. 재구매 의사 있습니다.",
+                        "핏과 색감이 화면과 동일해서 좋았어요.",
+                        "배송이 빠르고 포장도 깔끔했습니다.",
+                        "무난하게 데일리로 입기 좋네요.",
+                        "소재가 생각보다 도톰하고 튼튼합니다.",
+                        "사이즈가 살짝 커서 한 치수 작게 추천해요.");
+                int made = 0;
+                for (int pi = 0; pi < products.size() && made < 90; pi++) {
+                    int perProduct = 1 + (pi % 2);
+                    for (int k = 0; k < perProduct && made < 90; k++) {
+                        Long uid = pick(rvUsers, pi * 2 + k + 3);
+                        int rating = 3 + ((pi + k) % 3);
+                        curated.add(review(products.get(pi).getId(), uid, rating, pick(body, pi + k)));
+                        made++;
+                    }
+                }
+                reviewRepository.saveAll(curated);
             }
         }
     }
@@ -408,6 +564,32 @@ public class DataSeeder implements CommandLineRunner {
                 Order o4 = order(user1Id, "paid", new BigDecimal("35000"), "toss_seed_order_4", "toss_seed_payment_key_4");
                 orderRepository.save(o4);
                 orderItemRepository.save(orderItem(o4.getId(), necklace.getId(), 1, necklace.getPrice(), "Silver"));
+
+                // 대량 더미 주문 생성(사용자 × 상품 순환, 상태 혼합)
+                List<Long> odUsers = userRepository.findAll().stream().filter(u -> Roles.USER.equals(u.getRole())).map(User::getId).toList();
+                for (int n = 5; n <= 60; n++) {
+                    Long uid = pick(odUsers, n);
+                    String status = n % 4 == 0 ? "pending" : "paid";
+                    int lineCount = 1 + (n % 2);
+                    List<Product> lines = new ArrayList<>();
+                    BigDecimal total = BigDecimal.ZERO;
+                    int[] qtys = new int[lineCount];
+                    for (int k = 0; k < lineCount; k++) {
+                        Product p = pick(products, n * 2 + k);
+                        int qty = 1 + (n % 2);
+                        lines.add(p);
+                        qtys[k] = qty;
+                        total = total.add(p.getPrice().multiply(BigDecimal.valueOf(qty)));
+                    }
+                    String paymentKey = status.equals("paid") ? "toss_seed_payment_key_" + n : null;
+                    Order o = order(uid, status, total, "toss_seed_order_" + n, paymentKey);
+                    orderRepository.save(o);
+                    for (int k = 0; k < lines.size(); k++) {
+                        Product p = lines.get(k);
+                        String opt = p.getOptionValues() == null ? null : p.getOptionValues().split(",")[0];
+                        orderItemRepository.save(orderItem(o.getId(), p.getId(), qtys[k], p.getPrice(), opt));
+                    }
+                }
             }
         }
     }
@@ -430,6 +612,31 @@ public class DataSeeder implements CommandLineRunner {
         oi.setUnitPrice(unitPrice);
         oi.setOptionValue(optionValue);
         return oi;
+    }
+
+    private void seedLoginLogs() {
+        if (loginLogRepository.count() > 0) {
+            return;
+        }
+        List<User> users = userRepository.findAll();
+        if (users.isEmpty()) {
+            return;
+        }
+        List<String> uas = List.of(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0 Safari/537.36",
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15",
+                "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) Safari/604.1",
+                "Mozilla/5.0 (Linux; Android 14) Chrome/126.0 Mobile Safari/537.36");
+        List<LoginLog> logs = new ArrayList<>();
+        for (int n = 0; n < 80; n++) {
+            User u = pick(users, n);
+            boolean success = n % 5 != 0;
+            String ip = "203.0." + (n % 256) + "." + ((n * 7) % 256);
+            LoginLog log = new LoginLog(u.getId(), u.getUsername(), ip, pick(uas, n), success);
+            log.setAt(java.time.LocalDateTime.now().minusHours(n * 3L));
+            logs.add(log);
+        }
+        loginLogRepository.saveAll(logs);
     }
 
     private String seedImage(String filename) throws IOException {
