@@ -1,5 +1,13 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useBackend } from './BackendContext.jsx';
+import { useSession } from './SessionContext.jsx';
+import {
+  fetchCart,
+  addCartItem,
+  updateCartItem,
+  removeCartItem,
+  clearCart,
+} from './api.js';
 
 const CartContext = createContext(null);
 
@@ -15,22 +23,92 @@ function lineKey(productId, option) {
   return `${productId}::${option || ''}`;
 }
 
+// 서버 장바구니 라인 → 클라이언트 아이템 형태로 정규화.
+function normalizeServerLine(l) {
+  return {
+    cartItemId: l.id,
+    productId: l.productId,
+    name: l.name,
+    price: Number(l.price),
+    option: l.optionValue || null,
+    optionName: l.optionName || null,
+    optionValues: Array.isArray(l.optionValues) ? l.optionValues : [],
+    stock: l.stock != null ? Number(l.stock) : null,
+    quantity: l.quantity,
+  };
+}
+
 function CartProvider({ children }) {
-  const { backendKey } = useBackend();
+  const { backend, backendKey } = useBackend();
+  const { user, loading } = useSession();
   const storageKey = `cart_${backendKey}`;
-  const [items, setItems] = useState(() => readCart(storageKey));
+
+  // 비로그인: localStorage 객체 / 로그인: 서버 라인 배열
+  const [localItems, setLocalItems] = useState(() => readCart(storageKey));
+  const [serverItems, setServerItems] = useState([]);
+  const mergedRef = useRef(false);
+
+  const loggedIn = !!user;
 
   useEffect(() => {
-    setItems(readCart(storageKey));
+    setLocalItems(readCart(storageKey));
   }, [storageKey]);
 
   useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(items));
-  }, [items, storageKey]);
+    if (!loggedIn) localStorage.setItem(storageKey, JSON.stringify(localItems));
+  }, [localItems, storageKey, loggedIn]);
+
+  const refreshServer = useCallback(() => {
+    fetchCart(backend.base)
+      .then((d) => setServerItems((d.items || []).map(normalizeServerLine)))
+      .catch(() => setServerItems([]));
+  }, [backend.base]);
+
+  // 로그인 시: localStorage 라인을 서버 장바구니로 1회 병합 후 로컬 비우기.
+  useEffect(() => {
+    if (loading) return;
+    if (!loggedIn) {
+      mergedRef.current = false;
+      return;
+    }
+    if (mergedRef.current) return;
+    mergedRef.current = true;
+    const pending = Object.values(readCart(storageKey));
+    (async () => {
+      for (const it of pending) {
+        try {
+          await addCartItem(backend.base, it.productId, it.quantity, it.option);
+        } catch {
+          /* 상품이 사라졌을 수 있음 — 무시 */
+        }
+      }
+      if (pending.length) {
+        localStorage.removeItem(storageKey);
+        setLocalItems({});
+      }
+      refreshServer();
+    })();
+  }, [loggedIn, loading, backend.base, storageKey, refreshServer]);
+
+  useEffect(() => {
+    if (loggedIn && !loading) refreshServer();
+  }, [loggedIn, loading, refreshServer]);
+
+  function findServerLine(productId, option) {
+    return serverItems.find((i) => i.productId === productId && (i.option || null) === (option || null));
+  }
+
+  // ---- 공개 API (로그인 여부에 따라 서버/로컬 분기) ----
 
   function addItem(product, quantity = 1, option = null) {
+    if (loggedIn) {
+      addCartItem(backend.base, product.id, quantity, option).then((d) =>
+        setServerItems((d.items || []).map(normalizeServerLine))
+      );
+      return;
+    }
     const key = lineKey(product.id, option);
-    setItems((prev) => ({
+    setLocalItems((prev) => ({
       ...prev,
       [key]: {
         productId: product.id,
@@ -45,41 +123,60 @@ function CartProvider({ children }) {
     }));
   }
 
-  // 장바구니 라인의 옵션을 변경한다. 대상 옵션 라인이 이미 있으면 수량을 합친다.
-  function changeOption(productId, oldOption, newOption) {
-    const oldKey = lineKey(productId, oldOption);
-    const newKey = lineKey(productId, newOption);
-    if (oldKey === newKey) return;
-    setItems((prev) => {
-      const line = prev[oldKey];
-      if (!line) return prev;
+  function setQuantity(productId, option, quantity) {
+    if (loggedIn) {
+      const line = findServerLine(productId, option);
+      if (!line) return;
+      updateCartItem(backend.base, line.cartItemId, quantity).then((d) =>
+        setServerItems((d.items || []).map(normalizeServerLine))
+      );
+      return;
+    }
+    const key = lineKey(productId, option);
+    setLocalItems((prev) => {
       const next = { ...prev };
-      delete next[oldKey];
-      if (next[newKey]) {
-        next[newKey] = { ...next[newKey], quantity: next[newKey].quantity + line.quantity };
-      } else {
-        next[newKey] = { ...line, option: newOption };
-      }
+      if (quantity <= 0) delete next[key];
+      else next[key] = { ...next[key], quantity };
       return next;
     });
   }
 
-  function setQuantity(productId, option, quantity) {
-    const key = lineKey(productId, option);
-    setItems((prev) => {
+  function changeOption(productId, oldOption, newOption) {
+    if (oldOption === newOption) return;
+    if (loggedIn) {
+      const line = findServerLine(productId, oldOption);
+      if (!line) return;
+      (async () => {
+        await removeCartItem(backend.base, line.cartItemId);
+        const d = await addCartItem(backend.base, productId, line.quantity, newOption);
+        setServerItems((d.items || []).map(normalizeServerLine));
+      })();
+      return;
+    }
+    const oldKey = lineKey(productId, oldOption);
+    const newKey = lineKey(productId, newOption);
+    setLocalItems((prev) => {
+      const line = prev[oldKey];
+      if (!line) return prev;
       const next = { ...prev };
-      if (quantity <= 0) {
-        delete next[key];
-      } else {
-        next[key] = { ...next[key], quantity };
-      }
+      delete next[oldKey];
+      if (next[newKey]) next[newKey] = { ...next[newKey], quantity: next[newKey].quantity + line.quantity };
+      else next[newKey] = { ...line, option: newOption };
       return next;
     });
   }
 
   function removeItem(productId, option) {
+    if (loggedIn) {
+      const line = findServerLine(productId, option);
+      if (!line) return;
+      removeCartItem(backend.base, line.cartItemId).then((d) =>
+        setServerItems((d.items || []).map(normalizeServerLine))
+      );
+      return;
+    }
     const key = lineKey(productId, option);
-    setItems((prev) => {
+    setLocalItems((prev) => {
       const next = { ...prev };
       delete next[key];
       return next;
@@ -87,10 +184,14 @@ function CartProvider({ children }) {
   }
 
   function clear() {
-    setItems({});
+    if (loggedIn) {
+      clearCart(backend.base).then(() => setServerItems([]));
+      return;
+    }
+    setLocalItems({});
   }
 
-  const list = Object.values(items);
+  const list = loggedIn ? serverItems : Object.values(localItems);
   const total = list.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   return (

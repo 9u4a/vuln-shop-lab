@@ -33,6 +33,14 @@ done
 echo "== node 전용 (Mongo 활동 피드) =="
 check "node activity(401)" "$BASE/api/node/activity"         401
 
+echo "== 주문 라이프사이클 (기능 44~47) =="
+for stack in node java; do
+  check "$stack cart(401)"   "$BASE/api/$stack/cart"                         401
+  check "$stack track(400)"  "$BASE/api/$stack/shipments/track"              400
+  check "$stack track hit"   "$BASE/api/$stack/shipments/track?no=1000000001" 200
+  check "$stack shared hit"  "$BASE/api/$stack/orders/shared/MQ=="           200
+done
+
 echo "== API 문서 (의도적 노출, VULN-034) =="
 check "api-docs index"     "$BASE/api-docs"                            200
 check "node swagger ui"    "$BASE/api-docs/node/"                      200

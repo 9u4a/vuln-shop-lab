@@ -10,6 +10,8 @@ import com.vulnlab.shop.repository.OrderItemRepository;
 import com.vulnlab.shop.entity.LoginLog;
 import com.vulnlab.shop.repository.LoginLogRepository;
 import com.vulnlab.shop.repository.OrderRepository;
+import com.vulnlab.shop.entity.Shipment;
+import com.vulnlab.shop.repository.ShipmentRepository;
 import com.vulnlab.shop.entity.StoreSetting;
 import com.vulnlab.shop.repository.ProductRepository;
 import com.vulnlab.shop.repository.StoreSettingRepository;
@@ -39,13 +41,15 @@ public class AdminController {
     private final NoticeRepository noticeRepository;
     private final LoginLogRepository loginLogRepository;
     private final StoreSettingRepository storeSettingRepository;
+    private final ShipmentRepository shipmentRepository;
 
     private static final String WEBHOOK_KEY = "notification_webhook_url";
 
     public AdminController(UserRepository userRepository, ProductRepository productRepository,
                             OrderRepository orderRepository, OrderItemRepository orderItemRepository,
                             FaqRepository faqRepository, NoticeRepository noticeRepository,
-                            LoginLogRepository loginLogRepository, StoreSettingRepository storeSettingRepository) {
+                            LoginLogRepository loginLogRepository, StoreSettingRepository storeSettingRepository,
+                            ShipmentRepository shipmentRepository) {
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
@@ -54,6 +58,7 @@ public class AdminController {
         this.noticeRepository = noticeRepository;
         this.loginLogRepository = loginLogRepository;
         this.storeSettingRepository = storeSettingRepository;
+        this.shipmentRepository = shipmentRepository;
     }
 
     private ResponseEntity<?> requireAdmin(HttpSession session) {
@@ -214,8 +219,21 @@ public class AdminController {
         orderMap.put("username", userRepository.findById(order.getUserId()).map(User::getUsername).orElse("unknown"));
         orderMap.put("status", order.getStatus());
         orderMap.put("totalAmount", order.getTotalAmount());
+        orderMap.put("discountAmount", order.getDiscountAmount());
         orderMap.put("tossOrderId", order.getTossOrderId());
         orderMap.put("createdAt", order.getCreatedAt());
+        if (order.getShipName() != null) {
+            Map<String, Object> shipping = new java.util.HashMap<>();
+            shipping.put("name", order.getShipName());
+            shipping.put("phone", order.getShipPhone());
+            shipping.put("postcode", order.getShipPostcode());
+            shipping.put("address", order.getShipAddress());
+            shipping.put("addressDetail", order.getShipAddressDetail());
+            orderMap.put("shipping", shipping);
+        }
+        Shipment shipment = shipmentRepository.findByOrderId(order.getId()).orElse(null);
+        Map<String, Object> shipmentMap = shipment == null ? null : Map.of(
+                "carrier", shipment.getCarrier(), "trackingNo", shipment.getTrackingNo(), "status", shipment.getStatus());
 
         List<Map<String, Object>> items = orderItemRepository.findByOrderId(order.getId()).stream()
                 .map(oi -> {
@@ -229,7 +247,11 @@ public class AdminController {
                     return m;
                 })
                 .toList();
-        return ResponseEntity.ok(Map.of("order", orderMap, "items", items));
+        Map<String, Object> resp = new java.util.HashMap<>();
+        resp.put("order", orderMap);
+        resp.put("items", items);
+        resp.put("shipment", shipmentMap);
+        return ResponseEntity.ok(resp);
     }
 
     private static final java.util.List<String> ORDER_STATUSES = java.util.List.of("pending", "paid", "failed", "cancelled");
@@ -249,6 +271,29 @@ public class AdminController {
         order.setStatus(status);
         orderRepository.save(order);
         return ResponseEntity.ok(Map.of("ok", true, "status", status));
+    }
+
+    // 송장 등록 — 택배사를 지정하면 순차 송장번호를 발번한다.
+    @PutMapping("/orders/{id}/shipment")
+    public ResponseEntity<?> setShipment(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        if (orderRepository.findById(id).isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "주문을 찾을 수 없습니다."));
+        }
+        String carrier = body.getOrDefault("carrier", "").isBlank() ? "CJ대한통운" : body.get("carrier").trim();
+        String status = body.getOrDefault("status", "shipped");
+        Shipment s = shipmentRepository.findByOrderId(id).orElse(null);
+        if (s == null) {
+            s = shipmentRepository.save(new Shipment(id, carrier, status));
+            s.setTrackingNo(String.valueOf(1000000000L + s.getId()));
+            shipmentRepository.save(s);
+        } else {
+            s.setCarrier(carrier);
+            s.setStatus(status);
+            shipmentRepository.save(s);
+        }
+        return ResponseEntity.ok(Map.of("carrier", s.getCarrier(), "trackingNo", s.getTrackingNo(), "status", s.getStatus()));
     }
 
     @PostMapping("/products")

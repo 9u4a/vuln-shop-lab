@@ -26,6 +26,8 @@ const pointRoutes = require('./routes/points');
 const returnRoutes = require('./routes/returns');
 const referralRoutes = require('./routes/referral');
 const restockRoutes = require('./routes/restock');
+const cartRoutes = require('./routes/cart');
+const shipmentRoutes = require('./routes/shipments');
 const { initMongo } = require('./mongo');
 
 const app = express();
@@ -92,6 +94,8 @@ app.use('/api/points', pointRoutes);
 app.use('/api/returns', returnRoutes);
 app.use('/api/referral', referralRoutes);
 app.use('/api/restock', restockRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/shipments', shipmentRoutes);
 
 initMongo().catch((err) => console.error('mongo init failed:', err.message));
 

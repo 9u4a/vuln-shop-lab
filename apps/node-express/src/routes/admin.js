@@ -147,15 +147,29 @@ router.get('/orders/:id', requireAdmin, (req, res) => {
        WHERE oi.order_id = ?`
     )
     .all(order.id);
+  const shipment = db.prepare('SELECT carrier, tracking_no, status FROM shipments WHERE order_id = ?').get(order.id);
   res.json({
     order: {
       id: order.id,
       username: order.username,
       status: order.status,
       totalAmount: order.total_amount,
+      discountAmount: order.discount_amount || 0,
       tossOrderId: order.toss_order_id,
       createdAt: order.created_at,
+      shipping: order.ship_name
+        ? {
+            name: order.ship_name,
+            phone: order.ship_phone,
+            postcode: order.ship_postcode,
+            address: order.ship_address,
+            addressDetail: order.ship_address_detail,
+          }
+        : null,
     },
+    shipment: shipment
+      ? { carrier: shipment.carrier, trackingNo: shipment.tracking_no, status: shipment.status }
+      : null,
     items: items.map((i) => ({
       productId: i.product_id,
       productName: i.product_name,
@@ -176,6 +190,24 @@ router.put('/orders/:id/status', requireAdmin, (req, res) => {
   const result = db.prepare('UPDATE orders SET status = ? WHERE id = ?').run(status, req.params.id);
   if (result.changes === 0) return res.status(404).json({ error: '주문을 찾을 수 없습니다.' });
   res.json({ ok: true, status });
+});
+
+// 송장 등록 — 택배사를 지정하면 순차 송장번호를 발번한다.
+router.put('/orders/:id/shipment', requireAdmin, (req, res) => {
+  const order = db.prepare('SELECT id FROM orders WHERE id = ?').get(req.params.id);
+  if (!order) return res.status(404).json({ error: '주문을 찾을 수 없습니다.' });
+  const carrier = (req.body.carrier || '').trim() || 'CJ대한통운';
+  const status = req.body.status || 'shipped';
+  let shipment = db.prepare('SELECT id FROM shipments WHERE order_id = ?').get(order.id);
+  if (!shipment) {
+    const r = db.prepare('INSERT INTO shipments (order_id, carrier, status) VALUES (?, ?, ?)').run(order.id, carrier, status);
+    db.prepare('UPDATE shipments SET tracking_no = ? WHERE id = ?').run(String(1000000000 + r.lastInsertRowid), r.lastInsertRowid);
+    shipment = { id: r.lastInsertRowid };
+  } else {
+    db.prepare('UPDATE shipments SET carrier = ?, status = ? WHERE id = ?').run(carrier, status, shipment.id);
+  }
+  const row = db.prepare('SELECT carrier, tracking_no, status FROM shipments WHERE id = ?').get(shipment.id);
+  res.json({ carrier: row.carrier, trackingNo: row.tracking_no, status: row.status });
 });
 
 router.post('/products', requireAdmin, (req, res) => {

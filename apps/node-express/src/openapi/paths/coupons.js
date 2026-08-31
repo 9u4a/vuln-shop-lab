@@ -47,6 +47,33 @@ module.exports = {
       responses: { 200: wrapped('coupons', { type: 'array', items: ref('Coupon') }), 401: rref('Unauthorized') },
     },
   },
+  '/coupons/apply-preview': {
+    post: {
+      tags: TAG,
+      summary: '체크아웃 쿠폰 미리보기',
+      description: '유효성·할인액만 계산한다. 실제 사용 처리는 주문 생성 시.',
+      security: AUTH,
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: { type: 'object', properties: { code: { type: 'string' }, itemsTotal: { type: 'integer' } } },
+          },
+        },
+      },
+      responses: {
+        200: jsonOk({
+          type: 'object',
+          properties: {
+            valid: { type: 'boolean' },
+            discountAmount: { type: 'integer' },
+            reason: { type: 'string', nullable: true },
+          },
+        }),
+        401: rref('Unauthorized'),
+      },
+    },
+  },
   '/coupons/manage': {
     get: {
       tags: TAG,

@@ -21,6 +21,7 @@ export default function SiteFooter() {
             <li>점심 12:30–13:30 / 주말·공휴일 휴무</li>
             <li><Link to="/faq">자주 묻는 질문</Link></li>
             <li><Link to="/qna">Q&amp;A 문의</Link></li>
+            <li><Link to="/track">배송조회</Link></li>
           </ul>
         </div>
 

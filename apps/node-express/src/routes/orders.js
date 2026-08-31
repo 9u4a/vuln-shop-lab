@@ -5,8 +5,13 @@ const fs = require('fs');
 const path = require('path');
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
+const { insertActivity } = require('../mongo');
 
 const router = express.Router();
+
+function shareToken(orderId) {
+  return Buffer.from(String(orderId)).toString('base64');
+}
 
 const TOSS_SECRET_KEY = process.env.TOSS_SECRET_KEY;
 const TOSS_CONFIRM_URL = 'https://api.tosspayments.com/v1/payments/confirm';
@@ -19,9 +24,29 @@ function toOrder(row) {
     id: row.id,
     status: row.status,
     totalAmount: row.total_amount,
+    discountAmount: row.discount_amount || 0,
     webhookUrl: row.webhook_url,
     tossOrderId: row.toss_order_id,
+    shareToken: row.share_token,
+    shipping: row.ship_name
+      ? {
+          name: row.ship_name,
+          phone: row.ship_phone,
+          postcode: row.ship_postcode,
+          address: row.ship_address,
+          addressDetail: row.ship_address_detail,
+        }
+      : null,
     createdAt: row.created_at,
+  };
+}
+
+function toShipment(row) {
+  if (!row) return null;
+  return {
+    carrier: row.carrier,
+    trackingNo: row.tracking_no,
+    status: row.status,
   };
 }
 
@@ -39,6 +64,42 @@ async function fireWebhook(webhookUrl, payload) {
   }
 }
 
+function orderItems(orderId) {
+  return db
+    .prepare(
+      `SELECT oi.*, p.name AS product_name FROM order_items oi
+       JOIN products p ON p.id = oi.product_id
+       WHERE oi.order_id = ?`
+    )
+    .all(orderId)
+    .map((i) => ({
+      productId: i.product_id,
+      productName: i.product_name,
+      quantity: i.quantity,
+      unitPrice: i.unit_price,
+      optionValue: i.option_value,
+    }));
+}
+
+// 주문 공유 링크 — 로그인 없이 토큰만으로 열람(읽기 전용).
+router.get('/shared/:token', (req, res) => {
+  const order = db.prepare('SELECT * FROM orders WHERE share_token = ?').get(req.params.token);
+  if (!order) return res.status(404).json({ error: '주문을 찾을 수 없습니다.' });
+  const shipment = db.prepare('SELECT * FROM shipments WHERE order_id = ?').get(order.id);
+  res.json({
+    order: {
+      id: order.id,
+      status: order.status,
+      totalAmount: order.total_amount,
+      discountAmount: order.discount_amount || 0,
+      createdAt: order.created_at,
+      shipping: toOrder(order).shipping,
+    },
+    items: orderItems(order.id),
+    shipment: toShipment(shipment),
+  });
+});
+
 router.get('/', requireAuth, (req, res) => {
   const rows = db
     .prepare('SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC')
@@ -51,27 +112,45 @@ router.get('/:id', requireAuth, (req, res) => {
   if (!order || order.user_id !== req.session.user.id) {
     return res.status(404).json({ error: '주문을 찾을 수 없습니다.' });
   }
-  const items = db
-    .prepare(
-      `SELECT oi.*, p.name AS product_name FROM order_items oi
-       JOIN products p ON p.id = oi.product_id
-       WHERE oi.order_id = ?`
-    )
-    .all(order.id);
+  const shipment = db.prepare('SELECT * FROM shipments WHERE order_id = ?').get(order.id);
   res.json({
     order: toOrder(order),
-    items: items.map((i) => ({
-      productId: i.product_id,
-      productName: i.product_name,
-      quantity: i.quantity,
-      unitPrice: i.unit_price,
-      optionValue: i.option_value,
-    })),
+    items: orderItems(order.id),
+    shipment: toShipment(shipment),
   });
 });
 
-router.post('/', requireAuth, (req, res) => {
-  const { items, webhookUrl, pointsUsed } = req.body;
+// 사용자의 보유 쿠폰(+coupons 조인)을 코드로 조회.
+function findUserCoupon(userId, code) {
+  return db
+    .prepare(
+      `SELECT uc.id AS user_coupon_id, uc.used, c.*
+       FROM user_coupons uc JOIN coupons c ON c.id = uc.coupon_id
+       WHERE uc.user_id = ? AND c.code = ?
+       ORDER BY uc.id DESC`
+    )
+    .get(userId, code);
+}
+
+// 쿠폰 유효성 검증 + 할인액 계산(서버). used 여부는 여기서 보지 않는다.
+function computeCouponDiscount(coupon, itemsTotal) {
+  if (!coupon) return { ok: false, reason: '보유하지 않은 쿠폰입니다.' };
+  if (!coupon.active) return { ok: false, reason: '사용할 수 없는 쿠폰입니다.' };
+  if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
+    return { ok: false, reason: '만료된 쿠폰입니다.' };
+  }
+  if (itemsTotal < (coupon.min_order_amount || 0)) {
+    return { ok: false, reason: `최소 주문금액 ${coupon.min_order_amount}원 이상부터 사용 가능합니다.` };
+  }
+  const discount =
+    coupon.discount_type === 'percent'
+      ? Math.floor((itemsTotal * coupon.discount_value) / 100)
+      : coupon.discount_value;
+  return { ok: true, discount: Math.min(discount, itemsTotal), couponId: coupon.id, userCouponId: coupon.user_coupon_id };
+}
+
+router.post('/', requireAuth, async (req, res) => {
+  const { items, webhookUrl, pointsUsed, couponCode, shipping } = req.body;
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: '최소 1개 이상의 상품이 필요합니다.' });
   }
@@ -88,16 +167,58 @@ router.post('/', requireAuth, (req, res) => {
     resolved.push({ product, quantity, optionValue: item.optionValue || null });
   }
 
+  // 재고 차감 — 항목별로 현재 재고를 읽고, 활동 로그를 남긴 뒤 감산한다.
+  for (const { product, quantity } of resolved) {
+    const current = db.prepare('SELECT stock FROM products WHERE id = ?').get(product.id).stock;
+    await insertActivity(req.session.user.id, 'order.create', `${product.name} x${quantity}`);
+    db.prepare('UPDATE products SET stock = ? WHERE id = ?').run(current - quantity, product.id);
+  }
+
+  // 쿠폰 적용
+  let discount = 0;
+  let couponId = null;
+  let userCouponId = null;
+  if (couponCode) {
+    const applied = computeCouponDiscount(findUserCoupon(req.session.user.id, couponCode), itemsTotal);
+    if (!applied.ok) {
+      return res.status(400).json({ error: applied.reason });
+    }
+    discount = applied.discount;
+    couponId = applied.couponId;
+    userCouponId = applied.userCouponId;
+  }
+
   const usePoints = Number(pointsUsed) || 0;
-  const total = itemsTotal - usePoints;
+  const total = itemsTotal - discount - usePoints;
+
+  // 배송지 스냅샷 — 요청 override가 있으면 그것을, 없으면 프로필 주소를 복사.
+  const profile = db.prepare('SELECT name, phone, postcode, address, address_detail FROM users WHERE id = ?').get(req.session.user.id);
+  const ship = {
+    name: shipping?.name || profile.name,
+    phone: shipping?.phone || profile.phone,
+    postcode: shipping?.postcode || profile.postcode,
+    address: shipping?.address || profile.address,
+    addressDetail: shipping?.addressDetail ?? profile.address_detail,
+  };
 
   const tossOrderId = `order_${crypto.randomUUID()}`;
   const insertOrder = db.prepare(
-    `INSERT INTO orders (user_id, status, total_amount, webhook_url, toss_order_id)
-     VALUES (?, 'pending', ?, ?, ?)`
+    `INSERT INTO orders
+       (user_id, status, total_amount, discount_amount, coupon_id, webhook_url, toss_order_id,
+        ship_name, ship_phone, ship_postcode, ship_address, ship_address_detail)
+     VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   );
-  const result = insertOrder.run(req.session.user.id, total, webhookUrl || null, tossOrderId);
+  const result = insertOrder.run(
+    req.session.user.id, total, discount, couponId, webhookUrl || null, tossOrderId,
+    ship.name, ship.phone, ship.postcode, ship.address, ship.addressDetail
+  );
   const orderId = result.lastInsertRowid;
+  db.prepare('UPDATE orders SET share_token = ? WHERE id = ?').run(shareToken(orderId), orderId);
+
+  // 쿠폰 사용 처리 — 이미 사용된 쿠폰인지 확인하지 않는다.
+  if (userCouponId) {
+    db.prepare('UPDATE user_coupons SET used = 1 WHERE id = ?').run(userCouponId);
+  }
 
   const insertItem = db.prepare(
     'INSERT INTO order_items (order_id, product_id, quantity, unit_price, option_value) VALUES (?, ?, ?, ?, ?)'
@@ -119,7 +240,19 @@ router.post('/', requireAuth, (req, res) => {
     insertPtx.run(req.session.user.id, earned, '주문 적립', orderId);
   }
 
-  res.status(201).json({ orderId, tossOrderId, amount: total, pointsUsed: usePoints, pointsEarned: earned });
+  // 서버 장바구니 비우기
+  const cart = db.prepare('SELECT id FROM carts WHERE user_id = ?').get(req.session.user.id);
+  if (cart) db.prepare('DELETE FROM cart_items WHERE cart_id = ?').run(cart.id);
+
+  res.status(201).json({
+    orderId,
+    tossOrderId,
+    amount: total,
+    discountAmount: discount,
+    pointsUsed: usePoints,
+    pointsEarned: earned,
+    shareToken: shareToken(orderId),
+  });
 });
 
 router.post('/:id/confirm', requireAuth, async (req, res) => {

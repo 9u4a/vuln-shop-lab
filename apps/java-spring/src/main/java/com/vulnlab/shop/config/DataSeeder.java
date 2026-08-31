@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,6 +36,8 @@ public class DataSeeder implements CommandLineRunner {
     private final QuestionRepository questionRepository;
     private final LoginLogRepository loginLogRepository;
     private final PointTransactionRepository pointTransactionRepository;
+    private final ShipmentRepository shipmentRepository;
+    private final UserCouponRepository userCouponRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public DataSeeder(ProductRepository productRepository, UserRepository userRepository,
@@ -43,7 +46,8 @@ public class DataSeeder implements CommandLineRunner {
                       OrderItemRepository orderItemRepository, EventRepository eventRepository,
                       ProductLikeRepository productLikeRepository, CouponRepository couponRepository,
                       QuestionRepository questionRepository, LoginLogRepository loginLogRepository,
-                      PointTransactionRepository pointTransactionRepository) {
+                      PointTransactionRepository pointTransactionRepository,
+                      ShipmentRepository shipmentRepository, UserCouponRepository userCouponRepository) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.faqRepository = faqRepository;
@@ -57,6 +61,8 @@ public class DataSeeder implements CommandLineRunner {
         this.questionRepository = questionRepository;
         this.loginLogRepository = loginLogRepository;
         this.pointTransactionRepository = pointTransactionRepository;
+        this.shipmentRepository = shipmentRepository;
+        this.userCouponRepository = userCouponRepository;
     }
 
     // 결정적 순환 선택 헬퍼 + 대량 더미 생성용 공용 데이터
@@ -85,6 +91,53 @@ public class DataSeeder implements CommandLineRunner {
         seedCoupons();
         seedLoginLogs();
         seedRewards();
+        seedShippingAndSharing();
+    }
+
+    // 주문 공유 토큰 + 배송지 스냅샷 + 시연용 배송/쿠폰 (멱등)
+    private void seedShippingAndSharing() {
+        for (Order o : orderRepository.findAll()) {
+            boolean dirty = false;
+            if (o.getShareToken() == null) {
+                o.setShareToken(Base64.getEncoder().encodeToString(String.valueOf(o.getId()).getBytes()));
+                dirty = true;
+            }
+            if (o.getShipName() == null) {
+                userRepository.findById(o.getUserId()).ifPresent(u -> {
+                    o.setShipName(u.getName());
+                    o.setShipPhone(u.getPhone());
+                    o.setShipPostcode(u.getPostcode());
+                    o.setShipAddress(u.getAddress());
+                    o.setShipAddressDetail(u.getAddressDetail());
+                });
+                dirty = true;
+            }
+            if (dirty) orderRepository.save(o);
+        }
+
+        if (shipmentRepository.count() == 0) {
+            List<Order> paid = orderRepository.findAll().stream()
+                    .filter(o -> "paid".equals(o.getStatus()))
+                    .sorted((a, b) -> a.getId().compareTo(b.getId()))
+                    .limit(8).toList();
+            String[] statuses = {"shipped", "delivered", "preparing"};
+            for (int i = 0; i < paid.size(); i++) {
+                Shipment s = shipmentRepository.save(new Shipment(paid.get(i).getId(), "CJ대한통운", statuses[i % statuses.length]));
+                s.setTrackingNo(String.valueOf(1000000000L + s.getId()));
+                shipmentRepository.save(s);
+            }
+        }
+
+        // user1에게 미사용 WELCOME5000 쿠폰 지급 — VULN-036 재현용
+        Long user1Id = userRepository.findByUsername("user1").map(User::getId).orElse(null);
+        Long welcomeId = couponRepository.findByCode("WELCOME5000").stream().findFirst().map(Coupon::getId).orElse(null);
+        if (user1Id != null && welcomeId != null) {
+            boolean owned = userCouponRepository.findByUserIdOrderByIdDesc(user1Id).stream()
+                    .anyMatch(uc -> welcomeId.equals(uc.getCouponId()));
+            if (!owned) {
+                userCouponRepository.save(new UserCoupon(user1Id, welcomeId));
+            }
+        }
     }
 
     // 추천 코드 backfill + 데모 사용자 포인트 적립(멱등)

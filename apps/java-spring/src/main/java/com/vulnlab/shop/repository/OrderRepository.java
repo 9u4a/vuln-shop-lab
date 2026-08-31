@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByUserId(Long userId);
     Optional<Order> findByTossOrderId(String tossOrderId);
+    Optional<Order> findByShareToken(String shareToken);
 }

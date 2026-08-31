@@ -45,6 +45,10 @@
 | [VULN-032](VULN-032-referral-reward-abuse.md) | 추천 보상 무한 적립 (멱등성·자기참조 미검증) | both | A04 Insecure Design | Medium | 구현됨 |
 | [VULN-033](VULN-033-restock-callback-ssrf.md) | 재입고 알림 콜백 URL SSRF (응답 반환형) | both | A10 SSRF | High | 구현됨 |
 | [VULN-034](VULN-034-unauthenticated-openapi-docs.md) | 인증 없는 OpenAPI 명세 · Swagger UI 노출 (API 인벤토리) | both | A05 Misconfiguration | Low | 구현됨 |
+| [VULN-035](VULN-035-stock-decrement-race.md) | 재고 차감 경쟁조건 (TOCTOU) → 초과판매 | both | A04 Insecure Design | High | 구현됨 |
+| [VULN-036](VULN-036-coupon-redemption-reuse.md) | 쿠폰 사용(redemption) 재사용 (used 미확인) | both | A04 Insecure Design | Medium | 구현됨 |
+| [VULN-037](VULN-037-shipment-tracking-idor.md) | 배송 조회 IDOR (순차 송장번호 + 무인증) → 구매자 PII | both | A01 Broken Access Control | High | 구현됨 |
+| [VULN-038](VULN-038-predictable-order-share-token.md) | 예측 가능한 주문 공유 토큰 (`base64(orderId)`) | both | A02 Cryptographic Failures | High | 구현됨 |
 
 ## OWASP / CLAUDE.md 스코프 커버리지
 
@@ -58,14 +62,16 @@
 | XSS — Stored | DONE | 008, 018, 023, 025, 028 |
 | XSS — Reflected | DONE | 016 |
 | XSS — DOM | DONE | 017 |
-| IDOR / Broken Access Control | DONE | 003, 009, 011, 013, 014, 024, 026, 031 |
+| IDOR / Broken Access Control | DONE | 003, 009, 011, 013, 014, 024, 026, 031, 037 |
 | Security Misconfiguration | DONE | 007, 018, 020, 025, 034 |
+| Cryptographic Failures (A02) | DONE | 038 |
 | Insecure Deserialization (Java) | DONE | 012 |
 | XXE | DONE | 020 |
 | SSRF | DONE | 004 (020 OOB로 재확인), 033 (응답 반환형) |
 | File Upload / Path Traversal | DONE | 011 (traversal), 018 (upload) |
 | Vulnerable dependencies | DONE | 021 |
-| Business logic / Insecure Design | DONE | 015, 027, 029, 030, 032 |
+| Business logic / Insecure Design | DONE | 015, 027, 029, 030, 032, 036 |
+| Race condition / 동시성 (TOCTOU) | DONE | 035 |
 | CSRF | DONE | 014 |
 
 배치 013–022 완료 — CLAUDE.md 스코프의 모든 클래스가 최소 1개 구현 항목으로 커버된다.
@@ -85,6 +91,10 @@ VULN-030~033은 커머스 리워드/운영 기능 배치(`docs/features/39-point
 VULN-034는 OpenAPI 문서화 기능(`docs/features/43-openapi-docs.md`)과 함께 추가된 자기문서화 표면 노출.
 VULN-007(진단 엔드포인트)과 같은 A05지만 유출물(런타임 내부 상태 vs API 인벤토리)·노출 경계
 (WAS 직접 포트 전용 vs nginx 공개 진입점 :8090)·정상 구현이 모두 달라 별도 ID로 둔다.
+VULN-035~038은 커머스 주문 라이프사이클 배치(`docs/features/44-server-cart.md`~`47-order-share-link.md`)와 함께 추가:
+서버 장바구니 재고 차감(035, 저장소 최초 동시성/TOCTOU)·쿠폰 사용 재사용(036)·배송 조회 IDOR(037)·
+예측 가능 공유 토큰(038, 저장소 최초 A02 Cryptographic Failures). 035는 015/027/029/030/032와 같은
+로직 결함 계열이지만 동시성 축을 새로 커버하고, 036은 029(발급 중복)와 달리 사용(redemption) 단계다.
 
 번호 주의: VULN-003은 원래 "기본 관리자 계정"으로 잡았다가 취약점이 아니라 철회된 번호이며, 빈 번호를
 없애기 위해 마지막 항목을 옮겨 재사용했다(구 VULN-030 — 그 이전 커밋 이력에는 030으로 기록되어 있다).
