@@ -3,7 +3,6 @@ import { Link, useLocation } from 'react-router-dom';
 import { useBackend } from '../BackendContext.jsx';
 import { useSession } from '../SessionContext.jsx';
 import { NAV_LINKS, ACCOUNT_LINKS, visibleLinks } from './navLinks.js';
-import { CATEGORIES } from '../data/categories.js';
 
 export default function SiteDrawer({ open, onClose }) {
   const { backends, backendKey, selectBackend } = useBackend();
@@ -33,13 +32,8 @@ export default function SiteDrawer({ open, onClose }) {
           <Link key={l.to} to={l.to} className="drawer__link">{l.label}</Link>
         ))}
 
-        <p className="drawer__section-label">카테고리</p>
-        <Link to="/products" className="drawer__link">전체 상품</Link>
-        {CATEGORIES.map((c) => (
-          <Link key={c.slug} to={`/products?category=${c.slug}`} className="drawer__link">
-            {c.emoji} {c.label}
-          </Link>
-        ))}
+        <p className="drawer__section-label">쇼핑</p>
+        <Link to="/products" className="drawer__link">상품</Link>
 
         <p className="drawer__section-label">계정</p>
         {user ? (

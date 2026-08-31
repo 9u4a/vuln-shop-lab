@@ -3,6 +3,7 @@ import { useBackend } from '../../BackendContext.jsx';
 import { fetchNotices, createNoticeAdmin, updateNoticeAdmin, deleteNoticeAdmin } from '../../api.js';
 import AdminImageField from '../../components/AdminImageField.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import Modal from '../../components/Modal.jsx';
 import Pagination from '../../components/Pagination.jsx';
 
 const emptyNotice = { title: '', body: '', imageUrl: '' };
@@ -69,14 +70,14 @@ export default function AdminNotices() {
     <section className="card">
       <div className="admin-toolbar">
         <h2>공지사항 <span className="muted">({notices.length})</span></h2>
-        <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? '취소' : '+ 공지사항 추가'}
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}>
+          + 공지사항 추가
         </button>
       </div>
       {error && <p className="error">{error}</p>}
 
-      {showForm && (
-        <form onSubmit={handleCreate} className="admin-create-form">
+      <Modal open={showForm} title="공지사항 추가" onClose={() => setShowForm(false)} wide>
+        <form onSubmit={handleCreate} style={{ maxWidth: 'none' }}>
           <label>제목
             <input value={newNotice.title} onChange={(e) => setNewNotice({ ...newNotice, title: e.target.value })} required />
           </label>
@@ -86,7 +87,7 @@ export default function AdminNotices() {
           <AdminImageField value={newNotice.imageUrl} onChange={(f) => setNewNotice({ ...newNotice, imageUrl: f })} />
           <button type="submit" className="btn btn-primary">공지사항 추가</button>
         </form>
-      )}
+      </Modal>
 
       <div>
         {paged.map((n) => (

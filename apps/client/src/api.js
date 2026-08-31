@@ -214,6 +214,13 @@ export function createProductAdmin(base, product) {
   });
 }
 
+export function updateProductAdmin(base, id, product) {
+  return apiRequest(base, `/admin/products/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(product),
+  });
+}
+
 export function deleteProductAdmin(base, id) {
   return apiRequest(base, `/admin/products/${id}`, { method: 'DELETE' });
 }
