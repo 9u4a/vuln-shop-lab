@@ -41,3 +41,4 @@
 | 33 | 주소 검색 서버화 · 푸터 보강 | feature/address-search-footer | — | 서버 주소 조회, 더미 74건, 사이트맵 |
 | 34 | 안정성·편의성 개선 | feature/ux-and-node-safety | — | 삭제 확인 모달, 이미지 폴백, 재고 경고, Node 크래시 방지 |
 | 35 | 안정성 강화 | feature/stability-hardening | — | ErrorBoundary, 에러 처리, 헬스체크·restart, nginx gzip, 개발 스크립트 |
+| 36 | 대량 더미 시드 데이터 | feature/bulk-seed-data | — | 항목당 50~100개 결정적 시드(양 스택), login_logs·activity 포함 |

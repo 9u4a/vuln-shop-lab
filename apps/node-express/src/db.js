@@ -243,6 +243,35 @@ for (const u of seedUsers) {
   }
 }
 
+// 1b. Bulk demo users (user4..user60) — 서버 기동 시 항목당 대량 더미 반영
+const SURNAMES = ['김', '이', '박', '최', '정', '강', '조', '윤', '장', '임', '한', '오', '서', '신', '권', '황', '안', '송', '전', '홍'];
+const GIVEN = ['민준', '서연', '도윤', '하은', '시우', '지우', '예준', '수아', '주원', '지민', '건우', '유진', '현우', '채원', '지호', '다은', '우진', '서윤', '선우', '예은'];
+const CITIES = ['서울특별시 강남구', '서울특별시 마포구', '부산광역시 해운대구', '대구광역시 수성구', '인천광역시 연수구', '광주광역시 서구', '대전광역시 유성구', '경기도 성남시 분당구', '경기도 수원시 영통구', '강원특별자치도 춘천시'];
+const ROADS = ['테헤란로', '월드컵북로', '센텀중앙로', '달구벌대로', '컨벤시아대로', '상무중앙로', '대학로', '판교역로', '광교중앙로', '중앙로'];
+const pick = (arr, i) => arr[i % arr.length];
+const insertBulkUser = db.prepare(
+  `INSERT OR IGNORE INTO users (username, password_hash, role, name, phone, bio, postcode, address, address_detail, active)
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`
+);
+for (let n = 4; n <= 60; n += 1) {
+  const username = `user${n}`;
+  const name = pick(SURNAMES, n) + pick(GIVEN, n * 3);
+  const phone = `010-${String(1000 + (n * 7) % 9000)}-${String(1000 + (n * 13) % 9000)}`;
+  const postcode = String(10000 + n);
+  const address = `${pick(CITIES, n)} ${pick(ROADS, n)} ${10 + (n % 90)}`;
+  insertBulkUser.run(
+    username,
+    bcrypt.hashSync(username, 10),
+    'user',
+    name,
+    phone,
+    `${name}의 데모 계정입니다.`,
+    postcode,
+    address,
+    `${100 + (n % 900)}호`
+  );
+}
+
 // 2. Seed Products (if missing)
 const productCount = db.prepare('SELECT COUNT(*) AS count FROM products').get().count;
 if (productCount === 0) {
@@ -279,6 +308,35 @@ if (productCount === 0) {
     ['실버 체인 목걸이', '변색에 강한 스테인리스 소재의 데일리 체인 목걸이. 심플한 실버 톤으로 포인트를 더합니다.', 35000, ACC, 'acc', 'Maison', 'ACC-001', '여성', '실버', '스테인리스', 80, '색상', 'Silver,Gold'],
     ['가죽 벨트', '견고한 소가죽 벨트. 캐주얼과 슬랙스 모두에 어울리는 브라운 컬러입니다.', 32000, ACC, 'acc', 'Basiclab', 'ACC-002', '남성', '브라운', '레더', 55, '사이즈', 'M,L,XL'],
   ];
+  // 대량 더미 상품 생성(카테고리별로 순환하며 60종까지 채움)
+  const CATS = [
+    { slug: 'top', img: TOP, prefix: 'TOP', items: ['크루넥 티셔츠', '헨리넥 티셔츠', '피케 폴로', '스트라이프 셔츠', '린넨 셔츠', '후드 집업', '라운드 니트', '카라 니트'], opt: 'S,M,L,XL', mats: ['코튼', '린넨', '울', '폴리에스터'] },
+    { slug: 'bottom', img: BOTTOM, prefix: 'BOT', items: ['테이퍼드 슬랙스', '와이드 데님', '슬림 치노', '카고 팬츠', '트랙 팬츠', '숏 팬츠', '코듀로이 팬츠'], opt: '28,30,32,34', mats: ['코튼', '데님', '폴리에스터', '코듀로이'] },
+    { slug: 'bag', img: BAG, prefix: 'BAG', items: ['에코 토트백', '미니 크로스백', '데일리 백팩', '메신저백', '더플백', '웨이스트백'], opt: 'Free', mats: ['캔버스', '나일론', '레더', '폴리에스터'] },
+    { slug: 'hat', img: HAT, prefix: 'HAT', items: ['볼캡', '버킷햇', '니트 비니', '베레모', '스트로우햇'], opt: 'Free', mats: ['코튼', '아크릴', '울', '스트로우'] },
+    { slug: 'acc', img: ACC, prefix: 'ACC', items: ['체인 목걸이', '가죽 벨트', '실버 링', '머플러', '양말 세트', '선글라스'], opt: 'Free', mats: ['스테인리스', '레더', '실버', '아크릴'] },
+  ];
+  const BRANDS = ['Basiclab', 'Urban', 'Maison'];
+  const GENDERS = ['공용', '남성', '여성'];
+  const COLORS = ['화이트', '블랙', '그레이', '네이비', '베이지', '카키', '브라운', '아이보리', '차콜', '인디고'];
+  let counter = { top: 4, bottom: 4, bag: 3, hat: 3, acc: 2 };
+  for (let n = 0; seed.length < 60; n += 1) {
+    const c = CATS[n % CATS.length];
+    counter[c.slug] += 1;
+    const seq = counter[c.slug];
+    const item = pick(c.items, n);
+    const price = 15000 + ((n * 3137) % 80) * 1000;
+    const stock = (n % 11 === 0) ? 0 : 20 + (n * 7) % 130;
+    seed.push([
+      `${pick(BRANDS, n)} ${item}`,
+      `${item} 상품입니다. 데일리로 활용하기 좋은 ${pick(c.mats, n)} 소재의 ${pick(COLORS, n)} 컬러 아이템입니다.`,
+      price, c.img, c.slug, pick(BRANDS, n),
+      `${c.prefix}-${String(seq).padStart(3, '0')}`,
+      pick(GENDERS, n), pick(COLORS, n), pick(c.mats, n), stock,
+      c.slug === 'bottom' ? '사이즈' : (c.slug === 'top' ? '사이즈' : '옵션'),
+      c.opt,
+    ]);
+  }
   for (const row of seed) insert.run(...row);
 }
 
@@ -295,6 +353,25 @@ if (faqCount === 0) {
     ["결제 가능한 수단에는 어떤 것들이 있나요?", "토스페이먼츠 안전 결제를 통해 신용카드 결제 및 계좌이체, 토스페이, 삼성페이 등 다양한 간편결제 수단을 완벽하게 이용하실 수 있습니다.", systemAdminId],
     ["개인정보 보호 및 보안 관련 정책이 어떻게 되나요?", "저희는 회원님의 모든 패스워드를 최신 암호화 알고리즘(BCrypt)으로 처리하여 철저하게 보호하고 있으며, 결제 정보 등 주요 데이터 역시 안전한 보안 프레임워크를 통해 철저하게 관리되고 있으니 안심하셔도 됩니다.", systemAdminId]
   ];
+  // 대량 더미 FAQ 생성(주제 순환)
+  const FAQ_TOPICS = [
+    ['배송', '배송비는 얼마인가요', '3만원 이상 구매 시 무료이며, 미만은 3,000원이 부과됩니다.'],
+    ['배송', '해외 배송도 되나요', '현재는 국내 배송만 지원하고 있으며 해외 배송은 준비 중입니다.'],
+    ['교환/반품', '단순 변심 반품 시 배송비는', '단순 변심의 경우 왕복 배송비가 고객 부담으로 발생합니다.'],
+    ['교환/반품', '교환은 몇 번까지 가능한가요', '동일 상품 기준 1회 교환이 가능하며 재고 상황에 따라 다를 수 있습니다.'],
+    ['결제', '무통장 입금도 가능한가요', '토스페이먼츠 계좌이체로 대체되며 가상계좌 입금이 지원됩니다.'],
+    ['결제', '해외 카드로 결제되나요', '일부 해외 발급 카드는 결제가 제한될 수 있습니다.'],
+    ['회원', '아이디를 변경할 수 있나요', '아이디는 변경이 불가하며 탈퇴 후 재가입이 필요합니다.'],
+    ['회원', '휴면 계정은 어떻게 되나요', '1년 이상 미접속 시 휴면 전환되며 재로그인으로 해제됩니다.'],
+    ['쿠폰', '쿠폰은 중복 사용되나요', '주문당 1장의 쿠폰만 적용 가능합니다.'],
+    ['상품', '재입고 알림을 받고 싶어요', '품절 상품 상세에서 재입고 알림을 신청할 수 있습니다.'],
+  ];
+  const faqAuthors = [adminId, systemAdminId];
+  for (let n = 0; faqs.length < 60; n += 1) {
+    const t = FAQ_TOPICS[n % FAQ_TOPICS.length];
+    const round = Math.floor(n / FAQ_TOPICS.length) + 1;
+    faqs.push([`[${t[0]}] ${t[1]}? (${round})`, t[2], pick(faqAuthors, n)]);
+  }
   for (const row of faqs) insertFaq.run(...row);
 }
 
@@ -317,6 +394,22 @@ if (questionCount === 0) {
   );
   insertOpen.run(user2, 'user2', '사이즈 교환도 가능한가요?', 'M 사이즈를 주문했는데 L로 교환하고 싶습니다. 절차가 궁금합니다.', 0);
   insertOpen.run(user1, 'user1', '(비밀글) 결제 영수증 재발급 문의', '세금계산서 처리 때문에 영수증 재발급이 필요합니다. 계정 정보 확인 부탁드립니다.', 1);
+
+  // 대량 더미 Q&A 생성(답변완료/미답변/비밀글 순환)
+  const qUsers = db.prepare("SELECT id, username FROM users WHERE role = 'user' ORDER BY id").all();
+  const Q_TITLES = ['배송 조회는 어디서 하나요', '주문 취소하고 싶어요', '색상 문의드립니다', '재입고 예정일이 궁금해요', '쿠폰 적용이 안돼요', '사이즈 추천 부탁드려요', '영수증 발급 요청', '주소 변경 가능한가요', '적립금은 어떻게 쓰나요', '상품 상세 사이즈표 문의'];
+  const Q_BODY = '문의 내용입니다. 확인 후 안내 부탁드립니다.';
+  const Q_ANSWER = '안녕하세요. 문의 주신 내용 확인하여 순차적으로 안내드리고 있습니다. 감사합니다.';
+  for (let n = 0; n < 57 && qUsers.length; n += 1) {
+    const u = pick(qUsers, n);
+    const secret = n % 7 === 0 ? 1 : 0;
+    const title = `${pick(Q_TITLES, n)} (${n + 1})`;
+    if (n % 3 === 0) {
+      insertAnswered.run(u.id, u.username, title, Q_BODY, secret, Q_ANSWER, 'admin');
+    } else {
+      insertOpen.run(u.id, u.username, title, Q_BODY, secret);
+    }
+  }
 }
 
 // 4. Seed Notices (if missing)
@@ -341,6 +434,15 @@ if (noticeCount === 0) {
       "최근 한반도를 통과하는 강력한 하절기 태풍의 영향으로 인하여, 남부 지방 및 제주/도서 지역으로의 택배 배송 배차가 일부 지연되고 있습니다.\n\n- 지연 예상 지역: 부산, 울산, 경남, 전남 전체 및 제주 특별자치도\n- 예상 지연 일수: 기존 배송일보다 약 1~2영업일 지연 예상\n\n상품을 기다리시는 고객님들께 심려를 끼쳐드려 대단히 죄송하며, 기상 특보가 해제되는 대로 신속하고 안전하게 배송이 재개될 수 있도록 물류팀에서 최선을 다하겠습니다."
     ]
   ];
+  // 대량 더미 공지 생성(카테고리 순환)
+  const N_KINDS = [['공지', '신규 입점 브랜드 안내'], ['이벤트', '주간 특가 상품 안내'], ['점검', '시스템 정기 점검 안내'], ['안내', '배송 정책 변경 안내'], ['공지', '고객센터 운영시간 변경']];
+  for (let n = 0; notices.length < 60; n += 1) {
+    const k = N_KINDS[n % N_KINDS.length];
+    notices.push([
+      `[${k[0]}] ${k[1]} (${n + 1})`,
+      `안녕하세요. Vulnlab Shop입니다.\n\n${k[1]} 관련하여 안내드립니다. 자세한 내용은 본문을 확인해 주세요.\n\n감사합니다.`,
+    ]);
+  }
   for (const row of notices) insertNotice.run(...row);
 }
 
@@ -379,6 +481,20 @@ if (eventCount === 0) {
       null,
     ],
   ];
+  // 대량 더미 이벤트 생성(활성/비활성 순환)
+  const E_TITLES = ['가을 신상 프리뷰', '주말 타임세일', '브랜드 위크', '리뷰 이벤트', '친구 초대 혜택', '멤버십 더블 적립', '시즌 오프 클리어런스', '단독 특가전'];
+  for (let n = 0; events.length < 60; n += 1) {
+    const title = `${pick(E_TITLES, n)} (${n + 1})`;
+    events.push([
+      title,
+      `<h3 style="margin-top:0">${title}</h3><p>지금 참여하고 다양한 혜택을 받아보세요. 기간 한정으로 진행됩니다.</p>`,
+      null,
+      '/products',
+      n % 5 === 0 ? 0 : 1,
+      null,
+      null,
+    ]);
+  }
   for (const row of events) insertEvent.run(...row);
 }
 
@@ -393,6 +509,21 @@ if (couponCount === 0) {
     ['SUMMER10', '여름맞이 10% 할인', '3만원 이상 구매 시 10% 할인. 여름 데일리 웨어를 준비하세요.', 'percent', 10, 30000, 1, '2026-09-30T23:59:59Z'],
     ['FREESHIP3000', '무료배송 쿠폰', '배송비 3,000원 할인 쿠폰입니다.', 'amount', 3000, 0, 1, null],
   ];
+  // 대량 더미 쿠폰 생성(정액/정률 순환, 고유 코드)
+  for (let n = 0; coupons.length < 60; n += 1) {
+    const isPercent = n % 2 === 0;
+    const code = `PROMO${String(n + 1).padStart(4, '0')}`;
+    coupons.push([
+      code,
+      isPercent ? `${5 + (n % 3) * 5}% 할인 쿠폰` : `${(1 + (n % 5)) * 1000}원 할인 쿠폰`,
+      '기간 한정 프로모션 쿠폰입니다.',
+      isPercent ? 'percent' : 'amount',
+      isPercent ? 5 + (n % 3) * 5 : (1 + (n % 5)) * 1000,
+      (n % 3) * 10000,
+      n % 9 === 0 ? 0 : 1,
+      null,
+    ]);
+  }
   for (const row of coupons) insertCoupon.run(...row);
 }
 
@@ -421,6 +552,28 @@ if (reviewCount === 0) {
     db.prepare(
       'UPDATE reviews SET secret = 1 WHERE product_id = 1 AND user_id = ?'
     ).run(user2Id);
+
+    // 대량 더미 후기 생성(상품 전반 × 사용자 순환)
+    const rvUsers = db.prepare("SELECT id FROM users WHERE role = 'user' ORDER BY id").all().map((r) => r.id);
+    const rvProducts = db.prepare('SELECT id FROM products ORDER BY id').all().map((r) => r.id);
+    const RV_BODY = [
+      '가격 대비 만족스러워요. 재구매 의사 있습니다.',
+      '핏과 색감이 화면과 동일해서 좋았어요.',
+      '배송이 빠르고 포장도 깔끔했습니다.',
+      '무난하게 데일리로 입기 좋네요.',
+      '소재가 생각보다 도톰하고 튼튼합니다.',
+      '사이즈가 살짝 커서 한 치수 작게 추천해요.',
+    ];
+    let made = 0;
+    for (let pi = 0; pi < rvProducts.length && made < 90; pi += 1) {
+      const reviewsPerProduct = 1 + (pi % 2); // 상품당 1~2개
+      for (let k = 0; k < reviewsPerProduct && made < 90; k += 1) {
+        const uid = pick(rvUsers, pi * 2 + k + 3);
+        const rating = 3 + ((pi + k) % 3); // 3~5
+        insertReview.run(rvProducts[pi], uid, rating, pick(RV_BODY, pi + k));
+        made += 1;
+      }
+    }
   }
 }
 
@@ -438,6 +591,18 @@ if (likeCount === 0) {
       [user3Id, 1], [user3Id, 5],
     ];
     for (const [uid, pid] of likes) insertLike.run(uid, pid);
+
+    // 대량 더미 좋아요 생성(상품 × 사용자 순환, UNIQUE는 OR IGNORE로 처리)
+    const lkUsers = db.prepare("SELECT id FROM users WHERE role = 'user' ORDER BY id").all().map((r) => r.id);
+    const lkProducts = db.prepare('SELECT id FROM products ORDER BY id').all().map((r) => r.id);
+    let lmade = 0;
+    for (let pi = 0; pi < lkProducts.length && lmade < 90; pi += 1) {
+      const likesPerProduct = 1 + (pi % 3); // 상품당 1~3명
+      for (let k = 0; k < likesPerProduct && lmade < 90; k += 1) {
+        insertLike.run(pick(lkUsers, pi * 3 + k), lkProducts[pi]);
+        lmade += 1;
+      }
+    }
   }
 }
 
@@ -475,6 +640,50 @@ if (orderCount === 0) {
     // Order 4 (user1) - Paid  (실버 체인 목걸이)
     const o4 = insertOrder.run(user1Id, 'paid', 35000, null, 'toss_seed_order_4', 'toss_seed_payment_key_4');
     insertOrderItem.run(o4.lastInsertRowid, 15, 1, 35000, 'Silver');
+
+    // 대량 더미 주문 생성(사용자 × 상품 순환, 상태 혼합)
+    const odUsers = db.prepare("SELECT id FROM users WHERE role = 'user' ORDER BY id").all().map((r) => r.id);
+    const odProducts = db.prepare('SELECT id, price, option_values FROM products ORDER BY id').all();
+    for (let n = 5; n <= 60; n += 1) {
+      const uid = pick(odUsers, n);
+      const status = n % 4 === 0 ? 'pending' : 'paid';
+      const lineCount = 1 + (n % 2); // 1~2개 품목
+      const items = [];
+      let total = 0;
+      for (let k = 0; k < lineCount; k += 1) {
+        const p = pick(odProducts, n * 2 + k);
+        const qty = 1 + (n % 2);
+        const opt = (p.option_values || '').split(',')[0] || null;
+        items.push([p.id, qty, p.price, opt]);
+        total += p.price * qty;
+      }
+      const paymentKey = status === 'paid' ? `toss_seed_payment_key_${n}` : null;
+      const o = insertOrder.run(uid, status, total, null, `toss_seed_order_${n}`, paymentKey);
+      for (const [pid, qty, price, opt] of items) {
+        insertOrderItem.run(o.lastInsertRowid, pid, qty, price, opt);
+      }
+    }
+  }
+}
+
+// 7. Seed Login Logs (if missing) — 대량 더미 접속 로그
+const loginLogCount = db.prepare('SELECT COUNT(*) AS count FROM login_logs').get().count;
+if (loginLogCount === 0) {
+  const insertLog = db.prepare(
+    "INSERT INTO login_logs (user_id, username, ip, user_agent, success, at) VALUES (?, ?, ?, ?, ?, datetime('now', ?))"
+  );
+  const logUsers = db.prepare('SELECT id, username FROM users ORDER BY id').all();
+  const UAS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) Safari/604.1',
+    'Mozilla/5.0 (Linux; Android 14) Chrome/126.0 Mobile Safari/537.36',
+  ];
+  for (let n = 0; n < 80 && logUsers.length; n += 1) {
+    const u = pick(logUsers, n);
+    const success = n % 5 === 0 ? 0 : 1; // 5건 중 1건 실패
+    const ip = `203.0.${n % 256}.${(n * 7) % 256}`;
+    insertLog.run(u.id, u.username, ip, pick(UAS, n), success, `-${n * 3} hours`);
   }
 }
 
