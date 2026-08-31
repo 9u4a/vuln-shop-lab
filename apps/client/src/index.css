@@ -1399,9 +1399,16 @@ textarea { resize: vertical; min-height: 4.5rem; }
   overflow: hidden;
   animation: toast-in 0.22s ease-out;
 }
-.event-popup__image { width: 100%; display: block; object-fit: cover; max-height: 280px; flex: none; }
 .event-popup__body { padding: var(--space-8); flex: 1 1 auto; }
 .event-popup__title { font-size: 1.5rem; margin-bottom: var(--space-4); }
+.event-popup__image {
+  width: 100%;
+  display: block;
+  object-fit: cover;
+  max-height: 280px;
+  border-radius: var(--radius);
+  margin-bottom: var(--space-4);
+}
 .event-popup__content { font-size: 1rem; line-height: 1.7; color: var(--color-text); }
 .event-popup__content :first-child { margin-top: 0; }
 .event-popup__content :last-child { margin-bottom: 0; }

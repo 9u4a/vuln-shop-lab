@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { useBackend } from '../BackendContext.jsx';
 import { fetchNotices } from '../api.js';
 import Pagination from '../components/Pagination.jsx';
-import SafeImage from '../components/SafeImage.jsx';
 
 const PAGE_SIZE = 5;
 
@@ -54,9 +53,6 @@ export default function Notices() {
           {notices.map((n) => (
             <li key={n.id} className="post-list__item">
               <Link to={`/notices/${n.id}`} className="post-list__link">
-                {n.imageUrl && (
-                  <SafeImage className="post-list__thumb" src={`${backend.uploadsBase}/${n.imageUrl}`} alt="" />
-                )}
                 <span className="post-list__title">{n.title}</span>
               </Link>
               <span className="post-list__date">{(n.createdAt || '').slice(0, 10)}</span>

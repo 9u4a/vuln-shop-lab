@@ -53,11 +53,11 @@ export default function EventPopups() {
     <div className="event-popups" role="dialog" aria-label="이벤트 안내">
       {visible.map((event) => (
         <div key={event.id} className="event-popup">
-          {event.imageUrl && (
-            <SafeImage className="event-popup__image" src={`${backend.uploadsBase}/${event.imageUrl}`} alt="" />
-          )}
           <div className="event-popup__body">
             <h3 className="event-popup__title">{event.title}</h3>
+            {event.imageUrl && (
+              <SafeImage className="event-popup__image" src={`${backend.uploadsBase}/${event.imageUrl}`} alt="" />
+            )}
             {event.body && (
               <div
                 className="event-popup__content"
