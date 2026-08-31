@@ -1305,9 +1305,9 @@ textarea { resize: vertical; min-height: 4.5rem; }
 
 /* 회원가입 약관 동의 */
 .agree-box { border: 1px solid var(--color-line); border-radius: var(--radius); padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-2); margin: var(--space-4) 0; }
-.agree-box__all { display: flex; align-items: center; gap: var(--space-2); padding-bottom: var(--space-2); border-bottom: 1px solid var(--color-line); }
-.agree-box__item { display: flex; align-items: center; gap: var(--space-2); font-size: 0.88rem; color: var(--color-text); }
-.agree-box input[type="checkbox"] { width: auto; }
+.agree-box__all { display: flex; flex-direction: row; align-items: center; gap: var(--space-2); padding-bottom: var(--space-2); border-bottom: 1px solid var(--color-line); }
+.agree-box__item { display: flex; flex-direction: row; align-items: center; gap: var(--space-2); font-size: 0.88rem; font-weight: 400; color: var(--color-text); }
+.agree-box input[type="checkbox"] { width: auto; flex: none; margin: 0; }
 
 /* 약관 문서 페이지 */
 .terms-doc h3 { margin-top: var(--space-5); font-size: 0.98rem; }
