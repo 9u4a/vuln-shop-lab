@@ -17,6 +17,7 @@ import ProductDetail from './pages/ProductDetail.jsx';
 import MyPageLayout from './pages/mypage/MyPageLayout.jsx';
 import MyPageProfile from './pages/mypage/MyPageProfile.jsx';
 import MyPageLikes from './pages/mypage/MyPageLikes.jsx';
+import MyPageRewards from './pages/mypage/MyPageRewards.jsx';
 import MyPagePassword from './pages/mypage/MyPagePassword.jsx';
 import Cart from './pages/Cart.jsx';
 import CheckoutResult from './pages/CheckoutResult.jsx';
@@ -43,6 +44,8 @@ import AdminFaq from './pages/admin/AdminFaq.jsx';
 import AdminNotices from './pages/admin/AdminNotices.jsx';
 import AdminEvents from './pages/admin/AdminEvents.jsx';
 import AdminCoupons from './pages/admin/AdminCoupons.jsx';
+import AdminReturns from './pages/admin/AdminReturns.jsx';
+import AdminRestock from './pages/admin/AdminRestock.jsx';
 
 function Layout({ children }) {
   return (
@@ -83,6 +86,7 @@ export default function App() {
                 <Route path="/mypage" element={<RequireAuth><MyPageLayout /></RequireAuth>}>
                   <Route index element={<MyPageProfile />} />
                   <Route path="likes" element={<MyPageLikes />} />
+                  <Route path="rewards" element={<MyPageRewards />} />
                   <Route path="password" element={<MyPagePassword />} />
                 </Route>
                 <Route path="/orders" element={<RequireAuth><Orders /></RequireAuth>} />
@@ -106,6 +110,8 @@ export default function App() {
                   <Route path="notices" element={<AdminNotices />} />
                   <Route path="events" element={<AdminEvents />} />
                   <Route path="coupons" element={<AdminCoupons />} />
+                  <Route path="returns" element={<AdminReturns />} />
+                  <Route path="restock" element={<AdminRestock />} />
                 </Route>
 
                 <Route path="/forbidden" element={<Forbidden />} />

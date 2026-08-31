@@ -2,11 +2,14 @@ package com.vulnlab.shop.controller;
 
 import com.vulnlab.shop.entity.Order;
 import com.vulnlab.shop.entity.OrderItem;
+import com.vulnlab.shop.entity.PointTransaction;
 import com.vulnlab.shop.entity.Product;
 import com.vulnlab.shop.entity.User;
 import com.vulnlab.shop.repository.OrderItemRepository;
 import com.vulnlab.shop.repository.OrderRepository;
+import com.vulnlab.shop.repository.PointTransactionRepository;
 import com.vulnlab.shop.repository.ProductRepository;
+import com.vulnlab.shop.repository.UserRepository;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -39,16 +42,21 @@ public class OrderController {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
+    private final UserRepository userRepository;
+    private final PointTransactionRepository pointTransactionRepository;
 
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(5))
             .build();
 
     public OrderController(OrderRepository orderRepository, OrderItemRepository orderItemRepository,
-                            ProductRepository productRepository) {
+                            ProductRepository productRepository, UserRepository userRepository,
+                            PointTransactionRepository pointTransactionRepository) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.productRepository = productRepository;
+        this.userRepository = userRepository;
+        this.pointTransactionRepository = pointTransactionRepository;
     }
 
     private User currentUser(HttpSession session) {
@@ -89,7 +97,7 @@ public class OrderController {
             return ResponseEntity.badRequest().body(Map.of("error", "최소 1개 이상의 상품이 필요합니다."));
         }
 
-        BigDecimal total = BigDecimal.ZERO;
+        BigDecimal itemsTotal = BigDecimal.ZERO;
         List<OrderItem> newItems = new ArrayList<>();
         for (Object raw : items) {
             Map<String, Object> item = (Map<String, Object>) raw;
@@ -99,7 +107,7 @@ public class OrderController {
             if (product == null) {
                 return ResponseEntity.badRequest().body(Map.of("error", "유효하지 않은 주문 항목입니다."));
             }
-            total = total.add(product.getPrice().multiply(BigDecimal.valueOf(quantity)));
+            itemsTotal = itemsTotal.add(product.getPrice().multiply(BigDecimal.valueOf(quantity)));
             OrderItem oi = new OrderItem();
             oi.setProductId(product.getId());
             oi.setQuantity(quantity);
@@ -108,6 +116,10 @@ public class OrderController {
             oi.setOptionValue(optionValue == null ? null : String.valueOf(optionValue));
             newItems.add(oi);
         }
+
+        int pointsUsed = body.get("pointsUsed") == null ? 0
+                : Integer.parseInt(String.valueOf(body.get("pointsUsed")));
+        BigDecimal total = itemsTotal.subtract(BigDecimal.valueOf(pointsUsed));
 
         Order order = new Order();
         order.setUserId(user.getId());
@@ -121,6 +133,20 @@ public class OrderController {
             oi.setOrderId(order.getId());
         }
         orderItemRepository.saveAll(newItems);
+
+        User dbUser = userRepository.findById(user.getId()).orElse(null);
+        if (dbUser != null) {
+            int earned = itemsTotal.multiply(BigDecimal.valueOf(5)).divide(BigDecimal.valueOf(100)).intValue();
+            if (pointsUsed != 0) {
+                dbUser.setPoints(dbUser.getPoints() - pointsUsed);
+                pointTransactionRepository.save(new PointTransaction(dbUser.getId(), -pointsUsed, "주문 사용", order.getId()));
+            }
+            if (earned > 0) {
+                dbUser.setPoints(dbUser.getPoints() + earned);
+                pointTransactionRepository.save(new PointTransaction(dbUser.getId(), earned, "주문 적립", order.getId()));
+            }
+            userRepository.save(dbUser);
+        }
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(Map.of("orderId", order.getId(), "tossOrderId", order.getTossOrderId(), "amount", total));

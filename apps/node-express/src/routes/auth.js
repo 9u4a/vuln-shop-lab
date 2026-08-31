@@ -5,7 +5,7 @@ const db = require('../db');
 const router = express.Router();
 
 router.post('/signup', async (req, res) => {
-  const { username, password, name, phone, postcode, address, addressDetail } = req.body;
+  const { username, password, name, phone, postcode, address, addressDetail, referralCode } = req.body;
   if (!username || !password || !name || !phone || !postcode || !address) {
     return res.status(400).json({ error: '아이디, 비밀번호, 이름, 전화번호, 주소는 필수입니다.' });
   }
@@ -16,10 +16,24 @@ router.post('/signup', async (req, res) => {
   const passwordHash = await bcrypt.hash(password, 10);
   const userCount = db.prepare('SELECT COUNT(*) AS count FROM users').get().count;
   const role = userCount === 0 ? 'system_admin' : 'user';
-  db.prepare(
-    `INSERT INTO users (username, password_hash, role, name, phone, postcode, address, address_detail)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(username, passwordHash, role, name, phone, postcode, address, addressDetail || null);
+  const referralCodeForUser = `REF${username.toUpperCase()}`;
+  const result = db.prepare(
+    `INSERT INTO users (username, password_hash, role, name, phone, postcode, address, address_detail, referral_code)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(username, passwordHash, role, name, phone, postcode, address, addressDetail || null, referralCodeForUser);
+  const newUserId = result.lastInsertRowid;
+
+  if (referralCode) {
+    const referrer = db.prepare('SELECT id FROM users WHERE referral_code = ?').get(referralCode);
+    if (referrer) {
+      db.prepare('UPDATE users SET referred_by = ? WHERE id = ?').run(referrer.id, newUserId);
+      db.prepare('UPDATE users SET points = points + 1000 WHERE id = ?').run(referrer.id);
+      db.prepare('UPDATE users SET points = points + 1000 WHERE id = ?').run(newUserId);
+      const insertPtx = db.prepare('INSERT INTO point_transactions (user_id, amount, reason) VALUES (?, ?, ?)');
+      insertPtx.run(referrer.id, 1000, '추천인 보상');
+      insertPtx.run(newUserId, 1000, '추천 가입 보상');
+    }
+  }
   res.status(201).json({ ok: true });
 });
 

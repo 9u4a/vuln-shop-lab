@@ -34,6 +34,7 @@ public class AuthController {
         String postcode = body.get("postcode");
         String address = body.get("address");
         String addressDetail = body.get("addressDetail");
+        String referralCode = body.get("referralCode");
         if (isBlank(username) || isBlank(password) || isBlank(name) || isBlank(phone)
                 || isBlank(postcode) || isBlank(address)) {
             return ResponseEntity.badRequest()
@@ -42,7 +43,7 @@ public class AuthController {
         if (authService.usernameTaken(username)) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "이미 사용 중인 아이디입니다."));
         }
-        authService.signup(username, password, name, phone, postcode, address, addressDetail);
+        authService.signup(username, password, name, phone, postcode, address, addressDetail, referralCode);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("ok", true));
     }
 

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { loadTossPayments, ANONYMOUS } from '@tosspayments/tosspayments-sdk';
 import { useCart } from '../CartContext.jsx';
 import { useBackend } from '../BackendContext.jsx';
-import { createOrder, importCartBackup } from '../api.js';
+import { createOrder, importCartBackup, fetchPoints } from '../api.js';
 import { formatCurrency } from '../format.js';
 import EmptyState from '../components/EmptyState.jsx';
 
@@ -20,6 +20,15 @@ export default function Cart() {
   const widgetsRef = useRef(null);
   const [backupJson, setBackupJson] = useState('');
   const [backupResult, setBackupResult] = useState(null);
+  const [pointsBalance, setPointsBalance] = useState(null);
+  const [pointsToUse, setPointsToUse] = useState('');
+
+  useEffect(() => {
+    fetchPoints(backend.base).then((d) => setPointsBalance(d.balance)).catch(() => setPointsBalance(null));
+  }, [backend.base]);
+
+  const usePoints = Number(pointsToUse) || 0;
+  const payable = total - usePoints;
 
   async function handleImportBackup(e) {
     e.preventDefault();
@@ -62,7 +71,7 @@ export default function Cart() {
     setError(null);
     setPendingNote(null);
     try {
-      const { orderId, tossOrderId, amount } = await createOrder(backend.base, items);
+      const { orderId, tossOrderId, amount } = await createOrder(backend.base, items, usePoints);
       if (!TOSS_CLIENT_KEY) {
         setPendingNote(
           `주문 #${orderId}이(가) 결제 대기 상태로 생성되었습니다. Toss 결제를 계속하려면 VITE_TOSS_CLIENT_KEY를 설정하세요.`
@@ -185,7 +194,20 @@ export default function Cart() {
           <div className="summary-box">
             <div className="summary-box__row"><span>상품금액</span><span className="tnum">{formatCurrency(total)}</span></div>
             <div className="summary-box__row"><span>배송비</span><span>무료</span></div>
-            <div className="summary-box__row summary-box__row--total"><span>결제 예상금액</span><span className="tnum">{formatCurrency(total)}</span></div>
+            {pointsBalance != null && (
+              <label className="summary-box__row" style={{ alignItems: 'center' }}>
+                <span>포인트 사용 <small className="muted">(보유 {formatCurrency(pointsBalance)}P)</small></span>
+                <input
+                  type="number"
+                  min="0"
+                  value={pointsToUse}
+                  onChange={(e) => setPointsToUse(e.target.value)}
+                  placeholder="0"
+                  style={{ width: 110, textAlign: 'right' }}
+                />
+              </label>
+            )}
+            <div className="summary-box__row summary-box__row--total"><span>결제 예상금액</span><span className="tnum">{formatCurrency(payable)}</span></div>
             <button disabled={items.length === 0 || busy} onClick={handleCheckout} className="btn btn-primary btn-block btn-lg">
               {busy ? '처리 중...' : '결제하기'}
             </button>

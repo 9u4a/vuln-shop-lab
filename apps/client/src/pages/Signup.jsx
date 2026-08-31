@@ -12,6 +12,7 @@ const emptyForm = {
   postcode: '',
   address: '',
   addressDetail: '',
+  referralCode: '',
 };
 
 export default function Signup() {
@@ -87,6 +88,9 @@ export default function Signup() {
           </label>
           <label>상세주소
             <input value={form.addressDetail} onChange={update('addressDetail')} placeholder="동, 호 등 (선택)" />
+          </label>
+          <label>추천인 코드
+            <input value={form.referralCode} onChange={update('referralCode')} placeholder="추천인 코드 (선택) 예: REFUSER1" />
           </label>
           <div className="agree-box">
             <label className="agree-box__all">

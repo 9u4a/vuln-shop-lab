@@ -4,7 +4,7 @@ import { useBackend } from '../BackendContext.jsx';
 import { useCart } from '../CartContext.jsx';
 import { useSession } from '../SessionContext.jsx';
 import { useToast } from '../ToastContext.jsx';
-import { fetchProduct, fetchReviews, createReview, updateReview, deleteReview } from '../api.js';
+import { fetchProduct, fetchReviews, createReview, updateReview, deleteReview, subscribeRestock } from '../api.js';
 import { formatCurrency } from '../format.js';
 import { CATEGORY_LABELS } from '../data/categories.js';
 import LikeButton from '../components/LikeButton.jsx';
@@ -45,6 +45,19 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [selectedOption, setSelectedOption] = useState('');
   const [pendingReview, setPendingReview] = useState(null);
+  const [restockUrl, setRestockUrl] = useState('');
+  const [restockMsg, setRestockMsg] = useState(null);
+
+  async function handleRestockSubscribe() {
+    setRestockMsg(null);
+    try {
+      await subscribeRestock(backend.base, product.id, restockUrl);
+      setRestockUrl('');
+      setRestockMsg('재입고 알림을 신청했습니다.');
+    } catch (err) {
+      setRestockMsg(err.message);
+    }
+  }
 
   function loadReviews() {
     fetchReviews(backend.base, id).then((data) => setReviews(data.reviews));
@@ -207,6 +220,20 @@ export default function ProductDetail() {
               바로 구매
             </button>
           </div>
+
+          {soldOut && user && (
+            <div className="restock-box">
+              <strong>재입고 알림 신청</strong>
+              <p className="muted">재입고 시 알림 받을 웹훅 URL(선택)을 입력하세요.</p>
+              <input
+                value={restockUrl}
+                onChange={(e) => setRestockUrl(e.target.value)}
+                placeholder="https://example.com/webhook (선택)"
+              />
+              <button type="button" onClick={handleRestockSubscribe} className="btn btn-ghost">알림 신청</button>
+              {restockMsg && <p className="status-ok">{restockMsg}</p>}
+            </div>
+          )}
         </div>
       </div>
 

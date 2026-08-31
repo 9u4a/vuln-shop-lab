@@ -22,6 +22,9 @@ db.exec(`
     address TEXT,
     address_detail TEXT,
     active INTEGER NOT NULL DEFAULT 1,
+    points INTEGER NOT NULL DEFAULT 0,
+    referral_code TEXT,
+    referred_by INTEGER,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
@@ -153,6 +156,33 @@ db.exec(`
     answered_at TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
+
+  CREATE TABLE IF NOT EXISTS point_transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    amount INTEGER NOT NULL,
+    reason TEXT,
+    order_id INTEGER REFERENCES orders(id),
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS returns (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL REFERENCES orders(id),
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    reason TEXT,
+    status TEXT NOT NULL DEFAULT 'requested',
+    refund_amount REAL NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS restock_subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id INTEGER NOT NULL REFERENCES products(id),
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    callback_url TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
 `);
 
 for (const stmt of [
@@ -178,6 +208,9 @@ for (const stmt of [
   'ALTER TABLE notices ADD COLUMN image_url TEXT',
   'ALTER TABLE reviews ADD COLUMN image_url TEXT',
   'ALTER TABLE reviews ADD COLUMN secret INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE users ADD COLUMN points INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE users ADD COLUMN referral_code TEXT',
+  'ALTER TABLE users ADD COLUMN referred_by INTEGER',
 ]) {
   try {
     db.exec(stmt);
@@ -684,6 +717,29 @@ if (loginLogCount === 0) {
     const success = n % 5 === 0 ? 0 : 1; // 5건 중 1건 실패
     const ip = `203.0.${n % 256}.${(n * 7) % 256}`;
     insertLog.run(u.id, u.username, ip, pick(UAS, n), success, `-${n * 3} hours`);
+  }
+}
+
+// 8. Seed referral codes for every user missing one (deterministic: REF<USERNAME>)
+const usersMissingCode = db.prepare('SELECT id, username FROM users WHERE referral_code IS NULL').all();
+if (usersMissingCode.length) {
+  const setCode = db.prepare('UPDATE users SET referral_code = ? WHERE id = ?');
+  for (const u of usersMissingCode) {
+    setCode.run(`REF${u.username.toUpperCase()}`, u.id);
+  }
+}
+
+// 9. Seed a starter point balance + ledger for demo users (if no transactions yet)
+const ptxCount = db.prepare('SELECT COUNT(*) AS count FROM point_transactions').get().count;
+if (ptxCount === 0) {
+  const insertPtx = db.prepare('INSERT INTO point_transactions (user_id, amount, reason) VALUES (?, ?, ?)');
+  const setPoints = db.prepare('UPDATE users SET points = ? WHERE id = ?');
+  for (const uname of ['user1', 'user2', 'user3']) {
+    const u = db.prepare('SELECT id FROM users WHERE username = ?').get(uname);
+    if (u) {
+      insertPtx.run(u.id, 3000, '가입 축하 적립');
+      setPoints.run(3000, u.id);
+    }
   }
 }
 

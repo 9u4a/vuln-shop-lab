@@ -40,6 +40,10 @@
 | [VULN-027](VULN-027-order-option-not-validated.md) | 주문 옵션 값 미검증 (제공 옵션과 대조 없음) | both | A04 Insecure Design | Low | 구현됨 |
 | [VULN-028](VULN-028-stored-xss-login-log-user-agent.md) | 접속 로그 User-Agent 저장형 XSS (관리자 대상) | both + client | A03 Injection (XSS) | High | 구현됨 |
 | [VULN-029](VULN-029-coupon-claim-no-dedup.md) | 쿠폰 중복 발급 (claim 한도/중복 검증 없음) | both | A04 Insecure Design | Low | 구현됨 |
+| [VULN-030](VULN-030-point-balance-manipulation.md) | 포인트 사용 미검증 → 결제액/잔액 조작 | both | A04 Insecure Design | High | 구현됨 |
+| [VULN-031](VULN-031-refund-access-control.md) | 반품/환불 접근제어·상태검증 누락 (IDOR + 이중환불) | both | A01 Broken Access Control | High | 구현됨 |
+| [VULN-032](VULN-032-referral-reward-abuse.md) | 추천 보상 무한 적립 (멱등성·자기참조 미검증) | both | A04 Insecure Design | Medium | 구현됨 |
+| [VULN-033](VULN-033-restock-callback-ssrf.md) | 재입고 알림 콜백 URL SSRF (응답 반환형) | both | A10 SSRF | High | 구현됨 |
 
 ## OWASP / CLAUDE.md 스코프 커버리지
 
@@ -53,14 +57,14 @@
 | XSS — Stored | DONE | 008, 018, 023, 025, 028 |
 | XSS — Reflected | DONE | 016 |
 | XSS — DOM | DONE | 017 |
-| IDOR / Broken Access Control | DONE | 003, 009, 011, 013, 014, 024, 026 |
+| IDOR / Broken Access Control | DONE | 003, 009, 011, 013, 014, 024, 026, 031 |
 | Security Misconfiguration | DONE | 007, 018, 020, 025 |
 | Insecure Deserialization (Java) | DONE | 012 |
 | XXE | DONE | 020 |
-| SSRF | DONE | 004 (020 OOB로 재확인) |
+| SSRF | DONE | 004 (020 OOB로 재확인), 033 (응답 반환형) |
 | File Upload / Path Traversal | DONE | 011 (traversal), 018 (upload) |
 | Vulnerable dependencies | DONE | 021 |
-| Business logic / Insecure Design | DONE | 015, 027, 029 |
+| Business logic / Insecure Design | DONE | 015, 027, 029, 030, 032 |
 | CSRF | DONE | 014 |
 
 배치 013–022 완료 — CLAUDE.md 스코프의 모든 클래스가 최소 1개 구현 항목으로 커버된다.
@@ -75,6 +79,8 @@ VULN-003은 Q&A 문의 게시판(`docs/features/32-qna-and-faq-board.md`)과 함
 같은 배치에서 공지/이벤트 이미지 업로드가 공용 업로드 엔드포인트로 전환되며 VULN-018 표면이,
 이벤트 본문이 `/events` 페이지에도 렌더되며 VULN-023 표면이 확장됨(신규 ID 없음).
 의류 카탈로그(`docs/features/26-apparel-catalog.md`)에서 상품 필터 파라미터 추가로 VULN-001/005 SQLi 표면이 확장됨(신규 ID 없음).
+VULN-030~033은 커머스 리워드/운영 기능 배치(`docs/features/39-points.md`~`42-restock-alerts.md`)와 함께 추가:
+포인트(030)·반품환불(031)·추천인(032)·재입고 알림(033). 033은 blind SSRF(VULN-004)와 달리 응답 반환형으로 SSRF 표면을 확장.
 
 번호 주의: VULN-003은 원래 "기본 관리자 계정"으로 잡았다가 취약점이 아니라 철회된 번호이며, 빈 번호를
 없애기 위해 마지막 항목을 옮겨 재사용했다(구 VULN-030 — 그 이전 커밋 이력에는 030으로 기록되어 있다).
