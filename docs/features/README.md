@@ -43,4 +43,4 @@
 | 35 | 안정성 강화 | feature/stability-hardening | — | ErrorBoundary, 에러 처리, 헬스체크·restart, nginx gzip, 개발 스크립트 |
 | 36 | 대량 더미 시드 데이터 | feature/bulk-seed-data | — | 항목당 50~100개 결정적 시드(양 스택), login_logs·activity 포함 |
 | 37 | 관리자/스토어프론트 개선 | feature/admin-storefront-improvements | — | 상품관리 버그·페이징·상세 모달+수정 API·이벤트 팝업 기간·약관 동의·반응형 |
-| 38 | 상단 메뉴 정리 · 관리자 등록 모달 · 상품 상세/수정 | feature/nav-slim-admin-modals | — | 내비 카테고리 제거(전체→상품), 상품/FAQ/공지 등록 모달화, 상품 상세/수정 |
+| 38 | 상단 메뉴 정리 · 관리자 등록/수정 모달 · 상품 상세/수정 | feature/nav-slim-admin-modals | — | 내비 카테고리 제거(전체→상품), 상품/FAQ/공지/이벤트/쿠폰 등록·수정 모달화, 상품 상세/수정 |

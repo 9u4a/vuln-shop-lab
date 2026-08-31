@@ -3,6 +3,7 @@ import { useBackend } from '../../BackendContext.jsx';
 import { fetchEventsManage, createEvent, updateEvent, deleteEvent } from '../../api.js';
 import AdminImageField from '../../components/AdminImageField.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import Modal from '../../components/Modal.jsx';
 import Pagination from '../../components/Pagination.jsx';
 
 const emptyEvent = {
@@ -133,57 +134,45 @@ export default function AdminEvents() {
       <section className="card">
         <div className="admin-toolbar">
           <h2>이벤트 <span className="muted">({events.length})</span></h2>
-          <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowForm((v) => !v)}>
-            {showForm ? '취소' : '+ 이벤트 추가'}
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}>
+            + 이벤트 추가
           </button>
         </div>
         <p className="muted">노출기간(시작·종료)이 설정된 활성 이벤트만 메인 팝업으로 노출됩니다.</p>
         {error && <p className="error">{error}</p>}
         {status && <p className="status-ok">{status}</p>}
 
-        {showForm && (
-          <div className="admin-create-form">
-            <EventForm value={draft} onChange={setDraft} onSubmit={handleCreate} submitLabel="이벤트 추가" />
-          </div>
-        )}
-
         <div>
           {paged.map((ev) => (
             <div key={ev.id} className="admin-item-row">
-              {editingId === ev.id ? (
-                <div style={{ flex: 1 }}>
-                  <EventForm
-                    value={editForm}
-                    onChange={setEditForm}
-                    onSubmit={handleSaveEdit}
-                    submitLabel="저장"
-                    onCancel={() => setEditingId(null)}
-                  />
-                </div>
-              ) : (
-                <>
-                  <div className="admin-item-row__body">
-                    <strong>{ev.title}</strong>
-                    <span className="muted">
-                      {ev.active ? '활성' : '비활성'}
-                      {(ev.startsAt || ev.endsAt) &&
-                        ` · ${(ev.startsAt || '').slice(0, 16) || '상시'} ~ ${(ev.endsAt || '').slice(0, 16) || '상시'}`}
-                      {ev.linkUrl && ` · 링크: ${ev.linkUrl}`}
-                    </span>
-                  </div>
-                  <div className="admin-item-row__actions">
-                    <button type="button" onClick={() => toggleActive(ev)}>{ev.active ? '비활성화' : '활성화'}</button>
-                    <button type="button" onClick={() => startEdit(ev)}>수정</button>
-                    <button type="button" onClick={() => setPendingId(ev.id)}>삭제</button>
-                  </div>
-                </>
-              )}
+              <div className="admin-item-row__body">
+                <strong>{ev.title}</strong>
+                <span className="muted">
+                  {ev.active ? '활성' : '비활성'}
+                  {(ev.startsAt || ev.endsAt) &&
+                    ` · ${(ev.startsAt || '').slice(0, 16) || '상시'} ~ ${(ev.endsAt || '').slice(0, 16) || '상시'}`}
+                  {ev.linkUrl && ` · 링크: ${ev.linkUrl}`}
+                </span>
+              </div>
+              <div className="admin-item-row__actions">
+                <button type="button" onClick={() => toggleActive(ev)}>{ev.active ? '비활성화' : '활성화'}</button>
+                <button type="button" onClick={() => startEdit(ev)}>수정</button>
+                <button type="button" onClick={() => setPendingId(ev.id)}>삭제</button>
+              </div>
             </div>
           ))}
         </div>
 
         <Pagination page={page} pageSize={PAGE_SIZE} total={events.length} onChange={setPage} />
       </section>
+
+      <Modal open={showForm} title="이벤트 추가" onClose={() => setShowForm(false)} wide>
+        <EventForm value={draft} onChange={setDraft} onSubmit={handleCreate} submitLabel="이벤트 추가" onCancel={() => setShowForm(false)} />
+      </Modal>
+
+      <Modal open={editingId != null} title="이벤트 수정" onClose={() => setEditingId(null)} wide>
+        <EventForm value={editForm} onChange={setEditForm} onSubmit={handleSaveEdit} submitLabel="저장" onCancel={() => setEditingId(null)} />
+      </Modal>
 
       <ConfirmDialog
         open={pendingId != null}
