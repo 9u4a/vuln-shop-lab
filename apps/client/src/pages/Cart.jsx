@@ -10,7 +10,7 @@ import EmptyState from '../components/EmptyState.jsx';
 const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY;
 
 export default function Cart() {
-  const { items, total, setQuantity, changeOption, removeItem } = useCart();
+  const { items, total, setQuantity, changeOption } = useCart();
   const { backend, backendKey } = useBackend();
   const [error, setError] = useState(null);
   const [pendingNote, setPendingNote] = useState(null);
@@ -185,7 +185,7 @@ export default function Cart() {
                   <span className="line-item__stock-warn">재고 {i.stock}개 남음 — 수량을 확인해 주세요</span>
                 )}
                 <div className="line-item__actions">
-                  <button onClick={() => removeItem(i.productId, i.option)}>삭제</button>
+                  <button onClick={() => setQuantity(i.productId, i.option, i.quantity - 1)}>삭제</button>
                 </div>
               </li>
             ))}
@@ -200,9 +200,17 @@ export default function Cart() {
                 <input
                   type="number"
                   min="0"
-                  value={pointsToUse}
-                  onChange={(e) => setPointsToUse(e.target.value)}
+                  max={pointsBalance}
+                  value={pointsBalance > 0 ? pointsToUse : ''}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    if (raw === '') return setPointsToUse('');
+                    const clamped = Math.max(0, Math.min(Math.floor(Number(raw) || 0), pointsBalance));
+                    setPointsToUse(String(clamped));
+                  }}
                   placeholder="0"
+                  disabled={pointsBalance <= 0}
+                  title={pointsBalance <= 0 ? '사용 가능한 포인트가 없습니다' : undefined}
                   style={{ width: 110, textAlign: 'right' }}
                 />
               </label>
