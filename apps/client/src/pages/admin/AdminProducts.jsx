@@ -9,6 +9,7 @@ import {
 import { formatCurrency } from '../../format.js';
 import SafeImage from '../../components/SafeImage.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import Pagination from '../../components/Pagination.jsx';
 
 const emptyProduct = {
   name: '',
@@ -77,6 +78,9 @@ export default function AdminProducts() {
   const [error, setError] = useState(null);
   const [status, setStatus] = useState(null);
   const [pendingId, setPendingId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   function load() {
     setError(null);
@@ -84,6 +88,8 @@ export default function AdminProducts() {
   }
 
   useEffect(load, [backend.base]);
+
+  const paged = products.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   async function handleCreateProduct(e) {
     e.preventDefault();
@@ -98,6 +104,7 @@ export default function AdminProducts() {
           : undefined,
       });
       setNewProduct(emptyProduct);
+      setShowForm(false);
       setStatus('상품이 추가되었습니다.');
       load();
     } catch (err) {
@@ -131,7 +138,12 @@ export default function AdminProducts() {
   return (
     <>
       <section className="card">
-        <h2>상품 <span className="muted">({products.length})</span></h2>
+        <div className="admin-toolbar">
+          <h2>상품 <span className="muted">({products.length})</span></h2>
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowForm((v) => !v)}>
+            {showForm ? '취소' : '+ 상품 추가'}
+          </button>
+        </div>
         {error && <p className="error">{error}</p>}
         {status && <p className="status-ok">{status}</p>}
         <div className="admin-table__wrap">
@@ -147,7 +159,7 @@ export default function AdminProducts() {
               </tr>
             </thead>
             <tbody>
-              {products.map((p) => (
+              {paged.map((p) => (
                 <ProductRow
                   key={p.id}
                   product={p}
@@ -159,8 +171,10 @@ export default function AdminProducts() {
             </tbody>
           </table>
         </div>
+        <Pagination page={page} pageSize={PAGE_SIZE} total={products.length} onChange={setPage} />
       </section>
 
+      {showForm && (
       <section className="card">
         <h2>상품 추가</h2>
         <form onSubmit={handleCreateProduct} style={{ maxWidth: 'none' }}>
@@ -206,6 +220,7 @@ export default function AdminProducts() {
           <button type="submit" className="btn btn-primary">상품 추가</button>
         </form>
       </section>
+      )}
 
       <ConfirmDialog
         open={pendingId != null}

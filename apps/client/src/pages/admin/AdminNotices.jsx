@@ -3,8 +3,10 @@ import { useBackend } from '../../BackendContext.jsx';
 import { fetchNotices, createNoticeAdmin, updateNoticeAdmin, deleteNoticeAdmin } from '../../api.js';
 import AdminImageField from '../../components/AdminImageField.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import Pagination from '../../components/Pagination.jsx';
 
 const emptyNotice = { title: '', body: '', imageUrl: '' };
+const PAGE_SIZE = 10;
 
 export default function AdminNotices() {
   const { backend } = useBackend();
@@ -14,19 +16,24 @@ export default function AdminNotices() {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState(emptyNotice);
   const [pendingId, setPendingId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [page, setPage] = useState(1);
 
   function load() {
     setError(null);
-    fetchNotices(backend.base, { pageSize: 50 }).then((d) => setNotices(d.notices)).catch((e) => setError(e.message));
+    fetchNotices(backend.base, { pageSize: 200 }).then((d) => setNotices(d.notices)).catch((e) => setError(e.message));
   }
 
   useEffect(load, [backend.base]);
+
+  const paged = notices.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   async function handleCreate(e) {
     e.preventDefault();
     try {
       await createNoticeAdmin(backend.base, newNotice.title, newNotice.body, newNotice.imageUrl);
       setNewNotice(emptyNotice);
+      setShowForm(false);
       load();
     } catch (err) {
       setError(err.message);
@@ -60,11 +67,29 @@ export default function AdminNotices() {
 
   return (
     <section className="card">
-      <h2>공지사항 <span className="muted">({notices.length})</span></h2>
+      <div className="admin-toolbar">
+        <h2>공지사항 <span className="muted">({notices.length})</span></h2>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowForm((v) => !v)}>
+          {showForm ? '취소' : '+ 공지사항 추가'}
+        </button>
+      </div>
       {error && <p className="error">{error}</p>}
 
+      {showForm && (
+        <form onSubmit={handleCreate} className="admin-create-form">
+          <label>제목
+            <input value={newNotice.title} onChange={(e) => setNewNotice({ ...newNotice, title: e.target.value })} required />
+          </label>
+          <label>내용
+            <textarea value={newNotice.body} onChange={(e) => setNewNotice({ ...newNotice, body: e.target.value })} rows="5" required />
+          </label>
+          <AdminImageField value={newNotice.imageUrl} onChange={(f) => setNewNotice({ ...newNotice, imageUrl: f })} />
+          <button type="submit" className="btn btn-primary">공지사항 추가</button>
+        </form>
+      )}
+
       <div>
-        {notices.map((n) => (
+        {paged.map((n) => (
           <div key={n.id} className="admin-item-row">
             {editingId === n.id ? (
               <form onSubmit={handleSaveEdit} style={{ flex: 1, maxWidth: 'none' }}>
@@ -96,17 +121,7 @@ export default function AdminNotices() {
         ))}
       </div>
 
-      <h2 style={{ marginTop: 'var(--space-8)' }}>공지사항 추가</h2>
-      <form onSubmit={handleCreate}>
-        <label>제목
-          <input value={newNotice.title} onChange={(e) => setNewNotice({ ...newNotice, title: e.target.value })} required />
-        </label>
-        <label>내용
-          <textarea value={newNotice.body} onChange={(e) => setNewNotice({ ...newNotice, body: e.target.value })} rows="5" required />
-        </label>
-        <AdminImageField value={newNotice.imageUrl} onChange={(f) => setNewNotice({ ...newNotice, imageUrl: f })} />
-        <button type="submit" className="btn btn-primary">공지사항 추가</button>
-      </form>
+      <Pagination page={page} pageSize={PAGE_SIZE} total={notices.length} onChange={setPage} />
 
       <ConfirmDialog
         open={pendingId != null}

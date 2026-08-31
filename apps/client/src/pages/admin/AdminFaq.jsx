@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { useBackend } from '../../BackendContext.jsx';
 import { fetchFaqs, createFaq, updateFaqAdmin, deleteFaqAdmin } from '../../api.js';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import Pagination from '../../components/Pagination.jsx';
 
 const emptyFaq = { question: '', answer: '' };
+const PAGE_SIZE = 10;
 
 export default function AdminFaq() {
   const { backend } = useBackend();
@@ -13,19 +15,24 @@ export default function AdminFaq() {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState(emptyFaq);
   const [pendingId, setPendingId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [page, setPage] = useState(1);
 
   function load() {
     setError(null);
-    fetchFaqs(backend.base, { pageSize: 50 }).then((d) => setFaqs(d.faqs)).catch((e) => setError(e.message));
+    fetchFaqs(backend.base, { pageSize: 200 }).then((d) => setFaqs(d.faqs)).catch((e) => setError(e.message));
   }
 
   useEffect(load, [backend.base]);
+
+  const paged = faqs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   async function handleCreate(e) {
     e.preventDefault();
     try {
       await createFaq(backend.base, newFaq.question, newFaq.answer);
       setNewFaq(emptyFaq);
+      setShowForm(false);
       load();
     } catch (err) {
       setError(err.message);
@@ -59,11 +66,28 @@ export default function AdminFaq() {
 
   return (
     <section className="card">
-      <h2>FAQ <span className="muted">({faqs.length})</span></h2>
+      <div className="admin-toolbar">
+        <h2>FAQ <span className="muted">({faqs.length})</span></h2>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowForm((v) => !v)}>
+          {showForm ? '취소' : '+ FAQ 추가'}
+        </button>
+      </div>
       {error && <p className="error">{error}</p>}
 
+      {showForm && (
+        <form onSubmit={handleCreate} className="admin-create-form">
+          <label>질문
+            <input value={newFaq.question} onChange={(e) => setNewFaq({ ...newFaq, question: e.target.value })} required />
+          </label>
+          <label>답변
+            <textarea value={newFaq.answer} onChange={(e) => setNewFaq({ ...newFaq, answer: e.target.value })} rows="3" required />
+          </label>
+          <button type="submit" className="btn btn-primary">FAQ 추가</button>
+        </form>
+      )}
+
       <div>
-        {faqs.map((f) => (
+        {paged.map((f) => (
           <div key={f.id} className="admin-item-row">
             {editingId === f.id ? (
               <form onSubmit={handleSaveEdit} style={{ flex: 1, maxWidth: 'none' }}>
@@ -94,16 +118,7 @@ export default function AdminFaq() {
         ))}
       </div>
 
-      <h2 style={{ marginTop: 'var(--space-8)' }}>FAQ 추가</h2>
-      <form onSubmit={handleCreate}>
-        <label>질문
-          <input value={newFaq.question} onChange={(e) => setNewFaq({ ...newFaq, question: e.target.value })} required />
-        </label>
-        <label>답변
-          <textarea value={newFaq.answer} onChange={(e) => setNewFaq({ ...newFaq, answer: e.target.value })} rows="3" required />
-        </label>
-        <button type="submit" className="btn btn-primary">FAQ 추가</button>
-      </form>
+      <Pagination page={page} pageSize={PAGE_SIZE} total={faqs.length} onChange={setPage} />
 
       <ConfirmDialog
         open={pendingId != null}

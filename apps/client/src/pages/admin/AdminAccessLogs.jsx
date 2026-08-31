@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useBackend } from '../../BackendContext.jsx';
 import { fetchLoginLogs } from '../../api.js';
+import Pagination from '../../components/Pagination.jsx';
+
+const PAGE_SIZE = 15;
 
 const SUCCESS_FILTERS = [
   { value: '', label: '전체' },
@@ -14,15 +17,18 @@ export default function AdminAccessLogs() {
   const [error, setError] = useState(null);
   const [username, setUsername] = useState('');
   const [success, setSuccess] = useState('');
+  const [page, setPage] = useState(1);
 
   function load() {
     setError(null);
     fetchLoginLogs(backend.base, { username: username.trim(), success })
-      .then((d) => setLogs(d.logs))
+      .then((d) => { setLogs(d.logs); setPage(1); })
       .catch((e) => setError(e.message));
   }
 
   useEffect(load, [backend.base, success]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const paged = logs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <section className="card">
@@ -54,7 +60,7 @@ export default function AdminAccessLogs() {
             </tr>
           </thead>
           <tbody>
-            {logs.map((l) => (
+            {paged.map((l) => (
               <tr key={l.id}>
                 <td>{(l.at || '').replace('T', ' ').slice(0, 19)}</td>
                 <td>{l.username || '-'}</td>
@@ -71,6 +77,7 @@ export default function AdminAccessLogs() {
         </table>
       </div>
       {logs.length === 0 && <p className="muted">기록이 없습니다.</p>}
+      <Pagination page={page} pageSize={PAGE_SIZE} total={logs.length} onChange={setPage} />
     </section>
   );
 }

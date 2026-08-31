@@ -3,6 +3,7 @@ import { useBackend } from '../../BackendContext.jsx';
 import { fetchCouponsManage, createCoupon, updateCoupon, deleteCoupon } from '../../api.js';
 import { formatCurrency } from '../../format.js';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import Pagination from '../../components/Pagination.jsx';
 
 const emptyCoupon = {
   code: '',
@@ -78,6 +79,9 @@ export default function AdminCoupons() {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState(emptyCoupon);
   const [pendingId, setPendingId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   function load() {
     setError(null);
@@ -86,12 +90,15 @@ export default function AdminCoupons() {
 
   useEffect(load, [backend.base]);
 
+  const paged = coupons.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   async function handleCreate(e) {
     e.preventDefault();
     setStatus(null);
     try {
       await createCoupon(backend.base, normalize(draft));
       setDraft(emptyCoupon);
+      setShowForm(false);
       setStatus('쿠폰이 추가되었습니다.');
       load();
     } catch (err) {
@@ -147,13 +154,24 @@ export default function AdminCoupons() {
   return (
     <>
       <section className="card">
-        <h2>쿠폰 <span className="muted">({coupons.length})</span></h2>
+        <div className="admin-toolbar">
+          <h2>쿠폰 <span className="muted">({coupons.length})</span></h2>
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowForm((v) => !v)}>
+            {showForm ? '취소' : '+ 쿠폰 추가'}
+          </button>
+        </div>
         <p className="muted">활성 쿠폰은 사용자 쿠폰 페이지에서 발급받을 수 있습니다.</p>
         {error && <p className="error">{error}</p>}
         {status && <p className="status-ok">{status}</p>}
 
+        {showForm && (
+          <div className="admin-create-form">
+            <CouponForm value={draft} onChange={setDraft} onSubmit={handleCreate} submitLabel="쿠폰 추가" />
+          </div>
+        )}
+
         <div>
-          {coupons.map((c) => (
+          {paged.map((c) => (
             <div key={c.id} className="admin-item-row">
               {editingId === c.id ? (
                 <div style={{ flex: 1 }}>
@@ -179,11 +197,8 @@ export default function AdminCoupons() {
             </div>
           ))}
         </div>
-      </section>
 
-      <section className="card">
-        <h2>쿠폰 추가</h2>
-        <CouponForm value={draft} onChange={setDraft} onSubmit={handleCreate} submitLabel="쿠폰 추가" />
+        <Pagination page={page} pageSize={PAGE_SIZE} total={coupons.length} onChange={setPage} />
       </section>
 
       <ConfirmDialog
