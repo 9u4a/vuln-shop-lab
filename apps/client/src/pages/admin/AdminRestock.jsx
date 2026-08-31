@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useBackend } from '../../BackendContext.jsx';
-import { fetchAdminRestock, notifyRestock, testIntegrationWebhook } from '../../api.js';
+import { fetchAdminRestock, notifyRestock, testIntegrationWebhook, fetchStoreSettings, saveStoreSettings } from '../../api.js';
 import Pagination from '../../components/Pagination.jsx';
 
 const PAGE_SIZE = 10;
@@ -13,13 +13,28 @@ export default function AdminRestock() {
   const [page, setPage] = useState(1);
   const [hookUrl, setHookUrl] = useState('');
   const [hookResult, setHookResult] = useState(null);
+  const [hookSaved, setHookSaved] = useState(null);
 
   function load() {
     setError(null);
     fetchAdminRestock(backend.base).then((d) => setSubs(d.subscriptions)).catch((e) => setError(e.message));
+    fetchStoreSettings(backend.base)
+      .then((d) => setHookUrl(d.notificationWebhookUrl || ''))
+      .catch(() => {});
   }
 
   useEffect(load, [backend.base]);
+
+  async function handleSaveWebhook() {
+    setHookSaved(null);
+    setError(null);
+    try {
+      await saveStoreSettings(backend.base, { notificationWebhookUrl: hookUrl });
+      setHookSaved('연동 웹훅이 저장되었습니다.');
+    } catch (err) {
+      setError(err.message);
+    }
+  }
 
   const paged = subs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -86,8 +101,12 @@ export default function AdminRestock() {
           <label>웹훅 URL
             <input value={hookUrl} onChange={(e) => setHookUrl(e.target.value)} placeholder="https://hooks.example.com/..." />
           </label>
-          <button type="submit" className="btn btn-primary">테스트 요청</button>
+          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <button type="button" onClick={handleSaveWebhook} className="btn btn-ghost">저장</button>
+            <button type="submit" className="btn btn-primary">테스트 요청</button>
+          </div>
         </form>
+        {hookSaved && <p className="status-ok">{hookSaved}</p>}
         {hookResult && (
           <div style={{ marginTop: 'var(--space-4)' }}>
             <h3>응답 (status {hookResult.status})</h3>

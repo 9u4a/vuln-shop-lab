@@ -10,7 +10,9 @@ import com.vulnlab.shop.repository.OrderItemRepository;
 import com.vulnlab.shop.entity.LoginLog;
 import com.vulnlab.shop.repository.LoginLogRepository;
 import com.vulnlab.shop.repository.OrderRepository;
+import com.vulnlab.shop.entity.StoreSetting;
 import com.vulnlab.shop.repository.ProductRepository;
+import com.vulnlab.shop.repository.StoreSettingRepository;
 import com.vulnlab.shop.repository.UserRepository;
 import com.vulnlab.shop.security.Roles;
 import com.vulnlab.shop.storage.Uploads;
@@ -36,11 +38,14 @@ public class AdminController {
     private final FaqRepository faqRepository;
     private final NoticeRepository noticeRepository;
     private final LoginLogRepository loginLogRepository;
+    private final StoreSettingRepository storeSettingRepository;
+
+    private static final String WEBHOOK_KEY = "notification_webhook_url";
 
     public AdminController(UserRepository userRepository, ProductRepository productRepository,
                             OrderRepository orderRepository, OrderItemRepository orderItemRepository,
                             FaqRepository faqRepository, NoticeRepository noticeRepository,
-                            LoginLogRepository loginLogRepository) {
+                            LoginLogRepository loginLogRepository, StoreSettingRepository storeSettingRepository) {
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
@@ -48,6 +53,7 @@ public class AdminController {
         this.faqRepository = faqRepository;
         this.noticeRepository = noticeRepository;
         this.loginLogRepository = loginLogRepository;
+        this.storeSettingRepository = storeSettingRepository;
     }
 
     private ResponseEntity<?> requireAdmin(HttpSession session) {
@@ -370,12 +376,36 @@ public class AdminController {
         return ResponseEntity.ok(Map.of("referrals", out));
     }
 
-    // 알림 연동(웹훅) 테스트 — 관리자가 입력한 URL로 서버가 요청하고 응답을 그대로 반환한다.
+    private String savedWebhook() {
+        return storeSettingRepository.findById(WEBHOOK_KEY).map(StoreSetting::getValue).orElse(null);
+    }
+
+    @GetMapping("/settings")
+    public ResponseEntity<?> getSettings(HttpSession session) {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        Map<String, Object> out = new java.util.HashMap<>();
+        out.put("notificationWebhookUrl", savedWebhook());
+        return ResponseEntity.ok(out);
+    }
+
+    @PutMapping("/settings")
+    public ResponseEntity<?> saveSettings(@RequestBody Map<String, String> body, HttpSession session) {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        storeSettingRepository.save(new StoreSetting(WEBHOOK_KEY, body.get("notificationWebhookUrl")));
+        Map<String, Object> out = new java.util.HashMap<>();
+        out.put("notificationWebhookUrl", savedWebhook());
+        return ResponseEntity.ok(out);
+    }
+
+    // 알림 연동(웹훅) 테스트 — 입력 URL(없으면 저장된 URL)로 서버가 요청하고 응답을 그대로 반환한다.
     @PostMapping("/integrations/webhook/test")
     public ResponseEntity<?> testWebhook(@RequestBody Map<String, String> body, HttpSession session) {
         ResponseEntity<?> denied = requireAdmin(session);
         if (denied != null) return denied;
         String url = body.get("url");
+        if (url == null || url.isBlank()) url = savedWebhook();
         if (url == null || url.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "URL이 필요합니다."));
         }

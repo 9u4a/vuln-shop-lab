@@ -283,9 +283,29 @@ router.get('/referrals', requireAdmin, (req, res) => {
   });
 });
 
-// 알림 연동(웹훅) 테스트 — 관리자가 입력한 URL로 서버가 요청하고 응답을 그대로 반환한다.
+// 스토어 설정 조회/저장 — 알림 연동 웹훅 URL 등 관리자 설정을 영속화한다.
+const WEBHOOK_KEY = 'notification_webhook_url';
+function getSetting(key) {
+  return db.prepare('SELECT value FROM store_settings WHERE setting_key = ?').get(key)?.value || null;
+}
+function setSetting(key, value) {
+  db.prepare(
+    'INSERT INTO store_settings (setting_key, value) VALUES (?, ?) ON CONFLICT(setting_key) DO UPDATE SET value = excluded.value'
+  ).run(key, value);
+}
+
+router.get('/settings', requireAdmin, (req, res) => {
+  res.json({ notificationWebhookUrl: getSetting(WEBHOOK_KEY) });
+});
+
+router.put('/settings', requireAdmin, (req, res) => {
+  setSetting(WEBHOOK_KEY, req.body.notificationWebhookUrl || null);
+  res.json({ ok: true, notificationWebhookUrl: getSetting(WEBHOOK_KEY) });
+});
+
+// 알림 연동(웹훅) 테스트 — 입력 URL(없으면 저장된 URL)로 서버가 요청하고 응답을 그대로 반환한다.
 router.post('/integrations/webhook/test', requireAdmin, async (req, res) => {
-  const { url } = req.body;
+  const url = req.body.url || getSetting(WEBHOOK_KEY);
   if (!url) return res.status(400).json({ error: 'URL이 필요합니다.' });
   try {
     const upstream = await fetch(url, { signal: AbortSignal.timeout(5000) });

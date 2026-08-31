@@ -3,9 +3,12 @@ package com.vulnlab.shop.controller;
 import com.vulnlab.shop.entity.Product;
 import com.vulnlab.shop.entity.RestockSubscription;
 import com.vulnlab.shop.entity.User;
+import com.vulnlab.shop.entity.StoreSetting;
 import com.vulnlab.shop.repository.ProductRepository;
 import com.vulnlab.shop.repository.RestockSubscriptionRepository;
+import com.vulnlab.shop.repository.StoreSettingRepository;
 import com.vulnlab.shop.security.Roles;
+import com.vulnlab.shop.vuln.CallbackFetcher;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,10 +25,13 @@ public class RestockController {
 
     private final RestockSubscriptionRepository restockRepository;
     private final ProductRepository productRepository;
+    private final StoreSettingRepository storeSettingRepository;
 
-    public RestockController(RestockSubscriptionRepository restockRepository, ProductRepository productRepository) {
+    public RestockController(RestockSubscriptionRepository restockRepository, ProductRepository productRepository,
+                            StoreSettingRepository storeSettingRepository) {
         this.restockRepository = restockRepository;
         this.productRepository = productRepository;
+        this.storeSettingRepository = storeSettingRepository;
     }
 
     private User currentUser(HttpSession session) {
@@ -100,6 +106,10 @@ public class RestockController {
                 restockRepository.save(s);
                 count++;
             }
+        }
+        String hook = storeSettingRepository.findById("notification_webhook_url").map(StoreSetting::getValue).orElse(null);
+        if (hook != null && !hook.isBlank()) {
+            CallbackFetcher.deliver(hook, String.format("{\"event\":\"restock\",\"productId\":%d,\"notified\":%d}", productId, count));
         }
         return ResponseEntity.ok(Map.of("ok", true, "notified", count));
     }

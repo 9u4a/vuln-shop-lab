@@ -12,8 +12,11 @@
 기존 주문 webhook SSRF([[VULN-004-order-webhook-ssrf]])가 blind(fire-and-forget)인 것과 달리, 여기서는
 응답이 되돌아와 내부 서비스 읽기가 가능하다.
 
+웹훅 URL은 `store_settings`에 영속 저장되며(`PUT /api/admin/settings`), 테스트는 입력값 또는 저장값을
+사용한다. 재입고 발송(`/restock/notify/:productId`) 시에도 저장된 웹훅으로 서버가 전달(blind)한다.
+
 - node: `apps/node-express/src/routes/admin.js`, `POST /api/admin/integrations/webhook/test` —
-  `fetch(url)` 후 `res.json({ status, body })`로 응답 반환.
+  `fetch(url ?? 저장값)` 후 `res.json({ status, body })`로 응답 반환.
 - java: `apps/java-spring/.../controller/AdminController.java`, `testWebhook` — 요청 로직은
   `apps/java-spring/.../vuln/CallbackFetcher.java`로 격리, 응답 status/body를 반환.
 

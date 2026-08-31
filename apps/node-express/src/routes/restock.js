@@ -59,11 +59,20 @@ router.get('/', requireAdmin, (req, res) => {
   });
 });
 
-// 재입고 알림 발송 — 인앱 통지 처리(해당 상품 구독자 모두 notified 처리).
+// 재입고 알림 발송 — 인앱 통지 처리 + 저장된 연동 웹훅으로 전달(best-effort).
 router.post('/notify/:productId', requireAdmin, (req, res) => {
   const result = db
     .prepare('UPDATE restock_subscriptions SET notified = 1 WHERE product_id = ? AND notified = 0')
     .run(req.params.productId);
+  const hook = db.prepare("SELECT value FROM store_settings WHERE setting_key = 'notification_webhook_url'").get()?.value;
+  if (hook) {
+    fetch(hook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event: 'restock', productId: Number(req.params.productId), notified: result.changes }),
+      signal: AbortSignal.timeout(5000),
+    }).catch((err) => console.error(`restock webhook delivery failed: ${err.message}`));
+  }
   res.json({ ok: true, notified: result.changes });
 });
 

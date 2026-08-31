@@ -37,4 +37,19 @@ public final class CallbackFetcher {
         }
         return new Result(response.statusCode(), body);
     }
+
+    // 저장된 연동 웹훅으로 알림을 전달(best-effort). 실패는 무시한다.
+    public static void deliver(String url, String jsonBody) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(Duration.ofSeconds(5))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                    .build();
+            CLIENT.send(request, HttpResponse.BodyHandlers.discarding());
+        } catch (Exception e) {
+            System.err.println("restock webhook delivery failed: " + e.getMessage());
+        }
+    }
 }

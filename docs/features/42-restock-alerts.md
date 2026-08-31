@@ -8,8 +8,9 @@
   재입고 알림 신청(중복 신청은 무시). 관리자 "재입고 알림" 탭에서 구독 목록 조회 + 상품별 통지 발송(인앱).
 - 신규 API: `POST /api/restock`(상품만), `GET /api/restock/mine`(사용자), `GET /api/restock`,
   `POST /api/restock/notify/:productId`(관리자, 해당 상품 구독자 notified 처리).
-- 관리자 알림 연동(웹훅) 설정 + "테스트 요청": `POST /api/admin/integrations/webhook/test` — 재입고/주문
-  알림을 외부(Slack/ERP 등)로 전달할 웹훅을 관리자가 설정/테스트. 여기가 SSRF 표면(VULN-033).
+- 관리자 알림 연동(웹훅) **영속 설정** + "테스트 요청": `store_settings`(k/v) 테이블에 웹훅 URL 저장.
+  `GET/PUT /api/admin/settings`(저장·조회), `POST /api/admin/integrations/webhook/test`(입력 또는
+  저장된 URL로 테스트). 재입고 발송(`notify`) 시 저장된 웹훅으로 실제 전달(best-effort). 여기가 SSRF 표면(VULN-033).
 - 신규 관리자 페이지 `AdminRestock.jsx`(구독 목록 + 연동 웹훅 테스트), 상품 상세(`ProductDetail.jsx`) 신청 버튼.
 
 ## 설계 판단

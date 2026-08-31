@@ -466,6 +466,17 @@ export function testIntegrationWebhook(base, url) {
   });
 }
 
+export function fetchStoreSettings(base) {
+  return apiRequest(base, '/admin/settings');
+}
+
+export function saveStoreSettings(base, patch) {
+  return apiRequest(base, '/admin/settings', {
+    method: 'PUT',
+    body: JSON.stringify(patch),
+  });
+}
+
 export function changePassword(base, currentPassword, newPassword) {
   return apiRequest(base, '/profile/password', {
     method: 'PUT',
