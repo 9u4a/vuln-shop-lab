@@ -4,13 +4,18 @@ const { requireAuth, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
+// 품절 상품 재입고 알림 신청 — 사용자는 버튼 한 번으로 신청(같은 상품 중복 신청은 무시).
 router.post('/', requireAuth, (req, res) => {
-  const { productId, callbackUrl } = req.body;
+  const { productId } = req.body;
   const product = db.prepare('SELECT id FROM products WHERE id = ?').get(productId);
   if (!product) return res.status(404).json({ error: '상품을 찾을 수 없습니다.' });
+  const existing = db
+    .prepare('SELECT id FROM restock_subscriptions WHERE product_id = ? AND user_id = ?')
+    .get(product.id, req.session.user.id);
+  if (existing) return res.json({ id: existing.id, already: true });
   const result = db
-    .prepare('INSERT INTO restock_subscriptions (product_id, user_id, callback_url) VALUES (?, ?, ?)')
-    .run(product.id, req.session.user.id, callbackUrl || null);
+    .prepare('INSERT INTO restock_subscriptions (product_id, user_id) VALUES (?, ?)')
+    .run(product.id, req.session.user.id);
   res.status(201).json({ id: result.lastInsertRowid });
 });
 
@@ -22,7 +27,15 @@ router.get('/mine', requireAuth, (req, res) => {
        WHERE s.user_id = ? ORDER BY s.id DESC`
     )
     .all(req.session.user.id);
-  res.json({ subscriptions: rows.map((s) => ({ id: s.id, productId: s.product_id, productName: s.product_name, callbackUrl: s.callback_url, createdAt: s.created_at })) });
+  res.json({
+    subscriptions: rows.map((s) => ({
+      id: s.id,
+      productId: s.product_id,
+      productName: s.product_name,
+      notified: !!s.notified,
+      createdAt: s.created_at,
+    })),
+  });
 });
 
 router.get('/', requireAdmin, (req, res) => {
@@ -40,24 +53,18 @@ router.get('/', requireAdmin, (req, res) => {
       productId: s.product_id,
       productName: s.product_name,
       username: s.username,
-      callbackUrl: s.callback_url,
+      notified: !!s.notified,
       createdAt: s.created_at,
     })),
   });
 });
 
-// 재입고 통지 발송 — 구독자가 등록한 콜백 URL로 서버가 요청하고 그 응답을 그대로 반환한다.
-router.post('/:id/send', requireAdmin, async (req, res) => {
-  const sub = db.prepare('SELECT * FROM restock_subscriptions WHERE id = ?').get(req.params.id);
-  if (!sub) return res.status(404).json({ error: '구독을 찾을 수 없습니다.' });
-  if (!sub.callback_url) return res.status(400).json({ error: '콜백 URL이 없습니다.' });
-  try {
-    const upstream = await fetch(sub.callback_url, { signal: AbortSignal.timeout(5000) });
-    const body = await upstream.text();
-    res.json({ ok: true, status: upstream.status, body: body.slice(0, 5000) });
-  } catch (err) {
-    res.status(502).json({ error: `콜백 요청 실패: ${err.message}` });
-  }
+// 재입고 알림 발송 — 인앱 통지 처리(해당 상품 구독자 모두 notified 처리).
+router.post('/notify/:productId', requireAdmin, (req, res) => {
+  const result = db
+    .prepare('UPDATE restock_subscriptions SET notified = 1 WHERE product_id = ? AND notified = 0')
+    .run(req.params.productId);
+  res.json({ ok: true, notified: result.changes });
 });
 
 module.exports = router;

@@ -46,6 +46,7 @@ import AdminEvents from './pages/admin/AdminEvents.jsx';
 import AdminCoupons from './pages/admin/AdminCoupons.jsx';
 import AdminReturns from './pages/admin/AdminReturns.jsx';
 import AdminRestock from './pages/admin/AdminRestock.jsx';
+import AdminReferrals from './pages/admin/AdminReferrals.jsx';
 
 function Layout({ children }) {
   return (
@@ -112,6 +113,7 @@ export default function App() {
                   <Route path="coupons" element={<AdminCoupons />} />
                   <Route path="returns" element={<AdminReturns />} />
                   <Route path="restock" element={<AdminRestock />} />
+                  <Route path="referrals" element={<AdminReferrals />} />
                 </Route>
 
                 <Route path="/forbidden" element={<Forbidden />} />

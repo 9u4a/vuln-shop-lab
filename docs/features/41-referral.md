@@ -6,7 +6,9 @@
 
 - `users.referral_code`(가입 시 `REF<USERNAME>` 생성) + `users.referred_by`. 가입폼에 추천 코드
   입력(유효 시 추천인·신규 각 1,000P 적립). 마이페이지 "포인트·추천" 탭에서 내 코드 노출 + 사후 적용.
-- 신규 API: `GET /api/referral`(내 코드/추천 수), `POST /api/referral/apply`(코드 적용, 리워드).
+- 신규 API: `GET /api/referral`(내 코드/추천 수), `POST /api/referral/apply`(코드 적용, 리워드),
+  `GET /api/admin/referrals`(관리자 — 사용자별 추천 코드/피추천인/추천 수/포인트 내역).
+- 관리자 "추천인" 탭(`AdminReferrals.jsx`)에서 전체 추천 관계·리워드 현황 조회.
 - 시드: 모든 사용자에 `REF<USERNAME>` 코드 backfill(양 스택 동일).
 
 ## 설계 판단

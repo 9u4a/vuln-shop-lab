@@ -436,10 +436,10 @@ export function applyReferral(base, code) {
   });
 }
 
-export function subscribeRestock(base, productId, callbackUrl) {
+export function subscribeRestock(base, productId) {
   return apiRequest(base, '/restock', {
     method: 'POST',
-    body: JSON.stringify({ productId, callbackUrl: callbackUrl || null }),
+    body: JSON.stringify({ productId }),
   });
 }
 
@@ -451,8 +451,19 @@ export function fetchAdminRestock(base) {
   return apiRequest(base, '/restock');
 }
 
-export function sendRestock(base, id) {
-  return apiRequest(base, `/restock/${id}/send`, { method: 'POST' });
+export function notifyRestock(base, productId) {
+  return apiRequest(base, `/restock/notify/${productId}`, { method: 'POST' });
+}
+
+export function fetchAdminReferrals(base) {
+  return apiRequest(base, '/admin/referrals');
+}
+
+export function testIntegrationWebhook(base, url) {
+  return apiRequest(base, '/admin/integrations/webhook/test', {
+    method: 'POST',
+    body: JSON.stringify({ url }),
+  });
 }
 
 export function changePassword(base, currentPassword, newPassword) {

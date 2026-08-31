@@ -13,6 +13,7 @@ const TABS = [
   { to: 'coupons', label: '쿠폰' },
   { to: 'returns', label: '반품/환불' },
   { to: 'restock', label: '재입고 알림' },
+  { to: 'referrals', label: '추천인' },
 ];
 
 export default function AdminLayout() {

@@ -1,6 +1,7 @@
 package com.vulnlab.shop.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.ColumnDefault;
 import java.time.LocalDateTime;
 
 @Entity
@@ -17,8 +18,9 @@ public class RestockSubscription {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "callback_url")
-    private String callbackUrl;
+    @Column(nullable = false)
+    @ColumnDefault("false")
+    private boolean notified = false;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -32,8 +34,8 @@ public class RestockSubscription {
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
 
-    public String getCallbackUrl() { return callbackUrl; }
-    public void setCallbackUrl(String callbackUrl) { this.callbackUrl = callbackUrl; }
+    public boolean isNotified() { return notified; }
+    public void setNotified(boolean notified) { this.notified = notified; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

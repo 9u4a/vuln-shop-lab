@@ -259,4 +259,41 @@ router.delete('/products/:id', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
+// 추천인 내역 조회 — 사용자별 추천 코드/피추천인/추천 수/포인트.
+router.get('/referrals', requireAdmin, (req, res) => {
+  const rows = db
+    .prepare(
+      `SELECT u.id, u.username, u.referral_code, u.points,
+              r.username AS referred_by_username,
+              (SELECT COUNT(*) FROM users c WHERE c.referred_by = u.id) AS referred_count
+       FROM users u
+       LEFT JOIN users r ON r.id = u.referred_by
+       ORDER BY referred_count DESC, u.id`
+    )
+    .all();
+  res.json({
+    referrals: rows.map((u) => ({
+      id: u.id,
+      username: u.username,
+      referralCode: u.referral_code,
+      referredByUsername: u.referred_by_username,
+      referredCount: u.referred_count,
+      points: u.points,
+    })),
+  });
+});
+
+// 알림 연동(웹훅) 테스트 — 관리자가 입력한 URL로 서버가 요청하고 응답을 그대로 반환한다.
+router.post('/integrations/webhook/test', requireAdmin, async (req, res) => {
+  const { url } = req.body;
+  if (!url) return res.status(400).json({ error: 'URL이 필요합니다.' });
+  try {
+    const upstream = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    const body = await upstream.text();
+    res.json({ ok: true, status: upstream.status, body: body.slice(0, 5000) });
+  } catch (err) {
+    res.status(502).json({ error: `웹훅 요청 실패: ${err.message}` });
+  }
+});
+
 module.exports = router;
