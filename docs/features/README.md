@@ -48,3 +48,4 @@
 | 40 | 반품/환불 (RMA) | feature/commerce-rewards-batch | 031 | 반품 요청·관리자 승인·포인트 환급 |
 | 41 | 추천인 코드 | feature/commerce-rewards-batch | 032 | 가입 추천코드, 코드 적용 리워드 |
 | 42 | 재입고 알림 | feature/commerce-rewards-batch | 033 | 품절 상품 알림 신청, 콜백 통지 발송 |
+| 43 | OpenAPI(Swagger) API 문서 | feature/openapi-docs | 034 | 양 스택 비관리자 API 명세 + Swagger UI, nginx(:8090) 노출, UI 미링크, `/api/admin/**` 제외 |

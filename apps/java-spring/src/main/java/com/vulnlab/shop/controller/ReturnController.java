@@ -12,12 +12,14 @@ import com.vulnlab.shop.security.Roles;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/returns")
+@Tag(name = "반품·환불", description = "반품 요청(로그인) 및 승인·거절(관리자 전용 오퍼레이션 포함)")
 public class ReturnController {
 
     private final ReturnRepository returnRepository;

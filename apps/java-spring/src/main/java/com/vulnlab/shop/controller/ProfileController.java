@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vulnlab.shop.entity.User;
 import com.vulnlab.shop.repository.UserRepository;
 import com.vulnlab.shop.storage.Uploads;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +19,8 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/profile")
+@Tag(name = "프로필", description = "내 프로필 조회·수정·비밀번호·아바타 (로그인 필요)")
+@SecurityRequirement(name = "sessionCookie")
 public class ProfileController {
 
     private final UserRepository userRepository;
@@ -30,6 +35,7 @@ public class ProfileController {
         return (User) session.getAttribute("user");
     }
 
+    @Operation(summary = "내 프로필 조회")
     @GetMapping
     public ResponseEntity<?> get(HttpSession session) {
         User sessionUser = currentUser(session);
@@ -40,6 +46,7 @@ public class ProfileController {
         return ResponseEntity.ok(Map.of("profile", user));
     }
 
+    @Operation(summary = "내 프로필 수정", description = "본문의 필드를 사용자 레코드에 병합한다.")
     @PutMapping
     public ResponseEntity<?> update(@RequestBody Map<String, Object> body, HttpSession session) throws Exception {
         User sessionUser = currentUser(session);
@@ -53,6 +60,7 @@ public class ProfileController {
         return ResponseEntity.ok(Map.of("profile", user));
     }
 
+    @Operation(summary = "비밀번호 변경", description = "{ currentPassword, newPassword(8자+) }")
     @PutMapping("/password")
     public ResponseEntity<?> changePassword(@RequestBody Map<String, String> body, HttpSession session) {
         User sessionUser = currentUser(session);
@@ -74,6 +82,7 @@ public class ProfileController {
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
+    @Operation(summary = "비밀번호 재확인", description = "{ password } — 민감 작업 전 재인증")
     @PostMapping("/verify-password")
     public ResponseEntity<?> verifyPassword(@RequestBody Map<String, String> body, HttpSession session) {
         User sessionUser = currentUser(session);
@@ -91,6 +100,7 @@ public class ProfileController {
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
+    @Operation(summary = "아바타 업로드 (multipart/form-data, part: avatar)")
     @PostMapping("/avatar")
     public ResponseEntity<?> uploadAvatar(@RequestParam("avatar") MultipartFile file, HttpSession session) throws IOException {
         User sessionUser = currentUser(session);

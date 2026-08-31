@@ -12,9 +12,14 @@
 ## 트리거 방법
 
 ```
-GET /api/java/actuator/env
-GET /api/java/actuator/heapdump
+GET http://localhost:8081/actuator/env
+GET http://localhost:8081/actuator/heapdump
 ```
+
+주의: nginx(`:8090`)의 `location /api/java/`는 `proxy_pass ... /api/`로 프리픽스를 치환하므로
+`/api/java/actuator/env`는 백엔드에서 `/api/actuator/env`가 되어 404다. actuator는 `context-path`가 없어
+루트(`/actuator/**`)에 있으므로, 이 표면은 **WAS 포트(`:8081`)에 직접 접근할 수 있을 때만** 유효하다
+(nginx 공개 진입점으로 도달하는 [[VULN-034-unauthenticated-openapi-docs]]와 노출 경계가 다르다).
 
 Node는 서버 에러를 유발하는 요청(예: 잘못된 타입의 바디로 미처리 라우트 호출) 후 응답 바디에 스택트레이스 포함 여부 확인.
 

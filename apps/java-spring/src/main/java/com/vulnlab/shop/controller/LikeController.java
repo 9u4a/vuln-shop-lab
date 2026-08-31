@@ -8,6 +8,7 @@ import com.vulnlab.shop.repository.ProductRepository;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/likes")
+@Tag(name = "좋아요·위시리스트", description = "상품 좋아요 토글 및 위시리스트 조회")
 public class LikeController {
 
     private final ProductLikeRepository likeRepository;

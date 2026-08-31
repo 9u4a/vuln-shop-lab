@@ -8,6 +8,9 @@ import com.vulnlab.shop.repository.ReviewRepository;
 import com.vulnlab.shop.repository.UserRepository;
 import com.vulnlab.shop.service.ProductService;
 import com.vulnlab.shop.storage.Uploads;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.expression.Expression;
@@ -28,6 +31,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/products")
+@Tag(name = "상품", description = "상품 목록·검색·상세 및 후기")
 public class ProductController {
 
     private final ProductService productService;
@@ -43,16 +47,17 @@ public class ProductController {
         this.likeRepository = likeRepository;
     }
 
+    @Operation(summary = "상품 목록·검색", description = "모든 파라미터 선택. 응답: { products: [...] } (sort 사용 시 sortKeys 동반 가능).")
     @GetMapping
-    public Map<String, Object> list(@RequestParam(required = false) String q,
-                                     @RequestParam(required = false) String category,
-                                     @RequestParam(required = false) String sort,
-                                     @RequestParam(required = false) String gender,
-                                     @RequestParam(required = false) String color,
-                                     @RequestParam(required = false) String material,
-                                     @RequestParam(required = false) String minPrice,
-                                     @RequestParam(required = false) String maxPrice,
-                                     @RequestParam(required = false) String inStock,
+    public Map<String, Object> list(@Parameter(description = "상품명 검색어") @RequestParam(required = false) String q,
+                                     @Parameter(description = "카테고리 코드") @RequestParam(required = false) String category,
+                                     @Parameter(description = "정렬 키 (reviews, likes, price 등)") @RequestParam(required = false) String sort,
+                                     @Parameter(description = "성별 (men, women, unisex)") @RequestParam(required = false) String gender,
+                                     @Parameter(description = "컬러") @RequestParam(required = false) String color,
+                                     @Parameter(description = "소재") @RequestParam(required = false) String material,
+                                     @Parameter(description = "최소 가격") @RequestParam(required = false) String minPrice,
+                                     @Parameter(description = "최대 가격") @RequestParam(required = false) String maxPrice,
+                                     @Parameter(description = "재고 있는 상품만 (1 또는 true)") @RequestParam(required = false) String inStock,
                                      HttpSession session) {
         boolean stockOnly = "1".equals(inStock) || "true".equalsIgnoreCase(inStock);
         List<Product> products = productService.list(q, category, gender, color, material, minPrice, maxPrice, stockOnly);
@@ -108,6 +113,7 @@ public class ProductController {
         }
     }
 
+    @Operation(summary = "상품 상세")
     @GetMapping("/{id}")
     public ResponseEntity<?> detail(@PathVariable Long id, HttpSession session) {
         Product product = productService.findById(id);
@@ -121,6 +127,7 @@ public class ProductController {
         return ResponseEntity.ok(Map.of("product", product));
     }
 
+    @Operation(summary = "상품 후기 목록")
     @GetMapping("/{id}/reviews")
     public Map<String, Object> listReviews(@PathVariable Long id) {
         List<Review> reviews = reviewRepository.findByProductId(id);
@@ -142,6 +149,8 @@ public class ProductController {
         return Map.of("reviews", body);
     }
 
+    @Operation(summary = "후기 작성 (로그인 필요, multipart/form-data)")
+    @io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "sessionCookie")
     @PostMapping("/{id}/reviews")
     public ResponseEntity<?> createReview(@PathVariable Long id,
                                            @RequestParam(value = "rating", required = false) Integer rating,

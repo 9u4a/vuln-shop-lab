@@ -15,7 +15,7 @@ docker compose up --build -d
 # 특정 서비스만 재빌드+재기동 (예: 백엔드 코드 수정 후)
 docker compose up -d --build node-express
 docker compose up -d --build java-spring
-docker compose restart nginx        # WAS 재빌드 후 nginx 재시작(502/구버전 방지)
+docker compose up -d --build nginx  # nginx.conf는 이미지에 COPY됨 — restart로는 옛 conf가 뜬다
 
 # 클린 재시드 — DB 볼륨까지 삭제 후 새로 시드 (스키마·시드 변경 시)
 docker compose down -v && docker compose up --build -d

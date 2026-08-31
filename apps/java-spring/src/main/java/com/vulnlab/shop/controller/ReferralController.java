@@ -4,6 +4,8 @@ import com.vulnlab.shop.entity.PointTransaction;
 import com.vulnlab.shop.entity.User;
 import com.vulnlab.shop.repository.PointTransactionRepository;
 import com.vulnlab.shop.repository.UserRepository;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +15,8 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/referral")
+@Tag(name = "추천인", description = "추천 코드 조회·적용 (로그인 필요)")
+@SecurityRequirement(name = "sessionCookie")
 public class ReferralController {
 
     private static final int REFERRAL_REWARD = 1000;
