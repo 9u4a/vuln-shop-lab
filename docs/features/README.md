@@ -44,3 +44,7 @@
 | 36 | 대량 더미 시드 데이터 | feature/bulk-seed-data | — | 항목당 50~100개 결정적 시드(양 스택), login_logs·activity 포함 |
 | 37 | 관리자/스토어프론트 개선 | feature/admin-storefront-improvements | — | 상품관리 버그·페이징·상세 모달+수정 API·이벤트 팝업 기간·약관 동의·반응형 |
 | 38 | 상단 메뉴 정리 · 관리자 등록/수정 모달 · 상품 상세/수정 | feature/nav-slim-admin-modals | — | 내비 카테고리 제거(전체→상품), 상품/FAQ/공지/이벤트/쿠폰 등록·수정 모달화, 상품 상세/수정 |
+| 39 | 포인트/적립금 | feature/commerce-rewards-batch | 030 | 적립·사용, 포인트 원장, 마이페이지·결제 연동 |
+| 40 | 반품/환불 (RMA) | feature/commerce-rewards-batch | 031 | 반품 요청·관리자 승인·포인트 환급 |
+| 41 | 추천인 코드 | feature/commerce-rewards-batch | 032 | 가입 추천코드, 코드 적용 리워드 |
+| 42 | 재입고 알림 | feature/commerce-rewards-batch | 033 | 품절 상품 알림 신청, 콜백 통지 발송 |

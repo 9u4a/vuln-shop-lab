@@ -34,6 +34,7 @@ public class DataSeeder implements CommandLineRunner {
     private final CouponRepository couponRepository;
     private final QuestionRepository questionRepository;
     private final LoginLogRepository loginLogRepository;
+    private final PointTransactionRepository pointTransactionRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public DataSeeder(ProductRepository productRepository, UserRepository userRepository,
@@ -41,7 +42,8 @@ public class DataSeeder implements CommandLineRunner {
                       ReviewRepository reviewRepository, OrderRepository orderRepository,
                       OrderItemRepository orderItemRepository, EventRepository eventRepository,
                       ProductLikeRepository productLikeRepository, CouponRepository couponRepository,
-                      QuestionRepository questionRepository, LoginLogRepository loginLogRepository) {
+                      QuestionRepository questionRepository, LoginLogRepository loginLogRepository,
+                      PointTransactionRepository pointTransactionRepository) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.faqRepository = faqRepository;
@@ -54,6 +56,7 @@ public class DataSeeder implements CommandLineRunner {
         this.couponRepository = couponRepository;
         this.questionRepository = questionRepository;
         this.loginLogRepository = loginLogRepository;
+        this.pointTransactionRepository = pointTransactionRepository;
     }
 
     // 결정적 순환 선택 헬퍼 + 대량 더미 생성용 공용 데이터
@@ -81,6 +84,26 @@ public class DataSeeder implements CommandLineRunner {
         seedLikes();
         seedCoupons();
         seedLoginLogs();
+        seedRewards();
+    }
+
+    // 추천 코드 backfill + 데모 사용자 포인트 적립(멱등)
+    private void seedRewards() {
+        for (User u : userRepository.findAll()) {
+            if (u.getReferralCode() == null) {
+                u.setReferralCode("REF" + u.getUsername().toUpperCase());
+                userRepository.save(u);
+            }
+        }
+        if (pointTransactionRepository.count() == 0) {
+            for (String uname : new String[]{"user1", "user2", "user3"}) {
+                userRepository.findByUsername(uname).ifPresent(u -> {
+                    u.setPoints(3000);
+                    userRepository.save(u);
+                    pointTransactionRepository.save(new PointTransaction(u.getId(), 3000, "가입 축하 적립", null));
+                });
+            }
+        }
     }
 
     private void seedCoupons() {

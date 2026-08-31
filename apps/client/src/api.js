@@ -77,11 +77,12 @@ export function updateProfile(base, patch) {
   });
 }
 
-export function createOrder(base, items) {
+export function createOrder(base, items, pointsUsed) {
   return apiRequest(base, '/orders', {
     method: 'POST',
     body: JSON.stringify({
       items: items.map((i) => ({ productId: i.productId, quantity: i.quantity, optionValue: i.option || undefined })),
+      pointsUsed: pointsUsed || 0,
     }),
   });
 }
@@ -395,6 +396,85 @@ export function updateEvent(base, id, event) {
 
 export function deleteEvent(base, id) {
   return apiRequest(base, `/events/${id}`, { method: 'DELETE' });
+}
+
+export function fetchPoints(base) {
+  return apiRequest(base, '/points');
+}
+
+export function fetchReturns(base) {
+  return apiRequest(base, '/returns/mine');
+}
+
+export function requestReturn(base, orderId, reason) {
+  return apiRequest(base, '/returns', {
+    method: 'POST',
+    body: JSON.stringify({ orderId, reason }),
+  });
+}
+
+export function fetchAdminReturns(base) {
+  return apiRequest(base, '/returns');
+}
+
+export function approveReturn(base, id) {
+  return apiRequest(base, `/returns/${id}/approve`, { method: 'PUT' });
+}
+
+export function rejectReturn(base, id) {
+  return apiRequest(base, `/returns/${id}/reject`, { method: 'PUT' });
+}
+
+export function fetchReferral(base) {
+  return apiRequest(base, '/referral');
+}
+
+export function applyReferral(base, code) {
+  return apiRequest(base, '/referral/apply', {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  });
+}
+
+export function subscribeRestock(base, productId) {
+  return apiRequest(base, '/restock', {
+    method: 'POST',
+    body: JSON.stringify({ productId }),
+  });
+}
+
+export function fetchMyRestock(base) {
+  return apiRequest(base, '/restock/mine');
+}
+
+export function fetchAdminRestock(base) {
+  return apiRequest(base, '/restock');
+}
+
+export function notifyRestock(base, productId) {
+  return apiRequest(base, `/restock/notify/${productId}`, { method: 'POST' });
+}
+
+export function fetchAdminReferrals(base) {
+  return apiRequest(base, '/admin/referrals');
+}
+
+export function testIntegrationWebhook(base, url) {
+  return apiRequest(base, '/admin/integrations/webhook/test', {
+    method: 'POST',
+    body: JSON.stringify({ url }),
+  });
+}
+
+export function fetchStoreSettings(base) {
+  return apiRequest(base, '/admin/settings');
+}
+
+export function saveStoreSettings(base, patch) {
+  return apiRequest(base, '/admin/settings', {
+    method: 'PUT',
+    body: JSON.stringify(patch),
+  });
 }
 
 export function changePassword(base, currentPassword, newPassword) {

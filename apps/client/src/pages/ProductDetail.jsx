@@ -4,7 +4,7 @@ import { useBackend } from '../BackendContext.jsx';
 import { useCart } from '../CartContext.jsx';
 import { useSession } from '../SessionContext.jsx';
 import { useToast } from '../ToastContext.jsx';
-import { fetchProduct, fetchReviews, createReview, updateReview, deleteReview } from '../api.js';
+import { fetchProduct, fetchReviews, createReview, updateReview, deleteReview, subscribeRestock } from '../api.js';
 import { formatCurrency } from '../format.js';
 import { CATEGORY_LABELS } from '../data/categories.js';
 import LikeButton from '../components/LikeButton.jsx';
@@ -45,6 +45,17 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [selectedOption, setSelectedOption] = useState('');
   const [pendingReview, setPendingReview] = useState(null);
+  const [restockMsg, setRestockMsg] = useState(null);
+
+  async function handleRestockSubscribe() {
+    setRestockMsg(null);
+    try {
+      const res = await subscribeRestock(backend.base, product.id);
+      setRestockMsg(res.already ? '이미 재입고 알림을 신청한 상품입니다.' : '재입고 알림을 신청했습니다. 입고되면 알려드릴게요.');
+    } catch (err) {
+      setRestockMsg(err.message);
+    }
+  }
 
   function loadReviews() {
     fetchReviews(backend.base, id).then((data) => setReviews(data.reviews));
@@ -207,6 +218,15 @@ export default function ProductDetail() {
               바로 구매
             </button>
           </div>
+
+          {soldOut && user && (
+            <div className="restock-box">
+              <strong>재입고 알림 신청</strong>
+              <p className="muted">품절된 상품이 다시 입고되면 알림을 보내드립니다.</p>
+              <button type="button" onClick={handleRestockSubscribe} className="btn btn-ghost">재입고 알림 신청</button>
+              {restockMsg && <p className="status-ok">{restockMsg}</p>}
+            </div>
+          )}
         </div>
       </div>
 

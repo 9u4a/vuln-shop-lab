@@ -43,6 +43,16 @@ public class User {
     @ColumnDefault("true")
     private boolean active = true;
 
+    @Column(nullable = false)
+    @ColumnDefault("0")
+    private int points = 0;
+
+    @Column(name = "referral_code")
+    private String referralCode;
+
+    @Column(name = "referred_by")
+    private Long referredBy;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -82,6 +92,15 @@ public class User {
 
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
+
+    public int getPoints() { return points; }
+    public void setPoints(int points) { this.points = points; }
+
+    public String getReferralCode() { return referralCode; }
+    public void setReferralCode(String referralCode) { this.referralCode = referralCode; }
+
+    public Long getReferredBy() { return referredBy; }
+    public void setReferredBy(Long referredBy) { this.referredBy = referredBy; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

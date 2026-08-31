@@ -71,12 +71,12 @@ router.get('/:id', requireAuth, (req, res) => {
 });
 
 router.post('/', requireAuth, (req, res) => {
-  const { items, webhookUrl } = req.body;
+  const { items, webhookUrl, pointsUsed } = req.body;
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: '최소 1개 이상의 상품이 필요합니다.' });
   }
 
-  let total = 0;
+  let itemsTotal = 0;
   const resolved = [];
   for (const item of items) {
     const product = db.prepare('SELECT * FROM products WHERE id = ?').get(item.productId);
@@ -84,9 +84,12 @@ router.post('/', requireAuth, (req, res) => {
     if (!product || !Number.isInteger(quantity)) {
       return res.status(400).json({ error: '유효하지 않은 주문 항목입니다.' });
     }
-    total += product.price * quantity;
+    itemsTotal += product.price * quantity;
     resolved.push({ product, quantity, optionValue: item.optionValue || null });
   }
+
+  const usePoints = Number(pointsUsed) || 0;
+  const total = itemsTotal - usePoints;
 
   const tossOrderId = `order_${crypto.randomUUID()}`;
   const insertOrder = db.prepare(
@@ -103,7 +106,20 @@ router.post('/', requireAuth, (req, res) => {
     insertItem.run(orderId, product.id, quantity, product.price, optionValue);
   }
 
-  res.status(201).json({ orderId, tossOrderId, amount: total });
+  const insertPtx = db.prepare(
+    'INSERT INTO point_transactions (user_id, amount, reason, order_id) VALUES (?, ?, ?, ?)'
+  );
+  if (usePoints !== 0) {
+    db.prepare('UPDATE users SET points = points - ? WHERE id = ?').run(usePoints, req.session.user.id);
+    insertPtx.run(req.session.user.id, -usePoints, '주문 사용', orderId);
+  }
+  const earned = Math.floor(itemsTotal * 0.05);
+  if (earned > 0) {
+    db.prepare('UPDATE users SET points = points + ? WHERE id = ?').run(earned, req.session.user.id);
+    insertPtx.run(req.session.user.id, earned, '주문 적립', orderId);
+  }
+
+  res.status(201).json({ orderId, tossOrderId, amount: total, pointsUsed: usePoints, pointsEarned: earned });
 });
 
 router.post('/:id/confirm', requireAuth, async (req, res) => {

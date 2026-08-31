@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useBackend } from '../BackendContext.jsx';
-import { fetchOrder, generateReceipt, fetchReceipt } from '../api.js';
+import { fetchOrder, generateReceipt, fetchReceipt, requestReturn } from '../api.js';
 import { formatCurrency } from '../format.js';
 import StatusChip from '../components/StatusChip.jsx';
 
@@ -13,6 +13,20 @@ export default function OrderDetail() {
   const [note, setNote] = useState('');
   const [filename, setFilename] = useState('');
   const [receipt, setReceipt] = useState(null);
+  const [returnReason, setReturnReason] = useState('');
+  const [returnMsg, setReturnMsg] = useState(null);
+
+  async function handleRequestReturn(e) {
+    e.preventDefault();
+    setReturnMsg(null);
+    try {
+      await requestReturn(backend.base, data.order.id, returnReason);
+      setReturnReason('');
+      setReturnMsg('반품/환불 요청이 접수되었습니다. 관리자 승인 후 처리됩니다.');
+    } catch (err) {
+      setReturnMsg(err.message);
+    }
+  }
 
   useEffect(() => {
     setData(null);
@@ -73,6 +87,17 @@ export default function OrderDetail() {
         <div className="summary-box__row summary-box__row--total" style={{ marginTop: 'var(--space-4)' }}>
           <span>총 결제금액</span><span className="tnum">{formatCurrency(data.order.totalAmount)}</span>
         </div>
+      </section>
+
+      <section className="card">
+        <h2>반품/환불 요청</h2>
+        <form onSubmit={handleRequestReturn}>
+          <label>사유
+            <input value={returnReason} onChange={(e) => setReturnReason(e.target.value)} placeholder="반품 사유를 입력하세요" />
+          </label>
+          <button type="submit" className="btn btn-ghost">반품/환불 요청</button>
+        </form>
+        {returnMsg && <p className="status-ok">{returnMsg}</p>}
       </section>
 
       <section className="card">

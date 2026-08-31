@@ -10,7 +10,9 @@ import com.vulnlab.shop.repository.OrderItemRepository;
 import com.vulnlab.shop.entity.LoginLog;
 import com.vulnlab.shop.repository.LoginLogRepository;
 import com.vulnlab.shop.repository.OrderRepository;
+import com.vulnlab.shop.entity.StoreSetting;
 import com.vulnlab.shop.repository.ProductRepository;
+import com.vulnlab.shop.repository.StoreSettingRepository;
 import com.vulnlab.shop.repository.UserRepository;
 import com.vulnlab.shop.security.Roles;
 import com.vulnlab.shop.storage.Uploads;
@@ -36,11 +38,14 @@ public class AdminController {
     private final FaqRepository faqRepository;
     private final NoticeRepository noticeRepository;
     private final LoginLogRepository loginLogRepository;
+    private final StoreSettingRepository storeSettingRepository;
+
+    private static final String WEBHOOK_KEY = "notification_webhook_url";
 
     public AdminController(UserRepository userRepository, ProductRepository productRepository,
                             OrderRepository orderRepository, OrderItemRepository orderItemRepository,
                             FaqRepository faqRepository, NoticeRepository noticeRepository,
-                            LoginLogRepository loginLogRepository) {
+                            LoginLogRepository loginLogRepository, StoreSettingRepository storeSettingRepository) {
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
@@ -48,6 +53,7 @@ public class AdminController {
         this.faqRepository = faqRepository;
         this.noticeRepository = noticeRepository;
         this.loginLogRepository = loginLogRepository;
+        this.storeSettingRepository = storeSettingRepository;
     }
 
     private ResponseEntity<?> requireAdmin(HttpSession session) {
@@ -337,5 +343,77 @@ public class AdminController {
         if (!productRepository.existsById(id)) return ResponseEntity.notFound().build();
         productRepository.deleteById(id);
         return ResponseEntity.ok(Map.of("ok", true));
+    }
+
+    // 추천인 내역 조회 — 사용자별 추천 코드/피추천인/추천 수/포인트.
+    @GetMapping("/referrals")
+    public ResponseEntity<?> referrals(HttpSession session) {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        List<User> users = userRepository.findAll();
+        java.util.Map<Long, String> nameById = new java.util.HashMap<>();
+        java.util.Map<Long, Integer> referredCount = new java.util.HashMap<>();
+        for (User u : users) {
+            nameById.put(u.getId(), u.getUsername());
+        }
+        for (User u : users) {
+            if (u.getReferredBy() != null) {
+                referredCount.merge(u.getReferredBy(), 1, Integer::sum);
+            }
+        }
+        List<Map<String, Object>> out = new java.util.ArrayList<>();
+        for (User u : users) {
+            Map<String, Object> m = new java.util.HashMap<>();
+            m.put("id", u.getId());
+            m.put("username", u.getUsername());
+            m.put("referralCode", u.getReferralCode());
+            m.put("referredByUsername", u.getReferredBy() == null ? null : nameById.get(u.getReferredBy()));
+            m.put("referredCount", referredCount.getOrDefault(u.getId(), 0));
+            m.put("points", u.getPoints());
+            out.add(m);
+        }
+        out.sort((a, b) -> ((Integer) b.get("referredCount")).compareTo((Integer) a.get("referredCount")));
+        return ResponseEntity.ok(Map.of("referrals", out));
+    }
+
+    private String savedWebhook() {
+        return storeSettingRepository.findById(WEBHOOK_KEY).map(StoreSetting::getValue).orElse(null);
+    }
+
+    @GetMapping("/settings")
+    public ResponseEntity<?> getSettings(HttpSession session) {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        Map<String, Object> out = new java.util.HashMap<>();
+        out.put("notificationWebhookUrl", savedWebhook());
+        return ResponseEntity.ok(out);
+    }
+
+    @PutMapping("/settings")
+    public ResponseEntity<?> saveSettings(@RequestBody Map<String, String> body, HttpSession session) {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        storeSettingRepository.save(new StoreSetting(WEBHOOK_KEY, body.get("notificationWebhookUrl")));
+        Map<String, Object> out = new java.util.HashMap<>();
+        out.put("notificationWebhookUrl", savedWebhook());
+        return ResponseEntity.ok(out);
+    }
+
+    // 알림 연동(웹훅) 테스트 — 입력 URL(없으면 저장된 URL)로 서버가 요청하고 응답을 그대로 반환한다.
+    @PostMapping("/integrations/webhook/test")
+    public ResponseEntity<?> testWebhook(@RequestBody Map<String, String> body, HttpSession session) {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        String url = body.get("url");
+        if (url == null || url.isBlank()) url = savedWebhook();
+        if (url == null || url.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "URL이 필요합니다."));
+        }
+        try {
+            com.vulnlab.shop.vuln.CallbackFetcher.Result result = com.vulnlab.shop.vuln.CallbackFetcher.fetch(url);
+            return ResponseEntity.ok(Map.of("ok", true, "status", result.status, "body", result.body == null ? "" : result.body));
+        } catch (Exception e) {
+            return ResponseEntity.status(502).body(Map.of("error", "웹훅 요청 실패: " + e.getMessage()));
+        }
     }
 }
