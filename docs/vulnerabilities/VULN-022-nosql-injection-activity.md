@@ -2,7 +2,7 @@
 
 - 대상 스택: node-express (MongoDB)
 - 심각도: High
-- 분류: A03:2021 Injection (NoSQL Injection, CWE-943)
+- 분류: A05:2025 Injection (NoSQL Injection, CWE-943)
 
 ## 위치
 

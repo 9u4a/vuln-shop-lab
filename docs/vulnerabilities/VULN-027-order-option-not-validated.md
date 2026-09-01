@@ -2,7 +2,7 @@
 
 - 대상 스택: node-express, java-spring
 - 심각도: Low
-- 분류: A04:2021 Insecure Design (Business Logic, CWE-20)
+- 분류: A06:2025 Insecure Design (Business Logic, CWE-20)
 
 ## 위치
 

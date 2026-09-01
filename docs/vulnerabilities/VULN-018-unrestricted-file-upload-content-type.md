@@ -2,7 +2,7 @@
 
 - 대상 스택: node-express, java-spring (동일)
 - 심각도: High
-- 분류: A05:2021 Security Misconfiguration / A03 Injection (CWE-434 Unrestricted Upload)
+- 분류: A02:2025 Security Misconfiguration / A05 Injection (CWE-434 Unrestricted Upload)
 
 ## 위치
 

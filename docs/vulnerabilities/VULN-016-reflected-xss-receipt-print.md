@@ -2,7 +2,7 @@
 
 - 대상 스택: node-express, java-spring (동일)
 - 심각도: High
-- 분류: A03:2021 Injection (XSS, CWE-79)
+- 분류: A05:2025 Injection (XSS, CWE-79)
 
 ## 위치
 

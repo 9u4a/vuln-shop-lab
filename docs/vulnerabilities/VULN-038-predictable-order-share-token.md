@@ -2,7 +2,7 @@
 
 - 대상 스택: node-express, java-spring
 - 심각도: High
-- 분류: A02:2021 Cryptographic Failures (CWE-330 Use of Insufficiently Random Values, CWE-340 Generation of Predictable Numbers/IDs)
+- 분류: A04:2025 Cryptographic Failures (CWE-330 Use of Insufficiently Random Values, CWE-340 Generation of Predictable Numbers/IDs)
 
 ## 위치
 
@@ -30,7 +30,7 @@ python3 -c "import base64; print(base64.b64decode('NDI='))"   # b'42' — 토큰
 - 주문 번호 1부터 순차 인코딩만으로 **전 주문**의 항목·금액·배송지(VULN-037과 같은 PII)를 열거.
 - 토큰이 사용자에게 노출되므로(공유 링크 복사 UI) 한 건만 관찰해도 전체 스킴이 드러난다.
 - 만료·폐기 개념이 없어 한 번 유출된 링크는 영구 유효.
-- 저장소 최초의 **A02 Cryptographic Failures** 사례 — 그동안 비밀번호 해시(bcrypt)는 올바르게
+- 저장소 최초의 **A04 Cryptographic Failures** 사례 — 그동안 비밀번호 해시(bcrypt)는 올바르게
   쓰였고 약한 토큰·예측 가능 식별자가 없었다.
 
 ## 증거 (재현 확인)

@@ -2,7 +2,7 @@
 
 - 대상 스택: java-spring
 - 심각도: High
-- 분류: A05:2021 Security Misconfiguration (XXE, CWE-611)
+- 분류: A02:2025 Security Misconfiguration (XXE, CWE-611)
 
 ## 위치
 

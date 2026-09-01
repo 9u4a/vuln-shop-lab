@@ -2,7 +2,7 @@
 
 - 대상 스택: java-spring
 - 심각도: Critical (RCE 가능)
-- 분류: A03:2021 Injection (Expression Language Injection)
+- 분류: A05:2025 Injection (Expression Language Injection)
 
 ## 위치
 

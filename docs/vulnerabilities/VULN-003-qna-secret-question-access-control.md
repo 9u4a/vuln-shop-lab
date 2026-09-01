@@ -2,7 +2,7 @@
 
 - 대상 스택: node-express, java-spring (client 공통)
 - 심각도: Medium
-- 분류: A01:2021 Broken Access Control (CWE-639 / CWE-200)
+- 분류: A01:2025 Broken Access Control (CWE-639 / CWE-200)
 
 ## 위치
 

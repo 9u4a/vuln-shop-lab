@@ -2,7 +2,7 @@
 
 - 대상 스택: client (node-express / java-spring 양쪽 백엔드에서 공통)
 - 심각도: Medium
-- 분류: A03:2021 Injection (DOM-based XSS, CWE-79)
+- 분류: A05:2025 Injection (DOM-based XSS, CWE-79)
 
 ## 위치
 
