@@ -14,10 +14,11 @@ public class CorsConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        // 쉼표로 구분된 여러 오리진 허용(dev :5173, nginx 진입점 :8090 등).
+        // 쉼표로 구분된 여러 오리진 패턴 허용(dev :5173, nginx 진입점 :8090, localhost·127.0.0.1 등).
+        // allowedOriginPatterns를 써서 localhost/127.0.0.1의 임의 포트를 모두 수용(로컬 랩 접속 편의).
         String[] origins = allowedOrigin.split("\\s*,\\s*");
         registry.addMapping("/api/**")
-                .allowedOrigins(origins)
+                .allowedOriginPatterns(origins)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowCredentials(true);
     }

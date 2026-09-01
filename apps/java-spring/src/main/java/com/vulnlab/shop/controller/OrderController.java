@@ -278,8 +278,7 @@ public class OrderController {
         // 포인트 사용/적립과 쿠폰 사용 마킹은 결제 확인(POST /{id}/confirm) 시점에 처리한다.
         int earned = itemsTotal.multiply(BigDecimal.valueOf(5)).divide(BigDecimal.valueOf(100)).intValue();
 
-        // 서버 장바구니 비우기
-        cartRepository.findByUserId(user.getId()).ifPresent(c -> cartItemRepository.deleteByCartId(c.getId()));
+        // 장바구니 비우기는 결제 확인(confirm) 성공 시점으로 미룬다 — 결제 미완료로 빠져나오면 유지.
 
         // 주문 접수 알림 웹훅 — 등록된 URL로 즉시 발송(VULN-004).
         fireWebhook(order.getWebhookUrl(), order, "order.created", "pending");
@@ -400,6 +399,8 @@ public class OrderController {
                     .findFirst()
                     .ifPresent(uc -> { uc.setUsed(true); userCouponRepository.save(uc); });
         }
+        // 결제 확정 시점에 서버 장바구니 비우기
+        cartRepository.findByUserId(order.getUserId()).ifPresent(c -> cartItemRepository.deleteByCartId(c.getId()));
 
         fireWebhook(order.getWebhookUrl(), order, "order.paid", "paid");
 
