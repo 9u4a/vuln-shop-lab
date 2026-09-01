@@ -1094,6 +1094,11 @@ textarea { resize: vertical; min-height: 4.5rem; }
 .ship-fields__row input { flex: 1; min-width: 0; }
 .ship-fields__row input.ship-fields__postcode { flex: 0 0 96px; }
 
+/* 장바구니 공유 */
+.cart-share__row { display: flex; gap: var(--space-2); align-items: center; margin-top: var(--space-3); flex-wrap: wrap; }
+.cart-share__row input { flex: 1; min-width: 0; }
+.cart-share__code { font-family: ui-monospace, monospace; font-size: 0.8rem; }
+
 /* 장바구니 쿠폰 선택 */
 .coupon-applied { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); width: 100%; }
 .coupon-pick-list { list-style: none; display: flex; flex-direction: column; gap: var(--space-2); }

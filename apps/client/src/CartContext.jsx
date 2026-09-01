@@ -194,7 +194,7 @@ function CartProvider({ children }) {
   const total = list.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items: list, total, addItem, setQuantity, changeOption, removeItem, clear }}>
+    <CartContext.Provider value={{ items: list, total, addItem, setQuantity, changeOption, removeItem, clear, refresh: refreshServer }}>
       {children}
     </CartContext.Provider>
   );

@@ -535,10 +535,14 @@ export function verifyPassword(base, password) {
   });
 }
 
-export function importCartBackup(base, rawJson) {
+// 장바구니 공유 — 현재 장바구니를 공유 코드로 내보내고, 코드로 가져온다.
+export function shareCart(base) {
+  return apiRequest(base, '/cart/share');
+}
+export function importSharedCart(base, code) {
   return apiRequest(base, '/cart/import', {
     method: 'POST',
-    body: rawJson,
+    body: JSON.stringify({ code }),
   });
 }
 

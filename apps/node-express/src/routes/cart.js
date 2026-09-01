@@ -83,4 +83,50 @@ router.delete('/', requireAuth, (req, res) => {
   res.json({ items: [] });
 });
 
+// 장바구니 공유 코드 생성 — 현재 장바구니를 불투명 코드로 내보낸다.
+router.get('/share', requireAuth, (req, res) => {
+  const cartId = cartIdFor(req.session.user.id);
+  const items = cartLines(cartId).map((l) => ({
+    productId: l.productId,
+    quantity: l.quantity,
+    optionValue: l.optionValue,
+  }));
+  const code = Buffer.from(JSON.stringify(items)).toString('base64');
+  res.json({ code });
+});
+
+// 공유 코드로 장바구니 가져오기 — Node는 안전하게 JSON 파싱한다(취약점은 java 스택 전용, VULN-012).
+router.post('/import', requireAuth, (req, res) => {
+  let items;
+  try {
+    const json = Buffer.from(String(req.body.code || ''), 'base64').toString('utf8');
+    items = JSON.parse(json);
+  } catch {
+    return res.status(400).json({ error: '유효하지 않은 공유 코드입니다.' });
+  }
+  if (!Array.isArray(items)) {
+    return res.status(400).json({ error: '유효하지 않은 공유 코드입니다.' });
+  }
+  const cartId = cartIdFor(req.session.user.id);
+  let added = 0;
+  for (const it of items) {
+    const productId = Number(it && it.productId);
+    const product = db.prepare('SELECT id FROM products WHERE id = ?').get(productId);
+    if (!product) continue;
+    const quantity = Math.max(1, Number(it.quantity) || 1);
+    const optionValue = it.optionValue || null;
+    const existing = db
+      .prepare("SELECT id, quantity FROM cart_items WHERE cart_id = ? AND product_id = ? AND IFNULL(option_value, '') = IFNULL(?, '')")
+      .get(cartId, productId, optionValue);
+    if (existing) {
+      db.prepare('UPDATE cart_items SET quantity = ? WHERE id = ?').run(existing.quantity + quantity, existing.id);
+    } else {
+      db.prepare('INSERT INTO cart_items (cart_id, product_id, quantity, option_value) VALUES (?, ?, ?, ?)')
+        .run(cartId, productId, quantity, optionValue);
+    }
+    added++;
+  }
+  res.json({ itemCount: added, items: cartLines(cartId) });
+});
+
 module.exports = router;

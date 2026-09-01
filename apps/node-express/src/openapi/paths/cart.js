@@ -44,6 +44,39 @@ module.exports = {
       responses: { 201: itemsRes, 401: rref('Unauthorized'), 404: rref('NotFound') },
     },
   },
+  '/cart/share': {
+    get: {
+      tags: TAG,
+      summary: '장바구니 공유 코드 생성',
+      description: '현재 장바구니를 base64 공유 코드로 내보낸다.',
+      security: AUTH,
+      responses: {
+        200: jsonOk({ type: 'object', properties: { code: { type: 'string' } } }),
+        401: rref('Unauthorized'),
+      },
+    },
+  },
+  '/cart/import': {
+    post: {
+      tags: TAG,
+      summary: '공유 코드로 장바구니 가져오기',
+      description: '공유 코드를 디코드해 항목을 내 장바구니에 담는다.',
+      security: AUTH,
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: { type: 'object', required: ['code'], properties: { code: { type: 'string' } } },
+          },
+        },
+      },
+      responses: {
+        200: jsonOk({ type: 'object', properties: { itemCount: { type: 'integer' }, items: { type: 'array', items: ref('CartItem') } } }),
+        400: rref('BadRequest'),
+        401: rref('Unauthorized'),
+      },
+    },
+  },
   '/cart/items/{id}': {
     put: {
       tags: TAG,
