@@ -249,6 +249,7 @@ for (const stmt of [
   'ALTER TABLE orders ADD COLUMN ship_address TEXT',
   'ALTER TABLE orders ADD COLUMN ship_address_detail TEXT',
   'ALTER TABLE orders ADD COLUMN share_token TEXT',
+  'ALTER TABLE orders ADD COLUMN points_used INTEGER NOT NULL DEFAULT 0',
 ]) {
   try {
     db.exec(stmt);

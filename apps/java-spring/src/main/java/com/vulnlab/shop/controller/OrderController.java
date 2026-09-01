@@ -234,7 +234,6 @@ public class OrderController {
         // 쿠폰 적용
         BigDecimal discount = BigDecimal.ZERO;
         Long couponId = null;
-        UserCoupon usedCoupon = null;
         String couponCode = body.get("couponCode") == null ? null : String.valueOf(body.get("couponCode"));
         if (couponCode != null && !couponCode.isBlank()) {
             Map<String, Object> applied = applyCoupon(user.getId(), couponCode.trim(), itemsTotal);
@@ -243,7 +242,6 @@ public class OrderController {
             }
             discount = (BigDecimal) applied.get("discount");
             couponId = (Long) applied.get("couponId");
-            usedCoupon = (UserCoupon) applied.get("userCoupon");
         }
 
         int pointsUsed = body.get("pointsUsed") == null ? 0
@@ -260,6 +258,7 @@ public class OrderController {
         order.setTotalAmount(total);
         order.setDiscountAmount(discount);
         order.setCouponId(couponId);
+        order.setPointsUsed(pointsUsed);
         order.setWebhookUrl((String) body.get("webhookUrl"));
         order.setTossOrderId("order_" + UUID.randomUUID());
         order.setShipName(str(shipping.get("name"), dbUser.getName()));
@@ -271,29 +270,13 @@ public class OrderController {
         order.setShareToken(shareToken(order.getId()));
         orderRepository.save(order);
 
-        // 쿠폰 사용 처리 — 이미 사용된 쿠폰인지 확인하지 않는다.
-        if (usedCoupon != null) {
-            usedCoupon.setUsed(true);
-            userCouponRepository.save(usedCoupon);
-        }
-
         for (OrderItem oi : newItems) {
             oi.setOrderId(order.getId());
         }
         orderItemRepository.saveAll(newItems);
 
+        // 포인트 사용/적립과 쿠폰 사용 마킹은 결제 확인(POST /{id}/confirm) 시점에 처리한다.
         int earned = itemsTotal.multiply(BigDecimal.valueOf(5)).divide(BigDecimal.valueOf(100)).intValue();
-        if (dbUser.getId() != null) {
-            if (pointsUsed != 0) {
-                dbUser.setPoints(dbUser.getPoints() - pointsUsed);
-                pointTransactionRepository.save(new PointTransaction(dbUser.getId(), -pointsUsed, "주문 사용", order.getId()));
-            }
-            if (earned > 0) {
-                dbUser.setPoints(dbUser.getPoints() + earned);
-                pointTransactionRepository.save(new PointTransaction(dbUser.getId(), earned, "주문 적립", order.getId()));
-            }
-            userRepository.save(dbUser);
-        }
 
         // 서버 장바구니 비우기
         cartRepository.findByUserId(user.getId()).ifPresent(c -> cartItemRepository.deleteByCartId(c.getId()));
@@ -354,6 +337,9 @@ public class OrderController {
         if (order == null || !order.getUserId().equals(user.getId())) {
             return ResponseEntity.notFound().build();
         }
+        if ("paid".equals(order.getStatus())) {
+            return ResponseEntity.ok(Map.of("ok", true, "order", order));
+        }
         if (tossSecretKey == null || tossSecretKey.isBlank()) {
             return ResponseEntity.status(501)
                     .body(Map.of("error", "이 서버에는 결제가 설정되어 있지 않습니다 (TOSS_SECRET_KEY 누락)."));
@@ -387,6 +373,31 @@ public class OrderController {
         order.setStatus("paid");
         order.setTossPaymentKey(paymentKey);
         orderRepository.save(order);
+
+        // 결제가 확정된 시점에만 포인트를 차감/적립하고 쿠폰을 사용 처리한다.
+        int pointsUsed = order.getPointsUsed();
+        BigDecimal itemsTotal = order.getTotalAmount().add(order.getDiscountAmount()).add(BigDecimal.valueOf(pointsUsed));
+        int earned = itemsTotal.multiply(BigDecimal.valueOf(5)).divide(BigDecimal.valueOf(100)).intValue();
+        User dbUser = userRepository.findById(order.getUserId()).orElse(null);
+        if (dbUser != null) {
+            if (pointsUsed != 0) {
+                dbUser.setPoints(dbUser.getPoints() - pointsUsed);
+                pointTransactionRepository.save(new PointTransaction(dbUser.getId(), -pointsUsed, "주문 사용", order.getId()));
+            }
+            if (earned > 0) {
+                dbUser.setPoints(dbUser.getPoints() + earned);
+                pointTransactionRepository.save(new PointTransaction(dbUser.getId(), earned, "주문 적립", order.getId()));
+            }
+            userRepository.save(dbUser);
+        }
+        // 쿠폰 사용 처리 — 이미 사용된 쿠폰인지 확인하지 않는다.
+        if (order.getCouponId() != null) {
+            userCouponRepository.findByUserIdOrderByIdDesc(order.getUserId()).stream()
+                    .filter(uc -> order.getCouponId().equals(uc.getCouponId()))
+                    .findFirst()
+                    .ifPresent(uc -> { uc.setUsed(true); userCouponRepository.save(uc); });
+        }
+
         fireWebhook(order.getWebhookUrl(), order);
 
         return ResponseEntity.ok(Map.of("ok", true, "order", order));

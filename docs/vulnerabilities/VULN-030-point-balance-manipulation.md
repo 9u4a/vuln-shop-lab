@@ -7,12 +7,15 @@
 ## 위치
 
 주문 생성 시 클라이언트가 보낸 `pointsUsed`를 **보유 잔액·부호 검증 없이** 그대로 상품금액에서
-차감하고, 사용자 포인트 잔액도 하한(0) 없이 갱신한다.
+차감해 `total_amount`(결제 예상금액)를 만든다. 잔액 차감(`points = points - pointsUsed`)은 결제 확인
+시점으로 미뤄졌지만 **여기서도 잔액·부호 검증이 없다** — 검증 부재라는 결함은 그대로다.
 
 - node: `apps/node-express/src/routes/orders.js`, `POST /api/orders` —
-  `total = itemsTotal - Number(pointsUsed)` 후 그대로 `total_amount`에 저장, `points = points - pointsUsed`.
-- java: `apps/java-spring/.../controller/OrderController.java`, `create` —
-  `total = itemsTotal.subtract(pointsUsed)`, `dbUser.setPoints(dbUser.getPoints() - pointsUsed)`.
+  `total = itemsTotal - discount - Number(pointsUsed)` 후 그대로 `total_amount`에 저장(음수 허용).
+  잔액 차감은 `POST /api/orders/:id/confirm`에서 `points = points - pointsUsed`(검증 없음).
+- java: `apps/java-spring/.../controller/OrderController.java` —
+  `create`가 `total = itemsTotal.subtract(pointsUsed)`로 저장, `confirm`이
+  `dbUser.setPoints(dbUser.getPoints() - pointsUsed)`(검증 없음).
 
 ## 트리거 방법
 
@@ -21,6 +24,8 @@ POST /api/orders  (로그인 필요)
 {"items":[{"productId":1,"quantity":1}], "pointsUsed": 999999}
 → 보유 포인트가 0~3000뿐이어도 total_amount가 음수(-980999)로 생성됨.
   음수 pointsUsed를 보내면 반대로 결제액을 부풀릴 수도 있음.
+  실제 잔액 차감은 결제 확인(POST /api/orders/:id/confirm)이 성공해야 반영되며,
+  이때도 잔액·부호 검증이 없어 잔액이 음수/과다로 조작된다.
 ```
 
 ## 영향

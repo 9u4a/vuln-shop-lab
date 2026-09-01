@@ -10,10 +10,14 @@
 검증하고 할인액도 서버가 계산한다 — 그러나 **`user_coupons.used` 를 확인하지 않는다.** 사용 마킹은
 검증 없이 `SET used = 1`만 한다(`WHERE used = 0` 가드 없음). 따라서 이미 사용한 쿠폰을 계속 낼 수 있다.
 
-- node: `apps/node-express/src/routes/orders.js` — `findUserCoupon()` + `computeCouponDiscount()`는
-  `used`를 보지 않고, `POST /`의 쿠폰 블록이 `UPDATE user_coupons SET used = 1 WHERE id = ?`만 실행.
+할인 계산은 주문 생성(`POST /api/orders`)에서, 사용 마킹(`SET used = 1`)은 결제 확인
+(`POST /api/orders/:id/confirm`)에서 이뤄지는데, **어느 쪽도 `used`를 확인하지 않는다.** 따라서 이미
+사용한 쿠폰이라도 주문마다 할인이 그대로 적용된다(마킹 시점을 옮겨도 결함은 동일).
+
+- node: `apps/node-express/src/routes/orders.js` — `findUserCoupon()` + `computeCouponDiscount()`가
+  `used`를 보지 않고 할인 적용, `confirm`이 `UPDATE user_coupons SET used = 1 WHERE id = ?`만 실행.
 - java: `.../controller/OrderController.java` — `applyCoupon()`이 `isUsed()`로 거부하지 않고,
-  `usedCoupon.setUsed(true); userCouponRepository.save(...)`.
+  `confirm`이 `uc.setUsed(true); userCouponRepository.save(...)`.
 
 ## 트리거 방법
 

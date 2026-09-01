@@ -177,7 +177,6 @@ router.post('/', requireAuth, async (req, res) => {
   // 쿠폰 적용
   let discount = 0;
   let couponId = null;
-  let userCouponId = null;
   if (couponCode) {
     const applied = computeCouponDiscount(findUserCoupon(req.session.user.id, couponCode), itemsTotal);
     if (!applied.ok) {
@@ -185,7 +184,6 @@ router.post('/', requireAuth, async (req, res) => {
     }
     discount = applied.discount;
     couponId = applied.couponId;
-    userCouponId = applied.userCouponId;
   }
 
   const usePoints = Number(pointsUsed) || 0;
@@ -204,21 +202,16 @@ router.post('/', requireAuth, async (req, res) => {
   const tossOrderId = `order_${crypto.randomUUID()}`;
   const insertOrder = db.prepare(
     `INSERT INTO orders
-       (user_id, status, total_amount, discount_amount, coupon_id, webhook_url, toss_order_id,
+       (user_id, status, total_amount, discount_amount, coupon_id, points_used, webhook_url, toss_order_id,
         ship_name, ship_phone, ship_postcode, ship_address, ship_address_detail)
-     VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+     VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   );
   const result = insertOrder.run(
-    req.session.user.id, total, discount, couponId, webhookUrl || null, tossOrderId,
+    req.session.user.id, total, discount, couponId, usePoints, webhookUrl || null, tossOrderId,
     ship.name, ship.phone, ship.postcode, ship.address, ship.addressDetail
   );
   const orderId = result.lastInsertRowid;
   db.prepare('UPDATE orders SET share_token = ? WHERE id = ?').run(shareToken(orderId), orderId);
-
-  // 쿠폰 사용 처리 — 이미 사용된 쿠폰인지 확인하지 않는다.
-  if (userCouponId) {
-    db.prepare('UPDATE user_coupons SET used = 1 WHERE id = ?').run(userCouponId);
-  }
 
   const insertItem = db.prepare(
     'INSERT INTO order_items (order_id, product_id, quantity, unit_price, option_value) VALUES (?, ?, ?, ?, ?)'
@@ -227,18 +220,8 @@ router.post('/', requireAuth, async (req, res) => {
     insertItem.run(orderId, product.id, quantity, product.price, optionValue);
   }
 
-  const insertPtx = db.prepare(
-    'INSERT INTO point_transactions (user_id, amount, reason, order_id) VALUES (?, ?, ?, ?)'
-  );
-  if (usePoints !== 0) {
-    db.prepare('UPDATE users SET points = points - ? WHERE id = ?').run(usePoints, req.session.user.id);
-    insertPtx.run(req.session.user.id, -usePoints, '주문 사용', orderId);
-  }
+  // 포인트 사용/적립과 쿠폰 사용 마킹은 결제 확인(POST /:id/confirm) 시점에 처리한다.
   const earned = Math.floor(itemsTotal * 0.05);
-  if (earned > 0) {
-    db.prepare('UPDATE users SET points = points + ? WHERE id = ?').run(earned, req.session.user.id);
-    insertPtx.run(req.session.user.id, earned, '주문 적립', orderId);
-  }
 
   // 서버 장바구니 비우기
   const cart = db.prepare('SELECT id FROM carts WHERE user_id = ?').get(req.session.user.id);
@@ -259,6 +242,9 @@ router.post('/:id/confirm', requireAuth, async (req, res) => {
   const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
   if (!order || order.user_id !== req.session.user.id) {
     return res.status(404).json({ error: '주문을 찾을 수 없습니다.' });
+  }
+  if (order.status === 'paid') {
+    return res.json({ ok: true, order: toOrder(order) });
   }
   if (!TOSS_SECRET_KEY) {
     return res.status(501).json({ error: '이 서버에는 결제가 설정되어 있지 않습니다 (TOSS_SECRET_KEY 누락).' });
@@ -283,6 +269,30 @@ router.post('/:id/confirm', requireAuth, async (req, res) => {
   }
 
   db.prepare("UPDATE orders SET status = 'paid', toss_payment_key = ? WHERE id = ?").run(paymentKey, order.id);
+
+  // 결제가 확정된 시점에만 포인트를 차감/적립하고 쿠폰을 사용 처리한다.
+  const usePoints = order.points_used || 0;
+  const itemsTotal = order.total_amount + (order.discount_amount || 0) + usePoints;
+  const insertPtx = db.prepare(
+    'INSERT INTO point_transactions (user_id, amount, reason, order_id) VALUES (?, ?, ?, ?)'
+  );
+  if (usePoints !== 0) {
+    db.prepare('UPDATE users SET points = points - ? WHERE id = ?').run(usePoints, order.user_id);
+    insertPtx.run(order.user_id, -usePoints, '주문 사용', order.id);
+  }
+  const earned = Math.floor(itemsTotal * 0.05);
+  if (earned > 0) {
+    db.prepare('UPDATE users SET points = points + ? WHERE id = ?').run(earned, order.user_id);
+    insertPtx.run(order.user_id, earned, '주문 적립', order.id);
+  }
+  // 쿠폰 사용 처리 — 이미 사용된 쿠폰인지 확인하지 않는다.
+  if (order.coupon_id) {
+    const uc = db
+      .prepare('SELECT id FROM user_coupons WHERE user_id = ? AND coupon_id = ? ORDER BY id DESC')
+      .get(order.user_id, order.coupon_id);
+    if (uc) db.prepare('UPDATE user_coupons SET used = 1 WHERE id = ?').run(uc.id);
+  }
+
   const updated = db.prepare('SELECT * FROM orders WHERE id = ?').get(order.id);
   fireWebhook(order.webhook_url, {
     orderId: order.id,
