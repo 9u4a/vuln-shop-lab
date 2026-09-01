@@ -22,7 +22,6 @@ export default function Products() {
   const maxPrice = searchParams.get('maxPrice') || '';
   const inStock = searchParams.get('inStock') || '';
   const [products, setProducts] = useState(null);
-  const [sortKeys, setSortKeys] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -33,7 +32,6 @@ export default function Products() {
       .then((data) => {
         if (!active) return;
         setProducts(data.products);
-        setSortKeys(data.sortKeys || null);
       })
       .catch((err) => {
         if (!active) return;
@@ -147,8 +145,6 @@ export default function Products() {
       </form>
 
       {error && <p className="error">{error}</p>}
-
-      {sortKeys && <p className="muted">sortKeys: {JSON.stringify(sortKeys)}</p>}
 
       {products !== null && !error && (
         <p className="muted" style={{ marginBottom: 'var(--space-3)' }}>{products.length}개 상품</p>
