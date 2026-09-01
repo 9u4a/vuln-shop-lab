@@ -103,7 +103,7 @@ DB는 named volume(`node_data`, `java_data`, `mongo_data`)과 업로드 볼륨�
 ## 취약점 카탈로그
 
 의도적으로 심은 취약점 38건. **원본 인덱스와 재현 절차·조치 상태는
-[`docs/vulnerabilities/README.md`](docs/vulnerabilities/README.md)** 에 있으며, 아래 표는 공개용 요약입니다.
+[`docs/vulnerabilities/README.md`](docs/vulnerabilities/README.md)** 에 있으며, 아래 표는 요약입니다.
 
 | ID | 이름 | 스택 | OWASP 2025 | 심각도 |
 |----|------|------|-----------|--------|

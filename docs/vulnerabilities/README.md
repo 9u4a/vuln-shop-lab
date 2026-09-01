@@ -78,28 +78,3 @@ Insecure Design A04→**A06**.
 | Business logic / Insecure Design | DONE | 015, 027, 029, 030, 032, 036 |
 | Race condition / 동시성 (TOCTOU) | DONE | 035 |
 | CSRF | DONE | 014 |
-
-배치 013–022 완료 — CLAUDE.md 스코프의 모든 클래스가 최소 1개 구현 항목으로 커버된다.
-VULN-023은 이벤트 팝업 기능(`docs/features/25-event-popups.md`)과 함께 추가된 저장형 XSS.
-VULN-024는 좋아요/위시리스트 기능(`docs/features/27-product-likes.md`)과 함께 추가된 위시리스트 IDOR.
-VULN-025·026은 후기 사진 업로드/비밀글 기능(`docs/features/28-reviews-media-secret.md`)과 함께 추가.
-VULN-027은 장바구니 옵션 변경 기능(`docs/features/29-cart-option-edit.md`)에서 드러난 주문 옵션 미검증.
-VULN-028은 관리자 접속 로그/사용자 활성화 기능(`docs/features/30-admin-access-logs.md`)과 함께 추가된 로그 뷰어 저장형 XSS.
-VULN-029는 쿠폰 기능(`docs/features/31-events-coupons-uploads.md`)과 함께 추가된 쿠폰 중복 발급.
-VULN-003은 Q&A 문의 게시판(`docs/features/32-qna-and-faq-board.md`)과 함께 추가된 비밀 문의 상세 노출
-(비밀 후기 VULN-026과 동일 계열, 새 표면).
-같은 배치에서 공지/이벤트 이미지 업로드가 공용 업로드 엔드포인트로 전환되며 VULN-018 표면이,
-이벤트 본문이 `/events` 페이지에도 렌더되며 VULN-023 표면이 확장됨(신규 ID 없음).
-의류 카탈로그(`docs/features/26-apparel-catalog.md`)에서 상품 필터 파라미터 추가로 VULN-001/005 SQLi 표면이 확장됨(신규 ID 없음).
-VULN-030~033은 커머스 리워드/운영 기능 배치(`docs/features/39-points.md`~`42-restock-alerts.md`)와 함께 추가:
-포인트(030)·반품환불(031)·추천인(032)·재입고 알림(033). 033은 blind SSRF(VULN-004)와 달리 응답 반환형으로 SSRF 표면을 확장.
-VULN-034는 OpenAPI 문서화 기능(`docs/features/43-openapi-docs.md`)과 함께 추가된 자기문서화 표면 노출.
-VULN-007(진단 엔드포인트)과 같은 A02(Security Misconfiguration)지만 유출물(런타임 내부 상태 vs API 인벤토리)·노출 경계
-(WAS 직접 포트 전용 vs nginx 공개 진입점 :8090)·정상 구현이 모두 달라 별도 ID로 둔다.
-VULN-035~038은 커머스 주문 라이프사이클 배치(`docs/features/44-server-cart.md`~`47-order-share-link.md`)와 함께 추가:
-서버 장바구니 재고 차감(035, 저장소 최초 동시성/TOCTOU)·쿠폰 사용 재사용(036)·배송 조회 IDOR(037)·
-예측 가능 공유 토큰(038, 저장소 최초 A04 Cryptographic Failures). 035는 015/027/029/030/032와 같은
-로직 결함 계열이지만 동시성 축을 새로 커버하고, 036은 029(발급 중복)와 달리 사용(redemption) 단계다.
-
-번호 주의: VULN-003은 원래 "기본 관리자 계정"으로 잡았다가 취약점이 아니라 철회된 번호이며, 빈 번호를
-없애기 위해 마지막 항목을 옮겨 재사용했다(구 VULN-030 — 그 이전 커밋 이력에는 030으로 기록되어 있다).
