@@ -46,13 +46,13 @@ function CartProvider({ children }) {
   // 비로그인: localStorage 객체 / 로그인: 서버 라인 배열
   const [localItems, setLocalItems] = useState(() => readCart(storageKey));
   const [serverItems, setServerItems] = useState([]);
-  const mergedRef = useRef(false);
+  const mergedKeyRef = useRef(null);
 
   const loggedIn = !!user;
 
   useEffect(() => {
-    setLocalItems(readCart(storageKey));
-  }, [storageKey]);
+    if (!loggedIn) setLocalItems(readCart(storageKey));
+  }, [storageKey, loggedIn]);
 
   useEffect(() => {
     if (!loggedIn) localStorage.setItem(storageKey, JSON.stringify(localItems));
@@ -68,11 +68,11 @@ function CartProvider({ children }) {
   useEffect(() => {
     if (loading) return;
     if (!loggedIn) {
-      mergedRef.current = false;
+      mergedKeyRef.current = null;
       return;
     }
-    if (mergedRef.current) return;
-    mergedRef.current = true;
+    if (mergedKeyRef.current === storageKey) return;
+    mergedKeyRef.current = storageKey;
     const pending = Object.values(readCart(storageKey));
     (async () => {
       for (const it of pending) {
@@ -82,10 +82,9 @@ function CartProvider({ children }) {
           /* 상품이 사라졌을 수 있음 — 무시 */
         }
       }
-      if (pending.length) {
-        localStorage.removeItem(storageKey);
-        setLocalItems({});
-      }
+      // 로그인 후에는 서버 장바구니만 사용한다 — localStorage는 항상 비운다.
+      localStorage.removeItem(storageKey);
+      setLocalItems({});
       refreshServer();
     })();
   }, [loggedIn, loading, backend.base, storageKey, refreshServer]);
