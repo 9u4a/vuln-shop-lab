@@ -77,7 +77,7 @@ export function updateProfile(base, patch) {
   });
 }
 
-export function createOrder(base, items, pointsUsed, { couponCode, shipping } = {}) {
+export function createOrder(base, items, pointsUsed, { couponCode, shipping, webhookUrl } = {}) {
   return apiRequest(base, '/orders', {
     method: 'POST',
     body: JSON.stringify({
@@ -85,6 +85,7 @@ export function createOrder(base, items, pointsUsed, { couponCode, shipping } = 
       pointsUsed: pointsUsed || 0,
       couponCode: couponCode || undefined,
       shipping: shipping || undefined,
+      webhookUrl: webhookUrl || undefined,
     }),
   });
 }

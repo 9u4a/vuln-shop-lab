@@ -223,9 +223,16 @@ router.post('/', requireAuth, async (req, res) => {
   // 포인트 사용/적립과 쿠폰 사용 마킹은 결제 확인(POST /:id/confirm) 시점에 처리한다.
   const earned = Math.floor(itemsTotal * 0.05);
 
-  // 서버 장바구니 비우기
-  const cart = db.prepare('SELECT id FROM carts WHERE user_id = ?').get(req.session.user.id);
-  if (cart) db.prepare('DELETE FROM cart_items WHERE cart_id = ?').run(cart.id);
+  // 장바구니 비우기는 결제 확인(POST /:id/confirm) 성공 시점으로 미룬다 — 결제 미완료로 빠져나오면 유지.
+
+  // 주문 접수 알림 웹훅 — 등록된 URL로 즉시 발송(비동기, 실패 무시). URL 검증 없음(VULN-004).
+  fireWebhook(webhookUrl, {
+    event: 'order.created',
+    orderId,
+    tossOrderId,
+    status: 'pending',
+    amount: total,
+  });
 
   res.status(201).json({
     orderId,
@@ -292,6 +299,9 @@ router.post('/:id/confirm', requireAuth, async (req, res) => {
       .get(order.user_id, order.coupon_id);
     if (uc) db.prepare('UPDATE user_coupons SET used = 1 WHERE id = ?').run(uc.id);
   }
+  // 결제 확정 시점에 서버 장바구니 비우기
+  const paidCart = db.prepare('SELECT id FROM carts WHERE user_id = ?').get(order.user_id);
+  if (paidCart) db.prepare('DELETE FROM cart_items WHERE cart_id = ?').run(paidCart.id);
 
   const updated = db.prepare('SELECT * FROM orders WHERE id = ?').get(order.id);
   fireWebhook(order.webhook_url, {
