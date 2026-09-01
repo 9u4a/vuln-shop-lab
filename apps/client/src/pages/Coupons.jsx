@@ -75,6 +75,25 @@ export default function Coupons() {
       </div>
 
       <section className="section">
+        <div className="section__head"><h2>내 쿠폰함 {user && <span className="muted">({mine.length})</span>}</h2></div>
+        {!user ? (
+          <p className="muted"><Link to="/login">로그인</Link> 후 받은 쿠폰을 확인할 수 있어요.</p>
+        ) : mine.length === 0 ? (
+          <p className="muted">아직 받은 쿠폰이 없어요.</p>
+        ) : (
+          <ul className="coupon-list">
+            {mine.map((c) => (
+              <CouponCard
+                key={c.userCouponId}
+                coupon={c}
+                action={<span className={c.used ? 'badge' : 'badge badge-ok'}>{c.used ? '사용완료' : '사용가능'}</span>}
+              />
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="section">
         <div className="section__head"><h2>받을 수 있는 쿠폰</h2></div>
         {coupons === null ? (
           <p className="muted">불러오는 중...</p>
@@ -90,31 +109,12 @@ export default function Coupons() {
                   <button
                     type="button"
                     className="btn btn-primary btn-sm"
-                    disabled={busy === c.id}
+                    disabled={busy === c.id || c.claimed}
                     onClick={() => handleClaim(c)}
                   >
-                    받기
+                    {c.claimed ? '받음' : '받기'}
                   </button>
                 }
-              />
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="section">
-        <div className="section__head"><h2>내 쿠폰함 {user && <span className="muted">({mine.length})</span>}</h2></div>
-        {!user ? (
-          <p className="muted"><Link to="/login">로그인</Link> 후 받은 쿠폰을 확인할 수 있어요.</p>
-        ) : mine.length === 0 ? (
-          <p className="muted">아직 받은 쿠폰이 없어요.</p>
-        ) : (
-          <ul className="coupon-list">
-            {mine.map((c) => (
-              <CouponCard
-                key={c.userCouponId}
-                coupon={c}
-                action={<span className={c.used ? 'badge' : 'badge badge-ok'}>{c.used ? '사용완료' : '사용가능'}</span>}
               />
             ))}
           </ul>
