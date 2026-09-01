@@ -59,4 +59,19 @@ function getActivityCollection() {
   return activityCollection;
 }
 
-module.exports = { initMongo, getActivityCollection };
+// 활동 로그 1건 기록. Mongo 미가동 시 조용히 무시한다.
+async function insertActivity(username, action, detail) {
+  if (!activityCollection) return;
+  try {
+    await activityCollection.insertOne({
+      username,
+      action,
+      detail: detail || '',
+      at: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error(`activity insert failed: ${err.message}`);
+  }
+}
+
+module.exports = { initMongo, getActivityCollection, insertActivity };

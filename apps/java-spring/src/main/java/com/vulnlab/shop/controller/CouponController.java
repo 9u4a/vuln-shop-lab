@@ -61,6 +61,42 @@ public class CouponController {
         return Map.of("coupons", coupons);
     }
 
+    // 체크아웃 쿠폰 미리보기 — 유효성·할인액만 계산(사용 처리는 주문 생성 시).
+    @PostMapping("/apply-preview")
+    public ResponseEntity<?> applyPreview(@RequestBody Map<String, Object> body, HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그인이 필요합니다."));
+        }
+        String code = str(body.get("code")).trim();
+        long itemsTotal = intOf(body.get("itemsTotal"));
+        if (code.isBlank()) {
+            return ResponseEntity.ok(Map.of("valid", false, "discountAmount", 0, "reason", "쿠폰 코드를 입력해주세요."));
+        }
+        Coupon coupon = null;
+        for (UserCoupon uc : userCouponRepository.findByUserIdOrderByIdDesc(user.getId())) {
+            Coupon c = couponRepository.findById(uc.getCouponId()).orElse(null);
+            if (c != null && code.equals(c.getCode())) { coupon = c; break; }
+        }
+        if (coupon == null) return ResponseEntity.ok(Map.of("valid", false, "discountAmount", 0, "reason", "보유하지 않은 쿠폰입니다."));
+        if (!coupon.isActive()) return ResponseEntity.ok(Map.of("valid", false, "discountAmount", 0, "reason", "사용할 수 없는 쿠폰입니다."));
+        if (coupon.getExpiresAt() != null && coupon.getExpiresAt().compareTo(Instant.now().toString()) < 0) {
+            return ResponseEntity.ok(Map.of("valid", false, "discountAmount", 0, "reason", "만료된 쿠폰입니다."));
+        }
+        if (itemsTotal < coupon.getMinOrderAmount()) {
+            return ResponseEntity.ok(Map.of("valid", false, "discountAmount", 0,
+                    "reason", "최소 주문금액 " + coupon.getMinOrderAmount() + "원 이상부터 사용 가능합니다."));
+        }
+        long discount = "percent".equals(coupon.getDiscountType())
+                ? (itemsTotal * coupon.getDiscountValue()) / 100
+                : coupon.getDiscountValue();
+        Map<String, Object> ok = new HashMap<>();
+        ok.put("valid", true);
+        ok.put("discountAmount", Math.min(discount, itemsTotal));
+        ok.put("reason", null);
+        return ResponseEntity.ok(ok);
+    }
+
     // 내 쿠폰함.
     @GetMapping("/mine")
     public ResponseEntity<?> mine(HttpSession session) {

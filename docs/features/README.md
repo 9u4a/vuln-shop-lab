@@ -49,3 +49,7 @@
 | 41 | 추천인 코드 | feature/commerce-rewards-batch | 032 | 가입 추천코드, 코드 적용 리워드 |
 | 42 | 재입고 알림 | feature/commerce-rewards-batch | 033 | 품절 상품 알림 신청, 콜백 통지 발송 |
 | 43 | OpenAPI(Swagger) API 문서 | feature/openapi-docs | 034 | 양 스택 비관리자 API 명세 + Swagger UI, nginx(:8090) 노출, UI 미링크, `/api/admin/**` 제외 |
+| 44 | 서버 장바구니 + 체크아웃 재고 차감 | feature/order-lifecycle-batch | 035 | carts/cart_items 테이블, 하이브리드 CartContext, 주문 시 재고 차감 |
+| 45 | 쿠폰 결제 적용 | feature/order-lifecycle-batch | 036 | 체크아웃 쿠폰 코드 입력·서버 검증·할인액 계산, apply-preview |
+| 46 | 주문 배송지 + 배송 조회 | feature/order-lifecycle-batch | 037 | 주문 배송지 스냅샷, shipments 테이블, 관리자 송장 등록, 비회원 배송조회 |
+| 47 | 주문 공유 링크 | feature/order-lifecycle-batch | 038 | 토큰 기반 비회원 주문·배송 조회 페이지 |

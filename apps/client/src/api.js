@@ -77,13 +77,57 @@ export function updateProfile(base, patch) {
   });
 }
 
-export function createOrder(base, items, pointsUsed) {
+export function createOrder(base, items, pointsUsed, { couponCode, shipping } = {}) {
   return apiRequest(base, '/orders', {
     method: 'POST',
     body: JSON.stringify({
       items: items.map((i) => ({ productId: i.productId, quantity: i.quantity, optionValue: i.option || undefined })),
       pointsUsed: pointsUsed || 0,
+      couponCode: couponCode || undefined,
+      shipping: shipping || undefined,
     }),
+  });
+}
+
+// 서버 장바구니
+export function fetchCart(base) {
+  return apiRequest(base, '/cart');
+}
+export function addCartItem(base, productId, quantity, optionValue) {
+  return apiRequest(base, '/cart/items', {
+    method: 'POST',
+    body: JSON.stringify({ productId, quantity, optionValue: optionValue || undefined }),
+  });
+}
+export function updateCartItem(base, id, quantity) {
+  return apiRequest(base, `/cart/items/${id}`, { method: 'PUT', body: JSON.stringify({ quantity }) });
+}
+export function removeCartItem(base, id) {
+  return apiRequest(base, `/cart/items/${id}`, { method: 'DELETE' });
+}
+export function clearCart(base) {
+  return apiRequest(base, '/cart', { method: 'DELETE' });
+}
+
+// 쿠폰 체크아웃 미리보기
+export function previewCoupon(base, code, itemsTotal) {
+  return apiRequest(base, '/coupons/apply-preview', {
+    method: 'POST',
+    body: JSON.stringify({ code, itemsTotal }),
+  });
+}
+
+// 배송 조회 / 주문 공유
+export function trackShipment(base, no) {
+  return apiRequest(base, `/shipments/track?no=${encodeURIComponent(no)}`);
+}
+export function fetchSharedOrder(base, token) {
+  return apiRequest(base, `/orders/shared/${encodeURIComponent(token)}`);
+}
+export function setOrderShipment(base, orderId, carrier) {
+  return apiRequest(base, `/admin/orders/${orderId}/shipment`, {
+    method: 'PUT',
+    body: JSON.stringify({ carrier }),
   });
 }
 

@@ -1,14 +1,22 @@
 package com.vulnlab.shop.controller;
 
+import com.vulnlab.shop.entity.Coupon;
 import com.vulnlab.shop.entity.Order;
 import com.vulnlab.shop.entity.OrderItem;
 import com.vulnlab.shop.entity.PointTransaction;
 import com.vulnlab.shop.entity.Product;
+import com.vulnlab.shop.entity.Shipment;
 import com.vulnlab.shop.entity.User;
+import com.vulnlab.shop.entity.UserCoupon;
+import com.vulnlab.shop.repository.CartItemRepository;
+import com.vulnlab.shop.repository.CartRepository;
+import com.vulnlab.shop.repository.CouponRepository;
 import com.vulnlab.shop.repository.OrderItemRepository;
 import com.vulnlab.shop.repository.OrderRepository;
 import com.vulnlab.shop.repository.PointTransactionRepository;
 import com.vulnlab.shop.repository.ProductRepository;
+import com.vulnlab.shop.repository.ShipmentRepository;
+import com.vulnlab.shop.repository.UserCouponRepository;
 import com.vulnlab.shop.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -33,6 +41,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -51,6 +60,11 @@ public class OrderController {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final PointTransactionRepository pointTransactionRepository;
+    private final ShipmentRepository shipmentRepository;
+    private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
+    private final UserCouponRepository userCouponRepository;
+    private final CouponRepository couponRepository;
 
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(5))
@@ -58,12 +72,59 @@ public class OrderController {
 
     public OrderController(OrderRepository orderRepository, OrderItemRepository orderItemRepository,
                             ProductRepository productRepository, UserRepository userRepository,
-                            PointTransactionRepository pointTransactionRepository) {
+                            PointTransactionRepository pointTransactionRepository,
+                            ShipmentRepository shipmentRepository, CartRepository cartRepository,
+                            CartItemRepository cartItemRepository, UserCouponRepository userCouponRepository,
+                            CouponRepository couponRepository) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.pointTransactionRepository = pointTransactionRepository;
+        this.shipmentRepository = shipmentRepository;
+        this.cartRepository = cartRepository;
+        this.cartItemRepository = cartItemRepository;
+        this.userCouponRepository = userCouponRepository;
+        this.couponRepository = couponRepository;
+    }
+
+    private static String shareToken(Long orderId) {
+        return Base64.getEncoder().encodeToString(String.valueOf(orderId).getBytes());
+    }
+
+    private Map<String, Object> shipmentPayload(Long orderId) {
+        Shipment s = shipmentRepository.findByOrderId(orderId).orElse(null);
+        if (s == null) return null;
+        Map<String, Object> m = new HashMap<>();
+        m.put("carrier", s.getCarrier());
+        m.put("trackingNo", s.getTrackingNo());
+        m.put("status", s.getStatus());
+        return m;
+    }
+
+    // 주문 엔티티 → node 의 toOrder() 와 같은 형태(배송지는 shipping 객체로 중첩).
+    private Map<String, Object> orderPayload(Order o) {
+        Map<String, Object> m = new HashMap<>();
+        m.put("id", o.getId());
+        m.put("status", o.getStatus());
+        m.put("totalAmount", o.getTotalAmount());
+        m.put("discountAmount", o.getDiscountAmount());
+        m.put("webhookUrl", o.getWebhookUrl());
+        m.put("tossOrderId", o.getTossOrderId());
+        m.put("shareToken", o.getShareToken());
+        m.put("createdAt", o.getCreatedAt());
+        if (o.getShipName() != null) {
+            Map<String, Object> shipping = new HashMap<>();
+            shipping.put("name", o.getShipName());
+            shipping.put("phone", o.getShipPhone());
+            shipping.put("postcode", o.getShipPostcode());
+            shipping.put("address", o.getShipAddress());
+            shipping.put("addressDetail", o.getShipAddressDetail());
+            m.put("shipping", shipping);
+        } else {
+            m.put("shipping", null);
+        }
+        return m;
     }
 
     private User currentUser(HttpSession session) {
@@ -79,10 +140,11 @@ public class OrderController {
     public ResponseEntity<?> list(HttpSession session) {
         User user = currentUser(session);
         if (user == null) return unauthorized();
-        return ResponseEntity.ok(Map.of("orders", orderRepository.findByUserId(user.getId())));
+        return ResponseEntity.ok(Map.of("orders",
+                orderRepository.findByUserId(user.getId()).stream().map(this::orderPayload).toList()));
     }
 
-    @Operation(summary = "주문 상세 (주문 + 항목)")
+    @Operation(summary = "주문 상세 (주문 + 항목 + 배송)")
     @GetMapping("/{id}")
     public ResponseEntity<?> detail(@PathVariable Long id, HttpSession session) {
         User user = currentUser(session);
@@ -92,10 +154,43 @@ public class OrderController {
             return ResponseEntity.notFound().build();
         }
         List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
-        return ResponseEntity.ok(Map.of("order", order, "items", items));
+        Map<String, Object> out = new HashMap<>();
+        out.put("order", orderPayload(order));
+        out.put("items", items);
+        out.put("shipment", shipmentPayload(order.getId()));
+        return ResponseEntity.ok(out);
     }
 
-    @Operation(summary = "주문 생성", description = "{ items: [{ productId, quantity, optionValue }], pointsUsed, webhookUrl }")
+    @Operation(summary = "주문 공유 링크 조회 (비회원)", description = "공유 토큰만으로 주문·배송을 읽기 전용 열람한다.")
+    @io.swagger.v3.oas.annotations.security.SecurityRequirements
+    @GetMapping("/shared/{token}")
+    public ResponseEntity<?> shared(@PathVariable String token) {
+        Order order = orderRepository.findByShareToken(token).orElse(null);
+        if (order == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "주문을 찾을 수 없습니다."));
+        }
+        Map<String, Object> o = new HashMap<>();
+        o.put("id", order.getId());
+        o.put("status", order.getStatus());
+        o.put("totalAmount", order.getTotalAmount());
+        o.put("discountAmount", order.getDiscountAmount());
+        o.put("createdAt", order.getCreatedAt());
+        Map<String, Object> shipping = new HashMap<>();
+        shipping.put("name", order.getShipName());
+        shipping.put("phone", order.getShipPhone());
+        shipping.put("postcode", order.getShipPostcode());
+        shipping.put("address", order.getShipAddress());
+        shipping.put("addressDetail", order.getShipAddressDetail());
+        o.put("shipping", order.getShipName() == null ? null : shipping);
+        Map<String, Object> out = new HashMap<>();
+        out.put("order", o);
+        out.put("items", orderItemRepository.findByOrderId(order.getId()));
+        out.put("shipment", shipmentPayload(order.getId()));
+        return ResponseEntity.ok(out);
+    }
+
+    @Operation(summary = "주문 생성",
+            description = "가격은 서버가 계산한다. 체크아웃 시 재고 차감·쿠폰 적용·배송지 스냅샷이 함께 처리된다.")
     @SuppressWarnings("unchecked")
     @PostMapping
     public ResponseEntity<?> create(@RequestBody Map<String, Object> body, HttpSession session) {
@@ -109,6 +204,7 @@ public class OrderController {
 
         BigDecimal itemsTotal = BigDecimal.ZERO;
         List<OrderItem> newItems = new ArrayList<>();
+        List<int[]> stockOps = new ArrayList<>(); // [productId, quantity]
         for (Object raw : items) {
             Map<String, Object> item = (Map<String, Object>) raw;
             Long productId = Long.valueOf(String.valueOf(item.get("productId")));
@@ -125,28 +221,69 @@ public class OrderController {
             Object optionValue = item.get("optionValue");
             oi.setOptionValue(optionValue == null ? null : String.valueOf(optionValue));
             newItems.add(oi);
+            stockOps.add(new int[]{productId.intValue(), quantity});
+        }
+
+        // 재고 차감 — 현재 재고를 읽고 감산 후 저장한다.
+        for (int[] op : stockOps) {
+            Product p = productRepository.findById((long) op[0]).orElseThrow();
+            p.setStock(p.getStock() - op[1]);
+            productRepository.save(p);
+        }
+
+        // 쿠폰 적용
+        BigDecimal discount = BigDecimal.ZERO;
+        Long couponId = null;
+        UserCoupon usedCoupon = null;
+        String couponCode = body.get("couponCode") == null ? null : String.valueOf(body.get("couponCode"));
+        if (couponCode != null && !couponCode.isBlank()) {
+            Map<String, Object> applied = applyCoupon(user.getId(), couponCode.trim(), itemsTotal);
+            if (Boolean.FALSE.equals(applied.get("ok"))) {
+                return ResponseEntity.badRequest().body(Map.of("error", applied.get("reason")));
+            }
+            discount = (BigDecimal) applied.get("discount");
+            couponId = (Long) applied.get("couponId");
+            usedCoupon = (UserCoupon) applied.get("userCoupon");
         }
 
         int pointsUsed = body.get("pointsUsed") == null ? 0
                 : Integer.parseInt(String.valueOf(body.get("pointsUsed")));
-        BigDecimal total = itemsTotal.subtract(BigDecimal.valueOf(pointsUsed));
+        BigDecimal total = itemsTotal.subtract(discount).subtract(BigDecimal.valueOf(pointsUsed));
+
+        // 배송지 스냅샷 — override가 있으면 그것을, 없으면 프로필 주소를 복사한다.
+        User dbUser = userRepository.findById(user.getId()).orElse(user);
+        Map<String, Object> shipping = body.get("shipping") instanceof Map<?, ?> m ? (Map<String, Object>) m : Map.of();
 
         Order order = new Order();
         order.setUserId(user.getId());
         order.setStatus("pending");
         order.setTotalAmount(total);
+        order.setDiscountAmount(discount);
+        order.setCouponId(couponId);
         order.setWebhookUrl((String) body.get("webhookUrl"));
         order.setTossOrderId("order_" + UUID.randomUUID());
+        order.setShipName(str(shipping.get("name"), dbUser.getName()));
+        order.setShipPhone(str(shipping.get("phone"), dbUser.getPhone()));
+        order.setShipPostcode(str(shipping.get("postcode"), dbUser.getPostcode()));
+        order.setShipAddress(str(shipping.get("address"), dbUser.getAddress()));
+        order.setShipAddressDetail(str(shipping.get("addressDetail"), dbUser.getAddressDetail()));
         orderRepository.save(order);
+        order.setShareToken(shareToken(order.getId()));
+        orderRepository.save(order);
+
+        // 쿠폰 사용 처리 — 이미 사용된 쿠폰인지 확인하지 않는다.
+        if (usedCoupon != null) {
+            usedCoupon.setUsed(true);
+            userCouponRepository.save(usedCoupon);
+        }
 
         for (OrderItem oi : newItems) {
             oi.setOrderId(order.getId());
         }
         orderItemRepository.saveAll(newItems);
 
-        User dbUser = userRepository.findById(user.getId()).orElse(null);
-        if (dbUser != null) {
-            int earned = itemsTotal.multiply(BigDecimal.valueOf(5)).divide(BigDecimal.valueOf(100)).intValue();
+        int earned = itemsTotal.multiply(BigDecimal.valueOf(5)).divide(BigDecimal.valueOf(100)).intValue();
+        if (dbUser.getId() != null) {
             if (pointsUsed != 0) {
                 dbUser.setPoints(dbUser.getPoints() - pointsUsed);
                 pointTransactionRepository.save(new PointTransaction(dbUser.getId(), -pointsUsed, "주문 사용", order.getId()));
@@ -158,8 +295,54 @@ public class OrderController {
             userRepository.save(dbUser);
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(Map.of("orderId", order.getId(), "tossOrderId", order.getTossOrderId(), "amount", total));
+        // 서버 장바구니 비우기
+        cartRepository.findByUserId(user.getId()).ifPresent(c -> cartItemRepository.deleteByCartId(c.getId()));
+
+        Map<String, Object> out = new HashMap<>();
+        out.put("orderId", order.getId());
+        out.put("tossOrderId", order.getTossOrderId());
+        out.put("amount", total);
+        out.put("discountAmount", discount);
+        out.put("pointsUsed", pointsUsed);
+        out.put("pointsEarned", earned);
+        out.put("shareToken", order.getShareToken());
+        return ResponseEntity.status(HttpStatus.CREATED).body(out);
+    }
+
+    private static String str(Object override, String fallback) {
+        return (override == null || String.valueOf(override).isBlank()) ? fallback : String.valueOf(override);
+    }
+
+    // 쿠폰 유효성 검증 + 할인액 계산(서버). used 여부는 여기서 보지 않는다.
+    private Map<String, Object> applyCoupon(Long userId, String code, BigDecimal itemsTotal) {
+        UserCoupon match = null;
+        Coupon coupon = null;
+        for (UserCoupon uc : userCouponRepository.findByUserIdOrderByIdDesc(userId)) {
+            Coupon c = couponRepository.findById(uc.getCouponId()).orElse(null);
+            if (c != null && code.equals(c.getCode())) {
+                match = uc;
+                coupon = c;
+                break;
+            }
+        }
+        if (coupon == null) return Map.of("ok", false, "reason", "보유하지 않은 쿠폰입니다.");
+        if (!coupon.isActive()) return Map.of("ok", false, "reason", "사용할 수 없는 쿠폰입니다.");
+        if (coupon.getExpiresAt() != null && coupon.getExpiresAt().compareTo(java.time.Instant.now().toString()) < 0) {
+            return Map.of("ok", false, "reason", "만료된 쿠폰입니다.");
+        }
+        if (itemsTotal.intValue() < coupon.getMinOrderAmount()) {
+            return Map.of("ok", false, "reason", "최소 주문금액 " + coupon.getMinOrderAmount() + "원 이상부터 사용 가능합니다.");
+        }
+        BigDecimal discount = "percent".equals(coupon.getDiscountType())
+                ? itemsTotal.multiply(BigDecimal.valueOf(coupon.getDiscountValue())).divide(BigDecimal.valueOf(100), 0, java.math.RoundingMode.FLOOR)
+                : BigDecimal.valueOf(coupon.getDiscountValue());
+        discount = discount.min(itemsTotal);
+        Map<String, Object> ok = new HashMap<>();
+        ok.put("ok", true);
+        ok.put("discount", discount);
+        ok.put("couponId", coupon.getId());
+        ok.put("userCoupon", match);
+        return ok;
     }
 
     @Operation(summary = "결제 확인", description = "{ paymentKey, amount }. TOSS_SECRET_KEY 미설정 시 501.")

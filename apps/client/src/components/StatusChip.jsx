@@ -2,6 +2,7 @@ const LABELS = {
   pending: '결제 대기',
   paid: '결제 완료',
   confirmed: '결제 완료',
+  preparing: '배송 준비 중',
   shipped: '배송 중',
   delivered: '배송 완료',
   cancelled: '취소됨',

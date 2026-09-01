@@ -84,10 +84,46 @@ export default function OrderDetail() {
             </li>
           ))}
         </ul>
+        {data.order.discountAmount > 0 && (
+          <div className="summary-box__row"><span>쿠폰 할인</span><span className="tnum">-{formatCurrency(data.order.discountAmount)}</span></div>
+        )}
         <div className="summary-box__row summary-box__row--total" style={{ marginTop: 'var(--space-4)' }}>
           <span>총 결제금액</span><span className="tnum">{formatCurrency(data.order.totalAmount)}</span>
         </div>
       </section>
+
+      {(data.order.shipping || data.shipment) && (
+        <section className="card">
+          <h2>배송</h2>
+          {data.order.shipping && (
+            <p className="muted" style={{ whiteSpace: 'pre-line' }}>
+              {data.order.shipping.name} · {data.order.shipping.phone}
+              {'\n'}({data.order.shipping.postcode}) {data.order.shipping.address} {data.order.shipping.addressDetail || ''}
+            </p>
+          )}
+          {data.shipment ? (
+            <p>
+              <StatusChip status={data.shipment.status} />{' '}
+              {data.shipment.carrier} · 송장번호 <strong>{data.shipment.trackingNo}</strong>
+            </p>
+          ) : (
+            <p className="muted">아직 배송이 시작되지 않았습니다.</p>
+          )}
+        </section>
+      )}
+
+      {data.order.shareToken && (
+        <section className="card">
+          <h2>주문 공유</h2>
+          <p className="muted">로그인 없이 주문·배송 상태를 확인할 수 있는 링크입니다.</p>
+          <input
+            readOnly
+            value={`${window.location.origin}/orders/shared/${data.order.shareToken}`}
+            onFocus={(e) => e.target.select()}
+            style={{ width: '100%' }}
+          />
+        </section>
+      )}
 
       <section className="card">
         <h2>반품/환불 요청</h2>

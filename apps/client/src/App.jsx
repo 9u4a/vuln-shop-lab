@@ -23,6 +23,8 @@ import Cart from './pages/Cart.jsx';
 import CheckoutResult from './pages/CheckoutResult.jsx';
 import Orders from './pages/Orders.jsx';
 import OrderDetail from './pages/OrderDetail.jsx';
+import SharedOrder from './pages/SharedOrder.jsx';
+import TrackShipment from './pages/TrackShipment.jsx';
 import Faq from './pages/Faq.jsx';
 import Terms from './pages/Terms.jsx';
 import Qna from './pages/Qna.jsx';
@@ -81,6 +83,8 @@ export default function App() {
                 <Route path="/events/:id" element={<EventDetail />} />
                 <Route path="/coupons" element={<Coupons />} />
                 <Route path="/cart" element={<Cart />} />
+                <Route path="/track" element={<TrackShipment />} />
+                <Route path="/orders/shared/:token" element={<SharedOrder />} />
                 <Route path="/checkout/success" element={<CheckoutResult success />} />
                 <Route path="/checkout/fail" element={<CheckoutResult success={false} />} />
 

@@ -188,6 +188,31 @@ db.exec(`
     setting_key TEXT PRIMARY KEY,
     value TEXT
   );
+
+  CREATE TABLE IF NOT EXISTS carts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(user_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS cart_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cart_id INTEGER NOT NULL REFERENCES carts(id),
+    product_id INTEGER NOT NULL REFERENCES products(id),
+    quantity INTEGER NOT NULL DEFAULT 1,
+    option_value TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS shipments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL REFERENCES orders(id),
+    carrier TEXT,
+    tracking_no TEXT UNIQUE,
+    status TEXT NOT NULL DEFAULT 'preparing',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
 `);
 
 for (const stmt of [
@@ -216,6 +241,14 @@ for (const stmt of [
   'ALTER TABLE users ADD COLUMN points INTEGER NOT NULL DEFAULT 0',
   'ALTER TABLE users ADD COLUMN referral_code TEXT',
   'ALTER TABLE users ADD COLUMN referred_by INTEGER',
+  'ALTER TABLE orders ADD COLUMN coupon_id INTEGER REFERENCES coupons(id)',
+  'ALTER TABLE orders ADD COLUMN discount_amount REAL NOT NULL DEFAULT 0',
+  'ALTER TABLE orders ADD COLUMN ship_name TEXT',
+  'ALTER TABLE orders ADD COLUMN ship_phone TEXT',
+  'ALTER TABLE orders ADD COLUMN ship_postcode TEXT',
+  'ALTER TABLE orders ADD COLUMN ship_address TEXT',
+  'ALTER TABLE orders ADD COLUMN ship_address_detail TEXT',
+  'ALTER TABLE orders ADD COLUMN share_token TEXT',
 ]) {
   try {
     db.exec(stmt);
@@ -745,6 +778,55 @@ if (ptxCount === 0) {
       insertPtx.run(u.id, 3000, '가입 축하 적립');
       setPoints.run(3000, u.id);
     }
+  }
+}
+
+// 10. Backfill order share tokens + shipping snapshot (deterministic, idempotent)
+const ordersMissingToken = db.prepare('SELECT id FROM orders WHERE share_token IS NULL').all();
+if (ordersMissingToken.length) {
+  const setToken = db.prepare('UPDATE orders SET share_token = ? WHERE id = ?');
+  for (const o of ordersMissingToken) {
+    setToken.run(Buffer.from(String(o.id)).toString('base64'), o.id);
+  }
+}
+const ordersMissingShip = db.prepare(
+  "SELECT o.id, u.name, u.phone, u.postcode, u.address, u.address_detail FROM orders o JOIN users u ON u.id = o.user_id WHERE o.ship_name IS NULL"
+).all();
+if (ordersMissingShip.length) {
+  const setShip = db.prepare(
+    'UPDATE orders SET ship_name = ?, ship_phone = ?, ship_postcode = ?, ship_address = ?, ship_address_detail = ? WHERE id = ?'
+  );
+  for (const o of ordersMissingShip) {
+    setShip.run(o.name, o.phone, o.postcode, o.address, o.address_detail, o.id);
+  }
+}
+
+// 11. Seed shipments for the first few paid orders (if none yet) — 순차 송장번호 1000000000 + id
+const shipmentCount = db.prepare('SELECT COUNT(*) AS count FROM shipments').get().count;
+if (shipmentCount === 0) {
+  const paidOrders = db
+    .prepare("SELECT id FROM orders WHERE status = 'paid' ORDER BY id LIMIT 8")
+    .all();
+  const insertShipment = db.prepare(
+    'INSERT INTO shipments (order_id, carrier, status) VALUES (?, ?, ?)'
+  );
+  const setTracking = db.prepare('UPDATE shipments SET tracking_no = ? WHERE id = ?');
+  const SHIP_STATUS = ['shipped', 'delivered', 'preparing'];
+  paidOrders.forEach((o, idx) => {
+    const r = insertShipment.run(o.id, 'CJ대한통운', SHIP_STATUS[idx % SHIP_STATUS.length]);
+    setTracking.run(String(1000000000 + r.lastInsertRowid), r.lastInsertRowid);
+  });
+}
+
+// 12. Seed one claimed-but-unused coupon for user1 (WELCOME5000) — VULN-036 재현용
+const welcomeCoupon = db.prepare("SELECT id FROM coupons WHERE code = 'WELCOME5000'").get();
+const user1Row = db.prepare("SELECT id FROM users WHERE username = 'user1'").get();
+if (welcomeCoupon && user1Row) {
+  const owned = db
+    .prepare('SELECT id FROM user_coupons WHERE user_id = ? AND coupon_id = ?')
+    .get(user1Row.id, welcomeCoupon.id);
+  if (!owned) {
+    db.prepare('INSERT INTO user_coupons (user_id, coupon_id) VALUES (?, ?)').run(user1Row.id, welcomeCoupon.id);
   }
 }
 

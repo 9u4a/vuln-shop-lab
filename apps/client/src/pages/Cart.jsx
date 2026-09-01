@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { loadTossPayments, ANONYMOUS } from '@tosspayments/tosspayments-sdk';
 import { useCart } from '../CartContext.jsx';
 import { useBackend } from '../BackendContext.jsx';
-import { createOrder, importCartBackup, fetchPoints } from '../api.js';
+import { useSession } from '../SessionContext.jsx';
+import { createOrder, importCartBackup, fetchPoints, previewCoupon, fetchProfile } from '../api.js';
 import { formatCurrency } from '../format.js';
 import EmptyState from '../components/EmptyState.jsx';
 
@@ -12,6 +13,7 @@ const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY;
 export default function Cart() {
   const { items, total, setQuantity, changeOption } = useCart();
   const { backend, backendKey } = useBackend();
+  const { user } = useSession();
   const [error, setError] = useState(null);
   const [pendingNote, setPendingNote] = useState(null);
   const [pendingPayment, setPendingPayment] = useState(null);
@@ -22,13 +24,46 @@ export default function Cart() {
   const [backupResult, setBackupResult] = useState(null);
   const [pointsBalance, setPointsBalance] = useState(null);
   const [pointsToUse, setPointsToUse] = useState('');
+  const [couponCode, setCouponCode] = useState('');
+  const [couponPreview, setCouponPreview] = useState(null);
+  const [shipping, setShipping] = useState({ name: '', phone: '', postcode: '', address: '', addressDetail: '' });
 
   useEffect(() => {
     fetchPoints(backend.base).then((d) => setPointsBalance(d.balance)).catch(() => setPointsBalance(null));
   }, [backend.base]);
 
+  useEffect(() => {
+    if (!user) return;
+    fetchProfile(backend.base)
+      .then((d) => {
+        const p = d.profile || {};
+        setShipping({
+          name: p.name || '',
+          phone: p.phone || '',
+          postcode: p.postcode || '',
+          address: p.address || '',
+          addressDetail: p.addressDetail || '',
+        });
+      })
+      .catch(() => {});
+  }, [backend.base, user]);
+
   const usePoints = Number(pointsToUse) || 0;
-  const payable = total - usePoints;
+  const discount = couponPreview?.valid ? couponPreview.discountAmount : 0;
+  const payable = Math.max(0, total - discount - usePoints);
+
+  async function handleApplyCoupon() {
+    setCouponPreview(null);
+    if (!couponCode.trim()) return;
+    try {
+      const res = await previewCoupon(backend.base, couponCode.trim(), total);
+      setCouponPreview(res);
+    } catch (err) {
+      setCouponPreview({ valid: false, discountAmount: 0, reason: err.message });
+    }
+  }
+
+  const setShip = (field) => (e) => setShipping((s) => ({ ...s, [field]: e.target.value }));
 
   async function handleImportBackup(e) {
     e.preventDefault();
@@ -71,7 +106,10 @@ export default function Cart() {
     setError(null);
     setPendingNote(null);
     try {
-      const { orderId, tossOrderId, amount } = await createOrder(backend.base, items, usePoints);
+      const { orderId, tossOrderId, amount } = await createOrder(backend.base, items, usePoints, {
+        couponCode: couponPreview?.valid ? couponCode.trim() : undefined,
+        shipping: shipping.address ? shipping : undefined,
+      });
       if (!TOSS_CLIENT_KEY) {
         setPendingNote(
           `주문 #${orderId}이(가) 결제 대기 상태로 생성되었습니다. Toss 결제를 계속하려면 VITE_TOSS_CLIENT_KEY를 설정하세요.`
@@ -192,8 +230,44 @@ export default function Cart() {
           </ul>
 
           <div className="summary-box">
+            {user && (
+              <div className="summary-box__row" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                <span>배송지</span>
+                <div style={{ display: 'flex', gap: 'var(--space-2)', width: '100%' }}>
+                  <input value={shipping.name} onChange={setShip('name')} placeholder="받는 분" style={{ flex: 1 }} />
+                  <input value={shipping.phone} onChange={setShip('phone')} placeholder="연락처" style={{ flex: 1 }} />
+                </div>
+                <div style={{ display: 'flex', gap: 'var(--space-2)', width: '100%' }}>
+                  <input value={shipping.postcode} onChange={setShip('postcode')} placeholder="우편번호" style={{ width: 100 }} />
+                  <input value={shipping.address} onChange={setShip('address')} placeholder="주소" style={{ flex: 1 }} />
+                </div>
+                <input value={shipping.addressDetail} onChange={setShip('addressDetail')} placeholder="상세주소" style={{ width: '100%' }} />
+              </div>
+            )}
             <div className="summary-box__row"><span>상품금액</span><span className="tnum">{formatCurrency(total)}</span></div>
             <div className="summary-box__row"><span>배송비</span><span>무료</span></div>
+
+            <div className="summary-box__row" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: 'var(--space-2)' }}>
+              <span>쿠폰</span>
+              <div style={{ display: 'flex', gap: 'var(--space-2)', width: '100%' }}>
+                <input
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value)}
+                  placeholder="쿠폰 코드"
+                  style={{ flex: 1 }}
+                />
+                <button type="button" className="btn btn-ghost btn-sm" onClick={handleApplyCoupon}>적용</button>
+              </div>
+              {couponPreview && (
+                <small className={couponPreview.valid ? 'status-ok' : 'error'}>
+                  {couponPreview.valid ? `-${formatCurrency(couponPreview.discountAmount)} 적용됨` : couponPreview.reason}
+                </small>
+              )}
+            </div>
+            {discount > 0 && (
+              <div className="summary-box__row"><span>쿠폰 할인</span><span className="tnum">-{formatCurrency(discount)}</span></div>
+            )}
+
             {pointsBalance != null && (
               <label className="summary-box__row" style={{ alignItems: 'center' }}>
                 <span>포인트 사용 <small className="muted">(보유 {formatCurrency(pointsBalance)}P)</small></span>

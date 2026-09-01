@@ -21,6 +21,8 @@ const pathModules = [
   './paths/returns',
   './paths/referral',
   './paths/restock',
+  './paths/cart',
+  './paths/shipments',
 ];
 
 const paths = {};
@@ -46,6 +48,8 @@ const tags = [
   { name: '반품·환불' },
   { name: '추천인' },
   { name: '재입고 알림' },
+  { name: '장바구니' },
+  { name: '배송' },
 ];
 
 module.exports = {

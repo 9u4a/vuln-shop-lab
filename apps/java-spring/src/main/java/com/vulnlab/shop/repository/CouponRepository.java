@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface CouponRepository extends JpaRepository<Coupon, Long> {
     List<Coupon> findByActiveTrueOrderByIdDesc();
+    List<Coupon> findByCode(String code);
 }

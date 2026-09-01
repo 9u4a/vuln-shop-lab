@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useBackend } from '../../BackendContext.jsx';
-import { fetchAdminOrders, fetchAdminOrder, updateOrderStatus } from '../../api.js';
+import { fetchAdminOrders, fetchAdminOrder, updateOrderStatus, setOrderShipment } from '../../api.js';
 import { formatCurrency } from '../../format.js';
 import StatusChip from '../../components/StatusChip.jsx';
 import Modal from '../../components/Modal.jsx';
@@ -21,6 +21,8 @@ export default function AdminOrders() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [statusDraft, setStatusDraft] = useState('');
   const [saveStatus, setSaveStatus] = useState(null);
+  const [carrierDraft, setCarrierDraft] = useState('CJ대한통운');
+  const [shipMsg, setShipMsg] = useState(null);
 
   function load() {
     setError(null);
@@ -46,6 +48,7 @@ export default function AdminOrders() {
       const d = await fetchAdminOrder(backend.base, id);
       setDetail(d);
       setStatusDraft(d.order.status);
+      setShipMsg(null);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -68,6 +71,17 @@ export default function AdminOrders() {
       load();
     } catch (err) {
       setSaveStatus(err.message);
+    }
+  }
+
+  async function handleRegisterShipment() {
+    setShipMsg(null);
+    try {
+      const s = await setOrderShipment(backend.base, openId, carrierDraft);
+      setShipMsg(`송장번호 ${s.trackingNo} 등록됨`);
+      setDetail((d) => ({ ...d, shipment: s }));
+    } catch (err) {
+      setShipMsg(err.message);
     }
   }
 
@@ -120,6 +134,23 @@ export default function AdminOrders() {
               </button>
               {saveStatus && <span className={saveStatus === '상태가 변경되었습니다.' ? 'status-ok' : 'error'}>{saveStatus}</span>}
             </div>
+
+            <div className="order-status-edit">
+              <label>택배사
+                <input value={carrierDraft} onChange={(e) => setCarrierDraft(e.target.value)} />
+              </label>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={handleRegisterShipment}>
+                {detail.shipment ? '송장 수정' : '송장 등록'}
+              </button>
+              {detail.shipment && <span className="muted">현재: {detail.shipment.carrier} / {detail.shipment.trackingNo}</span>}
+              {shipMsg && <span className={shipMsg.includes('등록됨') ? 'status-ok' : 'error'}>{shipMsg}</span>}
+            </div>
+
+            {detail.order.shipping && (
+              <p className="muted">
+                배송지: {detail.order.shipping.name} · {detail.order.shipping.phone} · ({detail.order.shipping.postcode}) {detail.order.shipping.address} {detail.order.shipping.addressDetail || ''}
+              </p>
+            )}
 
             <h4>주문 상품 ({detail.items.length})</h4>
             <ul className="line-list">

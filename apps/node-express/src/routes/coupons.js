@@ -38,6 +38,33 @@ router.get('/', (req, res) => {
   res.json({ coupons: rows.map((r) => ({ ...toCoupon(r), claimed: claimedSet.has(r.id) })) });
 });
 
+// 체크아웃 쿠폰 미리보기 — 코드로 유효성·할인액만 계산(사용 처리는 주문 생성 시).
+router.post('/apply-preview', requireAuth, (req, res) => {
+  const code = (req.body.code || '').trim();
+  const itemsTotal = Number(req.body.itemsTotal) || 0;
+  if (!code) return res.json({ valid: false, discountAmount: 0, reason: '쿠폰 코드를 입력해주세요.' });
+
+  const row = db
+    .prepare(
+      `SELECT c.* FROM user_coupons uc JOIN coupons c ON c.id = uc.coupon_id
+       WHERE uc.user_id = ? AND c.code = ? ORDER BY uc.id DESC`
+    )
+    .get(req.session.user.id, code);
+  if (!row) return res.json({ valid: false, discountAmount: 0, reason: '보유하지 않은 쿠폰입니다.' });
+  if (!row.active) return res.json({ valid: false, discountAmount: 0, reason: '사용할 수 없는 쿠폰입니다.' });
+  if (row.expires_at && new Date(row.expires_at) < new Date()) {
+    return res.json({ valid: false, discountAmount: 0, reason: '만료된 쿠폰입니다.' });
+  }
+  if (itemsTotal < (row.min_order_amount || 0)) {
+    return res.json({ valid: false, discountAmount: 0, reason: `최소 주문금액 ${row.min_order_amount}원 이상부터 사용 가능합니다.` });
+  }
+  const discount =
+    row.discount_type === 'percent'
+      ? Math.floor((itemsTotal * row.discount_value) / 100)
+      : row.discount_value;
+  res.json({ valid: true, discountAmount: Math.min(discount, itemsTotal), reason: null });
+});
+
 // 내 쿠폰함.
 router.get('/mine', requireAuth, (req, res) => {
   const rows = db
