@@ -26,6 +26,8 @@ DELETE /api/products/1/reviews/5
 
 ## 증거 (재현 확인)
 
-(진단 단계에서 채움) — Phase 2(Burp 진단)에서 재현 예정.
+2026-09-01, 로컬 재현(`:8090`): `user1`(userId 3) 세션으로 `PUT /api/node/products/1/reviews/10`
+(리뷰 10은 userId 6 소유) → 200, 응답·후속 조회에서 body가 `HACKED-BY-user1(IDOR)`로 변경됨. 소유권
+검증 없이 `reviewId`+`productId`만으로 수정됨을 확인.
 
 ## 조치 상태: 미조치 (의도된 취약점)

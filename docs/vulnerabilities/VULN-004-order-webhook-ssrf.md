@@ -20,24 +20,42 @@ async function fireWebhook(webhookUrl, payload) {
 
 두 스택 모두 URL 스킴/호스트에 대한 allowlist가 전혀 없다 — `http://169.254.169.254/...` 같은 내부망·메타데이터 주소도 그대로 요청한다.
 
-이 UI 필드(Cart 페이지의 "Order webhook URL")는 사용성 문제로 제거했지만, `POST /api/orders`가 여전히 `webhookUrl` 바디 필드를 그대로 받으므로 Burp Repeater 등으로 직접 요청을 조작하면 동일하게 재현 가능하다 (VULN-001의 검색 필드처럼 UI 위젯 존재 여부와 무관한 API 레벨 취약점).
+이 UI 필드(Cart 페이지의 "Order webhook URL")는 제거했고, `POST /api/orders`가 여전히 `webhookUrl` 바디를
+받지만 **실제 발송은 결제 확인 경로 안쪽에서만** 일어난다(아래 재현 제약).
 
 ## 트리거 방법
 
 ```
 POST /api/orders
-{"items":[{"productId":1,"quantity":1}],"webhookUrl":"http://<attacker-controlled-collaborator-host>/"}
+{"items":[{"productId":1,"quantity":1}],"webhookUrl":"http://<collaborator-host>/"}
+→ 이어서 POST /api/orders/:id/confirm  (Toss 결제 확인 성공 시에만 fireWebhook 발화)
 ```
 
-주문 생성 후 `POST /api/orders/:id/confirm`으로 결제를 확인시키면(테스트 결제 완료), 서버가 `webhookUrl`로 아웃바운드 POST 요청을 보낸다 — Burp Collaborator로 수신 확인 가능. 내부 서비스(예: 같은 Docker 네트워크의 다른 컨테이너 IP:포트)를 대상으로 지정하면 포트 스캔/내부 서비스 프로빙에도 사용 가능.
+**재현 제약(중요)**: `fireWebhook`는 `confirm()`이 **Toss 결제 확인에 성공한 뒤에만** 호출된다.
+`confirm`은 `TOSS_SECRET_KEY`가 없으면 501을 반환하고(기본 랩 상태), 있어도 실제 Toss 위젯 결제로 받은
+유효한 `paymentKey`로 `https://api.tosspayments.com/.../confirm`이 <300을 반환해야 진행된다. 따라서
+"주문 생성 → confirm 한 번"만으로는 발송되지 않으며, **재현하려면 Toss 테스트 키 설정 + 위젯 결제 완주가
+필요**하다. 무-Toss 랩에서는 발화하지 않음.
+
+응답 반환형이며 관리자만 있으면 바로 재현되는 SSRF는 [[VULN-033-restock-callback-ssrf]]
+(웹훅 테스트 버튼)을 참고 — 004는 blind + 결제경로 게이팅이라 실증 난이도가 높다.
 
 ## 영향
 
-- 서버를 프록시 삼아 임의의 내부/외부 호스트로 아웃바운드 요청 발생 (Collaborator를 통한 존재 증명, 내부망 스캐닝, 클라우드 메타데이터 엔드포인트 접근 시도 등).
-- 5초 타임아웃(`AbortSignal.timeout(5000)`) 외에는 아무 제약이 없다.
+- (게이팅을 통과하면) 서버를 프록시 삼아 임의 내부/외부 호스트로 blind 아웃바운드 요청 — 내부망 스캐닝,
+  메타데이터 엔드포인트 접근 시도 등. 5초 타임아웃 외 제약 없음.
 
 ## 증거 (재현 확인)
 
-2026-08-25, 로컬 재현: `webhookUrl`을 `http://localhost:3000/api/session`(자기 자신의 다른 엔드포인트)으로 지정 후 주문 확인 → 서버 로그에 아웃바운드 요청이 실제로 발생함을 확인 (요청 실패 시에도 `console.error`로 델리버리 시도 자체는 로그에 남음).
+**재현 제약**: 2026-09-01 코드 확인 기준 `fireWebhook`는 Toss confirm 성공 분기에서만 호출되고, 기본 랩은
+`TOSS_SECRET_KEY` 미설정이라 `confirm`이 501 → 웹훅 미발송. 따라서 무-Toss 환경에서 문서 페이로드만으로는
+**재현되지 않음**(발송 자체가 게이팅됨). 실증은 Toss 테스트 결제 완주 후 Collaborator 수신으로 확인해야 함.
+
+## 정상 서비스 흐름에서의 어색함
+
+주문 웹훅 UI는 제거됐고 body 파라미터만 남아, 실제 발송이 결제 성공 경로 깊숙이에서만 일어난다 — 정상
+서비스로는 노출 지점이 거의 없고 실증도 어렵다. **후속 개선 후보**: (a) 발송을 order lifecycle의 명시적
+"주문 알림 웹훅 등록/테스트" 기능으로 자연스럽게 노출하거나, (b) VULN-033처럼 응답 반환형 테스트 경로로
+정리. (이번 감사에서는 코드 미변경, 문서로만 명시.)
 
 ## 조치 상태: 미조치 (의도된 취약점)

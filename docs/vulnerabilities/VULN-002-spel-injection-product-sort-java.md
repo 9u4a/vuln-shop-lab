@@ -40,4 +40,10 @@ sort=new java.util.Scanner(T(java.lang.Runtime).getRuntime().exec("id").getInput
 
 2026-08-25, `docker compose up --build` 후 로컬에서 재현: 위 페이로드로 `sortKeys`에 컨테이너 `HOSTNAME`(`05a1da218305`)이 그대로 노출되는 것을 확인 — 임의 정적 메서드 호출(따라서 임의 코드 실행 등가)이 가능함을 증명.
 
+## 정상 서비스 흐름 참고
+
+평가 결과를 담아 반환하는 응답의 `sortKeys` 배열은 실제 커머스엔 없을 디버그성 필드로, SpEL 평가
+결과가 그대로 노출되는 표면이다(자연스러움은 다소 떨어짐). UI에는 노출하지 않으며 API 응답에만 남아
+익스필 채널로 기능한다.
+
 ## 조치 상태: 미조치 (의도된 취약점)

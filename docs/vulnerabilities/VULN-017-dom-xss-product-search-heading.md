@@ -23,7 +23,16 @@ http://localhost:8090/products?q=<img src=x onerror="fetch('/api/node/profile').
 
 ## 증거 (재현 확인)
 
-(진단 단계에서 채움) 위 URL 접근 시 서버 접근 로그에는 XSS 페이로드가 검색어 파라미터로만 남고, Collaborator 로 브라우저에서 수집한 프로필 JSON 이 도착 → 클라이언트 측 sink 임을 입증.
+2026-09-01, 코드 확인: `apps/client/src/pages/Products.jsx`가 `useSearchParams().get('q')`를
+`dangerouslySetInnerHTML={{ __html: `'${q}' 검색 결과` }}`로 렌더 — 순수 클라이언트 DOM sink라 서버
+응답이 아니라 브라우저에서만 실행된다(서버 로그엔 `q` 파라미터로만 남음). `?q=<img src=x onerror=...>`로
+`/products` 접근 시 innerHTML 설정 시점에 실행(브라우저 필요, curl로는 재현 불가). 서버측 SQLi(VULN-001)와
+별개의 클라이언트 sink.
+
+## 정상 서비스 흐름 참고
+
+평범한 "검색 결과" 헤딩 텍스트에 `dangerouslySetInnerHTML`를 쓰는 것은 정상 구현이라면 불필요하다
+(하이라이트 목적의 실수로는 있을 법함) — DOM 기반 XSS sink를 두기 위한 구성이다. 정상 구현은 텍스트로 렌더.
 
 ## 조치 상태: 미조치 (의도된 취약점)
 

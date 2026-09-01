@@ -23,6 +23,6 @@ POST /api/products/1/reviews
 
 ## 증거 (재현 확인)
 
-(진단 단계에서 채움) — Phase 2(Burp 진단)에서 재현 예정.
+2026-09-01, 로컬 재현(`:8090`, `user1`): `POST /api/node/products/1/reviews {"rating":5,"body":"<img src=x onerror=alert(1)>"}` → 저장 후 `GET /products/1/reviews` 응답에 `body`가 이스케이프 없이 그대로 반환됨. 상품 상세(`ProductDetail.jsx:277`)가 `dangerouslySetInnerHTML`로 렌더하므로 열람자 브라우저에서 `onerror` 실행. (bare `<script>`는 innerHTML에서 실행 안 되므로 `img/onerror` 사용.)
 
 ## 조치 상태: 미조치 (의도된 취약점)

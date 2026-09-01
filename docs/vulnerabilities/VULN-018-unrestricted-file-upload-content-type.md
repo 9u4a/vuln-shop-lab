@@ -34,7 +34,11 @@ GET http://localhost:8090/uploads/node/<uuid>.html   → text/html, 스크립트
 
 ## 증거 (재현 확인)
 
-(진단 단계에서 채움) `<uuid>.html` 업로드 후 `GET /uploads/node/<uuid>.html` 응답 헤더 `Content-Type: text/html`, 브라우저에서 스크립트 실행되어 Collaborator 로 주문/`tossPaymentKey` 도착.
+2026-09-01, 로컬 재현 확인(`:8090`, 양 스택): `Content-Type: image/png`으로 `poc.html`을
+`POST /api/{node,java}/profile/avatar` 업로드 → 저장 파일명 `<uuid>.html`, `GET /uploads/{node,java}/<uuid>.html`
+응답 `Content-Type: text/html`(nosniff/Content-Disposition 없음). 앱 오리진(`:8090`)에서 그 URL을 직접 열면
+스크립트가 실행되는 저장형 XSS(피해자가 URL을 열거나 iframe에 넣을 때). `<img>`로 렌더되는 자리에서는
+실행되지 않음.
 
 ## 조치 상태: 미조치 (의도된 취약점)
 

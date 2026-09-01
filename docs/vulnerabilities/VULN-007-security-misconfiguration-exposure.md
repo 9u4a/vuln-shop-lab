@@ -29,6 +29,11 @@ Node는 서버 에러를 유발하는 요청(예: 잘못된 타입의 바디로 
 
 ## 증거 (재현 확인)
 
-(진단 단계에서 채움) — Phase 2(Burp 진단)에서 재현 예정.
+2026-09-01, 로컬 재현: java — `GET http://localhost:8081/actuator/env` → 200, `/actuator/beans` → 200
+(인증 없이 열람). nginx 경유 `GET :8090/api/java/actuator/env` → 404(프리픽스 치환 → `/api/actuator/env`),
+즉 표면은 WAS 직접 포트 전용임을 확인. node — 미처리 예외를 유발하는 요청(`GET /api/node/products?q=zzz'
+UNION SELECT id,username,password_hash,4,…FROM users-- -`, `option_values` 위치에 비문자열 필러) 시 응답
+본문에 `TypeError: row.option_values.split is not a function ... at toProduct (/app/src/routes/products.js:23)`
+전체 스택트레이스가 그대로 노출됨(dev 에러 핸들러).
 
 ## 조치 상태: 미조치 (의도된 취약점)

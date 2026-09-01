@@ -43,7 +43,9 @@ PUT  /api/{node,java}/admin/users/1/role   → 기존 system_admin(9u4a) 강등
 
 ## 증거 (재현 확인)
 
-(진단 단계에서 채움) `user1` 세션으로 `PUT /api/node/profile {"role":"system_admin"}` → `GET /api/node/admin/users` 200 + 전체 PII, `GET /api/node/session` 의 role 이 `system_admin`.
+2026-09-01, 로컬 재현 확인(`:8090`): `user1` 세션으로 `PUT /api/node/profile {"role":"system_admin"}` → 200,
+`GET /api/node/session`의 role이 `system_admin`으로 바뀌고 `GET /api/node/admin/users` 200(전체 PII 접근).
+(테스트 후 user1 role은 `user`로 원복함.)
 
 ## 조치 상태: 미조치 (의도된 취약점)
 
