@@ -11,7 +11,7 @@
   `user_coupons.used = 1` 마킹.
 - 신규 API `POST /api/coupons/apply-preview`(로그인) — Cart UI가 주문 전 할인액을 미리 보여주기 위한 것.
   실제 사용(redemption) 처리는 `POST /api/orders`에서만 일어난다.
-- `Cart.jsx`에 쿠폰 코드 입력 + 할인 미리보기 행, `OrderDetail`·관리자 주문 상세에 할인액 표시.
+- `Cart.jsx`에 쿠폰 선택 + 할인 미리보기 행, `OrderDetail`·관리자 주문 상세에 할인액 표시.
 
 ## 설계 판단
 
@@ -25,3 +25,9 @@
 ## 이후 변경
 
 - VULN-036을 의도적으로 남김: 쿠폰 사용 시 `used` 미확인 → 1장으로 여러 주문 할인.
+- 체크아웃 쿠폰 입력을 코드 직접 입력에서 **보유 쿠폰 선택 모달**(`CouponPickerModal`)로 변경.
+  미사용 쿠폰만 목록에 뜨고, 최소 주문금액 미달 쿠폰은 비활성. 선택/상품금액 변경 시
+  `apply-preview`를 다시 호출해 할인액을 갱신한다. 서버 계약(`POST /api/orders`의 `couponCode`)은 그대로.
+- 로그인 사용자에게만 쿠폰 행을 노출(비회원 장바구니에서는 숨김).
+- `Cart.jsx` 배송지 입력 필드가 요약 카드를 넘치던 문제 수정 — flex 입력에 `min-width: 0`
+  (`.ship-fields`), 우편번호는 고정폭.

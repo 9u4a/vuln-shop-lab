@@ -7,6 +7,7 @@ import { useSession } from '../SessionContext.jsx';
 import { createOrder, importCartBackup, fetchPoints, previewCoupon, fetchProfile } from '../api.js';
 import { formatCurrency } from '../format.js';
 import EmptyState from '../components/EmptyState.jsx';
+import CouponPickerModal from '../components/CouponPickerModal.jsx';
 
 const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY;
 
@@ -26,6 +27,7 @@ export default function Cart() {
   const [pointsToUse, setPointsToUse] = useState('');
   const [couponCode, setCouponCode] = useState('');
   const [couponPreview, setCouponPreview] = useState(null);
+  const [couponModalOpen, setCouponModalOpen] = useState(false);
   const [shipping, setShipping] = useState({ name: '', phone: '', postcode: '', address: '', addressDetail: '' });
 
   useEffect(() => {
@@ -52,16 +54,21 @@ export default function Cart() {
   const discount = couponPreview?.valid ? couponPreview.discountAmount : 0;
   const payable = Math.max(0, total - discount - usePoints);
 
-  async function handleApplyCoupon() {
-    setCouponPreview(null);
-    if (!couponCode.trim()) return;
-    try {
-      const res = await previewCoupon(backend.base, couponCode.trim(), total);
-      setCouponPreview(res);
-    } catch (err) {
-      setCouponPreview({ valid: false, discountAmount: 0, reason: err.message });
-    }
+  // 쿠폰 선택/해제 — 코드만 바꾸고, 실제 할인 미리보기는 아래 effect가 담당.
+  function handleSelectCoupon(code) {
+    setCouponCode(code);
+    if (!code) setCouponPreview(null);
   }
+
+  // 선택된 쿠폰이나 상품금액이 바뀔 때마다 서버에 할인액을 다시 확인.
+  useEffect(() => {
+    if (!couponCode) return;
+    let cancelled = false;
+    previewCoupon(backend.base, couponCode, total)
+      .then((res) => { if (!cancelled) setCouponPreview(res); })
+      .catch((err) => { if (!cancelled) setCouponPreview({ valid: false, discountAmount: 0, reason: err.message }); });
+    return () => { cancelled = true; };
+  }, [backend.base, couponCode, total]);
 
   const setShip = (field) => (e) => setShipping((s) => ({ ...s, [field]: e.target.value }));
 
@@ -233,37 +240,44 @@ export default function Cart() {
             {user && (
               <div className="summary-box__row" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: 'var(--space-2)' }}>
                 <span>배송지</span>
-                <div style={{ display: 'flex', gap: 'var(--space-2)', width: '100%' }}>
-                  <input value={shipping.name} onChange={setShip('name')} placeholder="받는 분" style={{ flex: 1 }} />
-                  <input value={shipping.phone} onChange={setShip('phone')} placeholder="연락처" style={{ flex: 1 }} />
+                <div className="ship-fields">
+                  <div className="ship-fields__row">
+                    <input value={shipping.name} onChange={setShip('name')} placeholder="받는 분" />
+                    <input value={shipping.phone} onChange={setShip('phone')} placeholder="연락처" />
+                  </div>
+                  <div className="ship-fields__row">
+                    <input className="ship-fields__postcode" value={shipping.postcode} onChange={setShip('postcode')} placeholder="우편번호" />
+                    <input value={shipping.address} onChange={setShip('address')} placeholder="주소" />
+                  </div>
+                  <input value={shipping.addressDetail} onChange={setShip('addressDetail')} placeholder="상세주소" />
                 </div>
-                <div style={{ display: 'flex', gap: 'var(--space-2)', width: '100%' }}>
-                  <input value={shipping.postcode} onChange={setShip('postcode')} placeholder="우편번호" style={{ width: 100 }} />
-                  <input value={shipping.address} onChange={setShip('address')} placeholder="주소" style={{ flex: 1 }} />
-                </div>
-                <input value={shipping.addressDetail} onChange={setShip('addressDetail')} placeholder="상세주소" style={{ width: '100%' }} />
               </div>
             )}
             <div className="summary-box__row"><span>상품금액</span><span className="tnum">{formatCurrency(total)}</span></div>
             <div className="summary-box__row"><span>배송비</span><span>무료</span></div>
 
-            <div className="summary-box__row" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: 'var(--space-2)' }}>
-              <span>쿠폰</span>
-              <div style={{ display: 'flex', gap: 'var(--space-2)', width: '100%' }}>
-                <input
-                  value={couponCode}
-                  onChange={(e) => setCouponCode(e.target.value)}
-                  placeholder="쿠폰 코드"
-                  style={{ flex: 1 }}
-                />
-                <button type="button" className="btn btn-ghost btn-sm" onClick={handleApplyCoupon}>적용</button>
+            {user && (
+              <div className="summary-box__row" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                <span>쿠폰</span>
+                {couponPreview?.valid ? (
+                  <div className="coupon-applied">
+                    <small className="status-ok">{couponCode} · -{formatCurrency(couponPreview.discountAmount)}</small>
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => setCouponModalOpen(true)}>변경</button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm btn-block"
+                    onClick={() => setCouponModalOpen(true)}
+                  >
+                    {couponCode ? '쿠폰 다시 선택' : '보유 쿠폰에서 선택'}
+                  </button>
+                )}
+                {couponPreview && !couponPreview.valid && (
+                  <small className="error">{couponPreview.reason}</small>
+                )}
               </div>
-              {couponPreview && (
-                <small className={couponPreview.valid ? 'status-ok' : 'error'}>
-                  {couponPreview.valid ? `-${formatCurrency(couponPreview.discountAmount)} 적용됨` : couponPreview.reason}
-                </small>
-              )}
-            </div>
+            )}
             {discount > 0 && (
               <div className="summary-box__row"><span>쿠폰 할인</span><span className="tnum">-{formatCurrency(discount)}</span></div>
             )}
@@ -296,6 +310,15 @@ export default function Cart() {
           </div>
         </div>
       )}
+
+      <CouponPickerModal
+        open={couponModalOpen}
+        base={backend.base}
+        itemsTotal={total}
+        selectedCode={couponCode}
+        onSelect={handleSelectCoupon}
+        onClose={() => setCouponModalOpen(false)}
+      />
 
       {backendKey === 'java' && (
         <section className="card" style={{ marginTop: 'var(--space-10)' }}>

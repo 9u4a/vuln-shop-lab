@@ -1087,6 +1087,35 @@ textarea { resize: vertical; min-height: 4.5rem; }
 .coupon-card__meta { font-size: 0.76rem; color: var(--color-text-muted); margin-top: auto; }
 .coupon-card__action { display: flex; align-items: center; padding: var(--space-3); }
 
+/* 장바구니 배송지 입력 */
+.ship-fields { display: flex; flex-direction: column; gap: var(--space-2); width: 100%; }
+.ship-fields > input { width: 100%; }
+.ship-fields__row { display: flex; gap: var(--space-2); width: 100%; }
+.ship-fields__row input { flex: 1; min-width: 0; }
+.ship-fields__row input.ship-fields__postcode { flex: 0 0 96px; }
+
+/* 장바구니 쿠폰 선택 */
+.coupon-applied { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); width: 100%; }
+.coupon-pick-list { list-style: none; display: flex; flex-direction: column; gap: var(--space-2); }
+.coupon-pick {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+.coupon-pick:hover:not(:disabled) { border-color: var(--color-ink); }
+.coupon-pick:disabled { opacity: 0.5; cursor: not-allowed; }
+.coupon-pick--active { border-color: var(--color-ink); background: var(--color-subtle); }
+.coupon-pick__discount { font-weight: 800; font-size: 0.95rem; }
+.coupon-pick__title { font-size: 0.9rem; color: var(--color-text); }
+.coupon-pick__meta { font-size: 0.76rem; color: var(--color-text-muted); }
+
 /* Admin image upload field */
 .admin-image-field { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-3); }
 .admin-image-field__label { font-size: 0.83rem; font-weight: 600; }
