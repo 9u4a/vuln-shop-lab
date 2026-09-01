@@ -2,7 +2,7 @@
 
 - 대상 스택: java-spring
 - 심각도: Critical
-- 분류: A08:2021 Software and Data Integrity Failures (Insecure Deserialization, CWE-502)
+- 분류: A08:2025 Software or Data Integrity Failures (Insecure Deserialization, CWE-502)
 
 ## 위치
 

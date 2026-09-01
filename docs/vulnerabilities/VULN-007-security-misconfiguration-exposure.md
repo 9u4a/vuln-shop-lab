@@ -2,7 +2,7 @@
 
 - 대상 스택: node-express, java-spring
 - 심각도: Medium
-- 분류: A05:2021 Security Misconfiguration
+- 분류: A02:2025 Security Misconfiguration
 
 ## 위치
 

@@ -2,7 +2,7 @@
 
 - 대상 스택: node-express, java-spring (동일)
 - 심각도: High
-- 분류: A10:2021 Server-Side Request Forgery (SSRF)
+- 분류: A01:2025 Broken Access Control (SSRF)
 
 ## 위치
 

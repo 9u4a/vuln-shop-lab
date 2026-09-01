@@ -2,7 +2,7 @@
 
 - 대상 스택: node-express, java-spring
 - 심각도: High
-- 분류: A04:2021 Insecure Design (CWE-362 Concurrent Execution using Shared Resource, CWE-367 TOCTOU)
+- 분류: A06:2025 Insecure Design (CWE-362 Concurrent Execution using Shared Resource, CWE-367 TOCTOU)
 
 ## 위치
 

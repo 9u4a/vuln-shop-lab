@@ -2,7 +2,7 @@
 
 - 대상 스택: node-express, java-spring
 - 심각도: High
-- 분류: A04:2021 Insecure Design (Business Logic, CWE-840 Business Logic Errors / CWE-20 Improper Input Validation)
+- 분류: A06:2025 Insecure Design (Business Logic, CWE-840 Business Logic Errors / CWE-20 Improper Input Validation)
 
 ## 위치
 

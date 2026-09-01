@@ -2,7 +2,7 @@
 
 - 대상 스택: node-express, java-spring
 - 심각도: Low
-- 분류: A05:2021 Security Misconfiguration (CWE-651, CWE-200)
+- 분류: A02:2025 Security Misconfiguration (CWE-651, CWE-200)
 
 ## 위치
 
@@ -47,7 +47,7 @@ Swagger UI "Try it out"으로 인증 오퍼레이션까지 실행된다(server �
   `POST /restock/notify/{productId}` 등)이 목록화된다 — 비인증 독자에게 "권한 있는 오퍼레이션이
   권한 없는 프리픽스에 숨어 있는 지도"를 발행하는 셈.
 
-※ **VULN-007(진단 엔드포인트 노출)과의 구분** — 같은 A05지만 셋 다 다르다.
+※ **VULN-007(진단 엔드포인트 노출)과의 구분** — 같은 A02지만 셋 다 다르다.
 1. **유출물**: 007은 *런타임 내부 상태*(actuator `/env`의 `TOSS_SECRET_KEY`, `/heapdump`, `/beans`,
    Express dev 스택트레이스). 034는 *애플리케이션 API 인벤토리*(경로·파라미터·오퍼레이션별 인증 요구 여부).
    겹치는 데이터가 없다.

@@ -2,7 +2,7 @@
 
 - 대상 스택: node-express
 - 심각도: Critical
-- 분류: A03:2021 Injection (OS Command Injection)
+- 분류: A05:2025 Injection (OS Command Injection)
 
 ## 위치
 

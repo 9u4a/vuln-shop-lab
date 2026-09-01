@@ -2,7 +2,7 @@
 
 - 대상 스택: node-express, java-spring (동일)
 - 심각도: Medium
-- 분류: A07:2021 Identification and Authentication Failures
+- 분류: A07:2025 Authentication Failures
 
 ## 위치
 

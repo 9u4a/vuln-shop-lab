@@ -2,7 +2,7 @@
 
 - 대상 스택: java-spring
 - 심각도: Critical
-- 분류: A06:2021 Vulnerable and Outdated Components (+ A03 via string interpolation)
+- 분류: A03:2025 Software Supply Chain Failures (+ A05 Injection via string interpolation)
 
 ## 위치
 

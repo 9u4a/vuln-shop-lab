@@ -2,7 +2,7 @@
 
 - 대상 스택: node-express, java-spring (동일)
 - 심각도: Critical
-- 분류: A01:2021 Broken Access Control (CWE-915 Mass Assignment)
+- 분류: A01:2025 Broken Access Control (CWE-915 Mass Assignment)
 
 ## 위치
 

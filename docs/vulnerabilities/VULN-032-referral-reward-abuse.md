@@ -2,7 +2,7 @@
 
 - 대상 스택: node-express, java-spring
 - 심각도: Medium
-- 분류: A04:2021 Insecure Design (Business Logic, CWE-770 Missing Limit / CWE-799 Improper Control of Interaction Frequency)
+- 분류: A06:2025 Insecure Design (Business Logic, CWE-770 Missing Limit / CWE-799 Improper Control of Interaction Frequency)
 
 ## 위치
 

@@ -2,7 +2,7 @@
 
 - 대상 스택: node-express, java-spring
 - 심각도: High
-- 분류: A01:2021 Broken Access Control (CWE-639 IDOR / CWE-841 Improper Enforcement of Behavioral Workflow)
+- 분류: A01:2025 Broken Access Control (CWE-639 IDOR / CWE-841 Improper Enforcement of Behavioral Workflow)
 
 ## 위치
 
