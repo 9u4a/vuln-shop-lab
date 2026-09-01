@@ -49,6 +49,7 @@ module.exports = {
                     addressDetail: { type: 'string' },
                   },
                 },
+                webhookUrl: { type: 'string', description: '주문 접수 알림을 받을 웹훅 URL(선택)' },
               },
             },
             example: { items: [{ productId: 1, quantity: 1 }], couponCode: 'WELCOME5000' },

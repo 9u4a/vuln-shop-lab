@@ -54,3 +54,4 @@
 | 46 | 주문 배송지 + 배송 조회 | feature/order-lifecycle-batch | 037 | 주문 배송지 스냅샷, shipments 테이블, 관리자 송장 등록, 비회원 배송조회 |
 | 47 | 주문 공유 링크 | feature/order-lifecycle-batch | 038 | 토큰 기반 비회원 주문·배송 조회 페이지 |
 | 48 | 장바구니 공유 | feature/cart-share | 012 | 공유 코드 내보내기/가져오기, java 역직렬화(VULN-012)를 자연스러운 기능으로 재구성 |
+| 49 | 주문 알림 웹훅 | feature/order-webhook-notify | 004 | 주문 접수 시 등록 URL로 웹훅 발송, VULN-004 SSRF를 생성 시점 발화로 재구성(재현 가능) |

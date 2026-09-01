@@ -227,6 +227,15 @@ router.post('/', requireAuth, async (req, res) => {
   const cart = db.prepare('SELECT id FROM carts WHERE user_id = ?').get(req.session.user.id);
   if (cart) db.prepare('DELETE FROM cart_items WHERE cart_id = ?').run(cart.id);
 
+  // 주문 접수 알림 웹훅 — 등록된 URL로 즉시 발송(비동기, 실패 무시). URL 검증 없음(VULN-004).
+  fireWebhook(webhookUrl, {
+    event: 'order.created',
+    orderId,
+    tossOrderId,
+    status: 'pending',
+    amount: total,
+  });
+
   res.status(201).json({
     orderId,
     tossOrderId,

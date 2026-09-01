@@ -281,6 +281,9 @@ public class OrderController {
         // 서버 장바구니 비우기
         cartRepository.findByUserId(user.getId()).ifPresent(c -> cartItemRepository.deleteByCartId(c.getId()));
 
+        // 주문 접수 알림 웹훅 — 등록된 URL로 즉시 발송(VULN-004).
+        fireWebhook(order.getWebhookUrl(), order, "order.created", "pending");
+
         Map<String, Object> out = new HashMap<>();
         out.put("orderId", order.getId());
         out.put("tossOrderId", order.getTossOrderId());
@@ -398,7 +401,7 @@ public class OrderController {
                     .ifPresent(uc -> { uc.setUsed(true); userCouponRepository.save(uc); });
         }
 
-        fireWebhook(order.getWebhookUrl(), order);
+        fireWebhook(order.getWebhookUrl(), order, "order.paid", "paid");
 
         return ResponseEntity.ok(Map.of("ok", true, "order", order));
     }
@@ -466,19 +469,20 @@ public class OrderController {
         return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(content);
     }
 
-    private void fireWebhook(String webhookUrl, Order order) {
+    // 주문 알림 웹훅 — 등록된 URL로 비동기 발송(응답 무시). URL 검증/allowlist 없음(VULN-004).
+    private void fireWebhook(String webhookUrl, Order order, String event, String status) {
         if (webhookUrl == null || webhookUrl.isBlank()) return;
         try {
             String payload = String.format(
-                    "{\"orderId\":%d,\"tossOrderId\":\"%s\",\"status\":\"paid\",\"amount\":%s}",
-                    order.getId(), order.getTossOrderId(), order.getTotalAmount().toPlainString());
+                    "{\"event\":\"%s\",\"orderId\":%d,\"tossOrderId\":\"%s\",\"status\":\"%s\",\"amount\":%s}",
+                    event, order.getId(), order.getTossOrderId(), status, order.getTotalAmount().toPlainString());
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(webhookUrl))
                     .timeout(Duration.ofSeconds(5))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(payload))
                     .build();
-            httpClient.send(request, HttpResponse.BodyHandlers.discarding());
+            httpClient.sendAsync(request, HttpResponse.BodyHandlers.discarding());
         } catch (Exception e) {
             System.err.println("Order webhook delivery failed: " + e.getMessage());
         }

@@ -29,6 +29,7 @@ export default function Cart() {
   const [couponCode, setCouponCode] = useState('');
   const [couponPreview, setCouponPreview] = useState(null);
   const [couponModalOpen, setCouponModalOpen] = useState(false);
+  const [webhookUrl, setWebhookUrl] = useState('');
   const [shipping, setShipping] = useState({ name: '', phone: '', postcode: '', address: '', addressDetail: '' });
 
   useEffect(() => {
@@ -131,6 +132,7 @@ export default function Cart() {
       const { orderId, tossOrderId, amount } = await createOrder(backend.base, items, usePoints, {
         couponCode: couponPreview?.valid ? couponCode.trim() : undefined,
         shipping: shipping.address ? shipping : undefined,
+        webhookUrl: webhookUrl.trim() || undefined,
       });
       if (!TOSS_CLIENT_KEY) {
         setPendingNote(
@@ -317,6 +319,17 @@ export default function Cart() {
                   style={{ width: 110, textAlign: 'right' }}
                 />
               </label>
+            )}
+            {user && (
+              <div className="summary-box__row" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                <span>주문 알림 URL <small className="muted">(선택 · 주문 접수 시 웹훅 발송)</small></span>
+                <input
+                  value={webhookUrl}
+                  onChange={(e) => setWebhookUrl(e.target.value)}
+                  placeholder="https://example.com/hooks/order"
+                  style={{ width: '100%' }}
+                />
+              </div>
             )}
             <div className="summary-box__row summary-box__row--total"><span>결제 예상금액</span><span className="tnum">{formatCurrency(payable)}</span></div>
             <button disabled={items.length === 0 || busy} onClick={handleCheckout} className="btn btn-primary btn-block btn-lg">
