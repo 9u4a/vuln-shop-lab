@@ -36,6 +36,10 @@ public class Order {
     @Column(name = "discount_amount")
     private BigDecimal discountAmount = BigDecimal.ZERO;
 
+    @Column(name = "points_used", nullable = false)
+    @org.hibernate.annotations.ColumnDefault("0")
+    private Integer pointsUsed = 0;
+
     @Column(name = "ship_name")
     private String shipName;
 
@@ -83,6 +87,9 @@ public class Order {
 
     public BigDecimal getDiscountAmount() { return discountAmount == null ? BigDecimal.ZERO : discountAmount; }
     public void setDiscountAmount(BigDecimal discountAmount) { this.discountAmount = discountAmount; }
+
+    public Integer getPointsUsed() { return pointsUsed == null ? 0 : pointsUsed; }
+    public void setPointsUsed(Integer pointsUsed) { this.pointsUsed = pointsUsed; }
 
     public String getShipName() { return shipName; }
     public void setShipName(String shipName) { this.shipName = shipName; }
