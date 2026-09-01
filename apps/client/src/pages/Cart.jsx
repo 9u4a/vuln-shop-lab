@@ -4,7 +4,7 @@ import { loadTossPayments, ANONYMOUS } from '@tosspayments/tosspayments-sdk';
 import { useCart } from '../CartContext.jsx';
 import { useBackend } from '../BackendContext.jsx';
 import { useSession } from '../SessionContext.jsx';
-import { createOrder, importCartBackup, fetchPoints, previewCoupon, fetchProfile } from '../api.js';
+import { createOrder, shareCart, importSharedCart, fetchPoints, previewCoupon, fetchProfile } from '../api.js';
 import { formatCurrency } from '../format.js';
 import EmptyState from '../components/EmptyState.jsx';
 import CouponPickerModal from '../components/CouponPickerModal.jsx';
@@ -12,8 +12,8 @@ import CouponPickerModal from '../components/CouponPickerModal.jsx';
 const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY;
 
 export default function Cart() {
-  const { items, total, setQuantity, changeOption } = useCart();
-  const { backend, backendKey } = useBackend();
+  const { items, total, setQuantity, changeOption, refresh } = useCart();
+  const { backend } = useBackend();
   const { user } = useSession();
   const [error, setError] = useState(null);
   const [pendingNote, setPendingNote] = useState(null);
@@ -21,8 +21,9 @@ export default function Cart() {
   const [widgetsReady, setWidgetsReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const widgetsRef = useRef(null);
-  const [backupJson, setBackupJson] = useState('');
-  const [backupResult, setBackupResult] = useState(null);
+  const [shareCode, setShareCode] = useState('');
+  const [importCode, setImportCode] = useState('');
+  const [shareMsg, setShareMsg] = useState(null);
   const [pointsBalance, setPointsBalance] = useState(null);
   const [pointsToUse, setPointsToUse] = useState('');
   const [couponCode, setCouponCode] = useState('');
@@ -72,12 +73,26 @@ export default function Cart() {
 
   const setShip = (field) => (e) => setShipping((s) => ({ ...s, [field]: e.target.value }));
 
-  async function handleImportBackup(e) {
+  async function handleShareCart() {
+    setError(null);
+    setShareMsg(null);
+    try {
+      const res = await shareCart(backend.base);
+      setShareCode(res.code);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleImportShared(e) {
     e.preventDefault();
     setError(null);
+    setShareMsg(null);
     try {
-      const res = await importCartBackup(backend.base, backupJson);
-      setBackupResult(`백업에서 ${res.itemCount}개 항목을 가져왔습니다.`);
+      const res = await importSharedCart(backend.base, importCode.trim());
+      setImportCode('');
+      setShareMsg(`공유 장바구니에서 ${res.itemCount}개 항목을 담았어요.`);
+      refresh();
     } catch (err) {
       setError(err.message);
     }
@@ -320,16 +335,34 @@ export default function Cart() {
         onClose={() => setCouponModalOpen(false)}
       />
 
-      {backendKey === 'java' && (
-        <section className="card" style={{ marginTop: 'var(--space-10)' }}>
-          <h2>장바구니 백업 가져오기</h2>
-          <form onSubmit={handleImportBackup}>
-            <label>백업 JSON
-              <textarea value={backupJson} onChange={(e) => setBackupJson(e.target.value)} rows="3" />
-            </label>
-            <button type="submit" className="btn btn-primary">가져오기</button>
+      {user && (
+        <section className="card cart-share" style={{ marginTop: 'var(--space-10)' }}>
+          <h2>장바구니 공유</h2>
+          <p className="muted">공유 코드를 만들어 친구에게 보내거나, 받은 코드로 장바구니를 그대로 담아보세요.</p>
+
+          <div className="cart-share__row">
+            <button type="button" className="btn btn-ghost btn-sm" onClick={handleShareCart}>공유 코드 만들기</button>
+            {shareCode && (
+              <input
+                className="cart-share__code"
+                value={shareCode}
+                readOnly
+                onFocus={(e) => e.target.select()}
+                aria-label="공유 코드"
+              />
+            )}
+          </div>
+
+          <form className="cart-share__row" onSubmit={handleImportShared}>
+            <input
+              value={importCode}
+              onChange={(e) => setImportCode(e.target.value)}
+              placeholder="공유 코드 붙여넣기"
+              aria-label="공유 코드 가져오기"
+            />
+            <button type="submit" className="btn btn-primary btn-sm" disabled={!importCode.trim()}>가져오기</button>
           </form>
-          {backupResult && <p className="status-ok">{backupResult}</p>}
+          {shareMsg && <p className="status-ok">{shareMsg}</p>}
         </section>
       )}
     </div>
