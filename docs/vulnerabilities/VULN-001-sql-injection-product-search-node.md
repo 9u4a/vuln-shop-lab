@@ -25,11 +25,17 @@ if (sort && !APP_SORTS.has(sort)) sql += ` ORDER BY ${sort}`;
 
 ## 트리거 방법 (UNION 기반, `users` 테이블 덤프)
 
+쿼리는 `SELECT * FROM products ...`이고 현재 `products`는 **15컬럼**이라, UNION은 **정확히 15컬럼**이어야
+한다(7컬럼 등 개수가 안 맞으면 SQLite 예외 → `try/catch`에 걸려 400, 덤프 실패). 또 `option_values`
+컬럼 위치(14번째)는 `toProduct`가 `.split(',')`로 처리하므로 숫자 필러를 넣으면 매핑 단계에서 크래시한다
+(그 자체가 VULN-007 dev 스택트레이스 노출). 필러는 **`NULL`**로 둔다.
+
 ```
-GET /api/products?category=nonexistent' UNION SELECT id, username, password_hash, 0, '', role, created_at FROM users -- 
+GET /api/products?q=zzz' UNION SELECT id,username,password_hash,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL FROM users-- -
 ```
 
-`products` 테이블 컬럼 순서(`id, name, description, price, image_url, category, created_at`)에 맞춰 `users` 테이블을 UNION SELECT하면, 응답의 `products` 배열에 `name=<username>`, `description=<password_hash>`인 가짜 상품이 사용자 수만큼 섞여 나온다.
+응답의 `products` 배열에 `name=<username>`, `description=<password_hash>`인 가짜 상품이 사용자 수만큼
+섞여 나온다(`id, username, password_hash` + `NULL`×12 = 15컬럼).
 
 `sort` 파라미터도 `ORDER BY`에 그대로 들어가므로 blind/error-based 인젝션 지점으로 별도 사용 가능 (예: `sort=(SELECT CASE WHEN (1=1) THEN id ELSE name END)`).
 
@@ -42,6 +48,8 @@ GET /api/products?category=nonexistent' UNION SELECT id, username, password_hash
 
 ## 증거 (재현 확인)
 
-2026-08-25, `docker compose up --build` 후 로컬에서 재현: 회원가입한 사용자(`noflag_node`, `victimuser`)의 실제 bcrypt 해시(`$2a$10$...`)가 위 페이로드로 `products` 응답에 그대로 노출되는 것을 확인.
+2026-09-01, 로컬 재현(`:8090`): 위 15컬럼 UNION 페이로드로 `products` 응답에 `9u4a`/`admin`/`user1`…의
+실제 bcrypt 해시(`$2a$10$Yfkj2TX…`, `$2a$10$aNC3Z4y…`, `$2a$10$I2ym82Y…`)가 그대로 노출됨. 7컬럼 UNION은
+HTTP 400(개수 불일치)이고, boolean 우회(`?color=x' OR '1'='1`)는 전체 60건 반환으로 별도 확인.
 
 ## 조치 상태: 미조치 (의도된 취약점)

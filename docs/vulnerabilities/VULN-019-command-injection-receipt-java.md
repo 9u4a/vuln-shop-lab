@@ -32,7 +32,15 @@ POST /api/java/orders/1/receipt
 
 ## 증거 (재현 확인)
 
-(진단 단계에서 채움) `note` 에 `; env >> receipts/receipt_1.txt; #` 삽입 후 영수증 다운로드 응답에 `TOSS_SECRET_KEY=...` 포함.
+2026-09-01, 로컬 재현 확인(`:8090`, `user1`, 주문 #1): `POST /api/java/orders/1/receipt {"note":"$(id)"}`
+→ `GET /orders/receipt/receipt_1.txt` 내용에 `메모: uid=0(root) gid=0(root) groups=0(root)` — `note`가
+`sh -c "echo … > file"`에 들어가 커맨드 치환 실행(컨테이너 root). RCE 확인. 동일 방식으로 `$(env)` 등
+시크릿 노출 가능(시크릿 노출을 피해 `id`로 검증).
+
+## 정상 서비스 흐름 참고
+
+010(node)의 java 짝. 영수증을 `Runtime.exec("sh -c echo … > file")`로 생성하는 방식이 인위적이다
+(바로 옆에 `Files.writeString`이 있음) — 커맨드 인젝션 sink 목적. 정상 구현은 셸을 거치지 않는 파일 쓰기.
 
 ## 조치 상태: 미조치 (의도된 취약점)
 

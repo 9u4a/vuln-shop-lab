@@ -66,7 +66,11 @@ Swagger UI "Try it out"으로 인증 오퍼레이션까지 실행된다(server �
 
 ## 증거 (재현 확인)
 
-(진단 단계에서 채움) — Phase 2(Burp 진단)에서 재현 예정.
+2026-09-01, 로컬 재현(무인증, nginx 공개 진입점 `:8090`): `GET /api-docs`(인덱스) 200,
+`/api-docs/node/openapi.json` 200, `/api-docs/node/`(Swagger UI) 200, `/api-docs/java/v3/api-docs` 200,
+`/api-docs/java/swagger-ui.html` 200 — 로그인·쿠키 없이 전체 API 명세·Swagger UI 열람. `/api/admin/**`은
+명세에서 제외(node 수기 스펙 미포함, java `paths-to-exclude`)되나 실제 admin 라우트는 `:8090`에서 여전히
+응답한다. (오퍼레이션 개수는 스펙 버전에 따라 변동 — 개수 자체는 취약점의 핵심이 아님.)
 예정 증거: 두 명세의 `paths` 키/오퍼레이션 개수, `/cart/import`가 명세에 존재함을 보이는 발췌,
 Burp Target 사이트맵에 임포트로 채워진 항목 수.
 

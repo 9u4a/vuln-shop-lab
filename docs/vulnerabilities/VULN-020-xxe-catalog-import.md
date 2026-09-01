@@ -33,7 +33,10 @@ Content-Type: application/xml
 
 ## 증거 (재현 확인)
 
-(진단 단계에서 채움) `file:///etc/passwd` 페이로드 → 응답 `imported[0].name` 에 `root:x:0:0:root:/root:/bin/bash ...` 전체. OOB DTD → Collaborator 로 `TOSS_SECRET_KEY`.
+2026-09-01, 로컬 재현 확인(`:8090`, `admin`): `<!DOCTYPE catalog [<!ENTITY xxe SYSTEM "file:///etc/hostname">]>`
+XML을 `POST /api/java/admin/products/import` → 응답 `imported[0].name`에 `92a8803f55aa\n`(컨테이너
+hostname 파일 내용) 그대로 확장됨. 동일 방식으로 `file:///etc/passwd` 등 XML 유효 텍스트 파일 열람,
+시크릿은 OOB DTD로 exfil 가능. (시크릿 노출을 피해 `hostname`으로 검증.)
 
 ## 조치 상태: 미조치 (의도된 취약점)
 

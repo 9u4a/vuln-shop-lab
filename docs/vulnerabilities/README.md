@@ -21,7 +21,7 @@ Insecure Design A04→**A06**.
 | [VULN-003](VULN-003-qna-secret-question-access-control.md) | 비밀 문의(Q&A) 본문 상세 API 노출 (클라이언트 마스킹만) | both + client | A01 Broken Access Control | Medium | 구현됨 |
 | [VULN-004](VULN-004-order-webhook-ssrf.md) | 주문 webhook URL SSRF | both | A01 Broken Access Control (SSRF) | High | 구현됨 |
 | [VULN-005](VULN-005-sql-injection-product-search-java.md) | 상품 검색/필터 SQL 인젝션 (001의 java 짝) | java | A05 Injection | Critical | 구현됨 |
-| [VULN-006](VULN-006-session-fixation-no-lockout.md) | 세션 고정 + 로그인 시도 제한 없음 | both | A07 Auth Failures | Medium | 구현됨 (문서형) |
+| [VULN-006](VULN-006-session-fixation-no-lockout.md) | 세션 고정 + 로그인 시도 제한 없음 | both | A07 Auth Failures | Medium | 구현됨 (java 고정 재현·node 제약) |
 | [VULN-007](VULN-007-security-misconfiguration-exposure.md) | 진단 엔드포인트 노출 (actuator `*` / dev 스택트레이스) | both | A02 Misconfiguration | Medium | 구현됨 |
 | [VULN-008](VULN-008-stored-xss-review-body.md) | 상품 리뷰 본문 저장형 XSS | both + client | A05 Injection (XSS) | High | 구현됨 |
 | [VULN-009](VULN-009-idor-review-update-delete.md) | 리뷰 수정/삭제 IDOR (소유권 미검증) | both | A01 Broken Access Control | Medium | 구현됨 |

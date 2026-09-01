@@ -30,7 +30,9 @@ POST /api/{node,java}/orders
 
 ## 증거 (재현 확인)
 
-(진단 단계에서 채움) `GET /api/{node,java}/orders/:id` 및 관리자 주문 목록에서 349,000원대 상품이 포함된 주문의 `totalAmount` 가 1 또는 음수로 저장됨을 확인.
+2026-09-01, 로컬 재현 확인(`:8090`, `user1`): `POST /api/node/orders`에 양수+음수 수량 혼합
+(`[{productId:1,quantity:5},{productId:2,quantity:-5}]`) → 응답 `amount=-100000`(결제 예상금액 음수).
+음수/0 수량 검증이 없어 결제액을 임의로 낮추거나 음수로 만들 수 있음.
 
 ## 조치 상태: 미조치 (의도된 취약점)
 

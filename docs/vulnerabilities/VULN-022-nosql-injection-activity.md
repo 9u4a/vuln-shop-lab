@@ -28,7 +28,14 @@ GET /api/node/activity?username[$regex]=^user   → user* 계정만
 
 ## 증거 (재현 확인)
 
-(진단 단계에서 채움) `user3` 세션으로 `GET /api/node/activity?username[$ne]=zzz` → `9u4a`(관리자 콘솔 접속), `admin`(상품 재고 조정), `user1`/`user2` 의 활동 문서가 응답에 포함.
+2026-09-01, 로컬 재현 확인(`:8090`, `user3`, mongo up): 정상 `GET /api/node/activity` → `username=user3`
+문서만 반환. `GET /api/node/activity?username[$ne]=zzz`(Express qs 파서가 `{username:{$ne:"zzz"}}`로 파싱)
+→ `9u4a`·`admin`·`user1`~`user60` 등 **전 사용자 활동 문서**가 응답에 포함(본인 필터 우회). 응답 필드는 `activity`.
+
+## 정상 서비스 흐름 참고
+
+앱 전반은 SQLite/H2인데 "활동 피드"만 Mongo로 단독 존재하는 섬 구조라 다소 인위적이다 — Express 스택의
+NoSQL 인젝션을 시연하기 위한 전용 기능이다(재현엔 `mongo` 컨테이너 필요).
 
 ## 조치 상태: 미조치 (의도된 취약점)
 

