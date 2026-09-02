@@ -18,6 +18,7 @@ function toProfile(row) {
     postcode: row.postcode,
     address: row.address,
     addressDetail: row.address_detail,
+    membershipTier: row.membership_tier,
     createdAt: row.created_at,
   };
 }
@@ -35,7 +36,7 @@ router.put('/', requireAuth, (req, res) => {
     db.prepare(`UPDATE users SET ${assignments} WHERE id = ?`).run(...values, req.session.user.id);
   }
   const row = db.prepare('SELECT * FROM users WHERE id = ?').get(req.session.user.id);
-  req.session.user = { id: row.id, username: row.username, role: row.role };
+  req.session.user = { id: row.id, username: row.username, role: row.role, membershipTier: row.membership_tier };
   res.json({ profile: toProfile(row) });
 });
 

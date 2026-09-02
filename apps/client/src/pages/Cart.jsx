@@ -4,7 +4,7 @@ import { loadTossPayments, ANONYMOUS } from '@tosspayments/tosspayments-sdk';
 import { useCart } from '../CartContext.jsx';
 import { useBackend } from '../BackendContext.jsx';
 import { useSession } from '../SessionContext.jsx';
-import { createOrder, shareCart, importSharedCart, fetchPoints, previewCoupon, fetchProfile } from '../api.js';
+import { createOrder, shareCart, importSharedCart, fetchPoints, previewCoupon, fetchProfile, fetchAddresses } from '../api.js';
 import { formatCurrency } from '../format.js';
 import EmptyState from '../components/EmptyState.jsx';
 import CouponPickerModal from '../components/CouponPickerModal.jsx';
@@ -31,10 +31,25 @@ export default function Cart() {
   const [couponModalOpen, setCouponModalOpen] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState('');
   const [shipping, setShipping] = useState({ name: '', phone: '', postcode: '', address: '', addressDetail: '' });
+  const [savedAddresses, setSavedAddresses] = useState([]);
 
   useEffect(() => {
     fetchPoints(backend.base).then((d) => setPointsBalance(d.balance)).catch(() => setPointsBalance(null));
   }, [backend.base]);
+
+  useEffect(() => {
+    if (!user) { setSavedAddresses([]); return; }
+    fetchAddresses(backend.base).then((d) => setSavedAddresses(d.addresses || [])).catch(() => setSavedAddresses([]));
+  }, [backend.base, user]);
+
+  function applySavedAddress(id) {
+    const a = savedAddresses.find((x) => String(x.id) === String(id));
+    if (!a) return;
+    setShipping({
+      name: a.name || '', phone: a.phone || '', postcode: a.postcode || '',
+      address: a.address || '', addressDetail: a.addressDetail || '',
+    });
+  }
 
   useEffect(() => {
     if (!user) return;
@@ -258,6 +273,20 @@ export default function Cart() {
               <div className="summary-box__row" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: 'var(--space-2)' }}>
                 <span>배송지</span>
                 <div className="ship-fields">
+                  {savedAddresses.length > 0 && (
+                    <select
+                      defaultValue=""
+                      onChange={(e) => applySavedAddress(e.target.value)}
+                      style={{ width: '100%' }}
+                    >
+                      <option value="" disabled>저장된 배송지 선택</option>
+                      {savedAddresses.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.label ? `[${a.label}] ` : ''}{a.name} · {a.address}{a.isDefault ? ' (기본)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   <div className="ship-fields__row">
                     <input value={shipping.name} onChange={setShip('name')} placeholder="받는 분" />
                     <input value={shipping.phone} onChange={setShip('phone')} placeholder="연락처" />

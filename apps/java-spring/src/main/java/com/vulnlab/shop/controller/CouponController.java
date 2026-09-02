@@ -1,9 +1,11 @@
 package com.vulnlab.shop.controller;
 
 import com.vulnlab.shop.entity.Coupon;
+import com.vulnlab.shop.entity.Notification;
 import com.vulnlab.shop.entity.User;
 import com.vulnlab.shop.entity.UserCoupon;
 import com.vulnlab.shop.repository.CouponRepository;
+import com.vulnlab.shop.repository.NotificationRepository;
 import com.vulnlab.shop.repository.UserCouponRepository;
 import com.vulnlab.shop.security.Roles;
 import jakarta.servlet.http.HttpSession;
@@ -27,10 +29,13 @@ public class CouponController {
 
     private final CouponRepository couponRepository;
     private final UserCouponRepository userCouponRepository;
+    private final NotificationRepository notificationRepository;
 
-    public CouponController(CouponRepository couponRepository, UserCouponRepository userCouponRepository) {
+    public CouponController(CouponRepository couponRepository, UserCouponRepository userCouponRepository,
+                            NotificationRepository notificationRepository) {
         this.couponRepository = couponRepository;
         this.userCouponRepository = userCouponRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     private ResponseEntity<?> requireAdmin(HttpSession session) {
@@ -137,6 +142,8 @@ public class CouponController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "쿠폰을 찾을 수 없습니다."));
         }
         UserCoupon uc = userCouponRepository.save(new UserCoupon(user.getId(), coupon.getId()));
+        notificationRepository.save(new Notification(user.getId(), "coupon", "쿠폰이 발급되었습니다",
+                coupon.getTitle() + " 쿠폰을 받았습니다.", "/mypage/rewards"));
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("userCouponId", uc.getId(), "coupon", coupon));
     }
 

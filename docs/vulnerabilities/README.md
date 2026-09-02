@@ -59,6 +59,9 @@ Insecure Design A04→**A06**.
 | [VULN-041](VULN-041-open-redirect-login.md) | 로그인 후 오픈 리다이렉트 (`?next=` 미검증) | client | A01 Broken Access Control | Medium | 구현됨 |
 | [VULN-042](VULN-042-jwt-weak-secret.md) | API 토큰(JWT) 알려진 시크릿으로 위조 | both | A07 Auth Failures | High | 구현됨 |
 | [VULN-043](VULN-043-gift-card-redeem-reuse.md) | 기프트카드 중복 등록(재사용) → 무한 적립 | both | A06 Insecure Design | High | 구현됨 |
+| [VULN-044](VULN-044-address-idor.md) | 배송지 주소록 IDOR (수정/삭제 소유권 미검증) | both | A01 Broken Access Control | Medium | 구현됨 |
+| [VULN-045](VULN-045-membership-tier-mass-assignment.md) | 회원 등급 자가 승급 (프로필 대량 할당) | both | A01 Broken Access Control | High | 구현됨 |
+| [VULN-046](VULN-046-notification-stored-xss.md) | 인앱 알림 저장형 XSS (관리자 브로드캐스트) | both + client | A05 Injection (XSS) | High | 구현됨 |
 
 ## OWASP / CLAUDE.md 스코프 커버리지
 
@@ -71,10 +74,10 @@ Insecure Design A04→**A06**.
 | Broken Authentication / Session Management | DONE | 006, 040, 042 |
 | 비밀번호 재설정 · 토큰 위조 (인증/토큰) | DONE | 039(재설정 토큰), 042(JWT 위조) |
 | Open Redirect (Unvalidated Redirect) | DONE | 041 |
-| XSS — Stored | DONE | 008, 018, 023, 025, 028 |
+| XSS — Stored | DONE | 008, 018, 023, 025, 028, 046 |
 | XSS — Reflected | DONE | 016 |
 | XSS — DOM | DONE | 017 |
-| IDOR / Broken Access Control | DONE | 003, 009, 011, 013, 014, 024, 026, 031, 037 |
+| IDOR / Broken Access Control | DONE | 003, 009, 011, 013, 014, 024, 026, 031, 037, 044, 045 |
 | Security Misconfiguration | DONE | 007, 018, 020, 025, 034 |
 | Cryptographic Failures (A04) | DONE | 038, 039 |
 | Insecure Deserialization (Java) | DONE | 012 |

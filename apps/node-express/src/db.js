@@ -26,6 +26,7 @@ db.exec(`
     address_detail TEXT,
     active INTEGER NOT NULL DEFAULT 1,
     points INTEGER NOT NULL DEFAULT 0,
+    membership_tier TEXT NOT NULL DEFAULT 'basic',
     referral_code TEXT,
     referred_by INTEGER,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -48,6 +49,38 @@ db.exec(`
     initial_balance INTEGER NOT NULL DEFAULT 0,
     active INTEGER NOT NULL DEFAULT 1,
     expires_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS recently_viewed (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    product_id INTEGER NOT NULL,
+    viewed_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(user_id, product_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS addresses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    label TEXT,
+    name TEXT,
+    phone TEXT,
+    postcode TEXT,
+    address TEXT,
+    address_detail TEXT,
+    is_default INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    type TEXT,
+    title TEXT,
+    body TEXT,
+    link TEXT,
+    read_at TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
@@ -255,6 +288,7 @@ for (const stmt of [
   'ALTER TABLE reviews ADD COLUMN image_url TEXT',
   'ALTER TABLE reviews ADD COLUMN secret INTEGER NOT NULL DEFAULT 0',
   'ALTER TABLE users ADD COLUMN points INTEGER NOT NULL DEFAULT 0',
+  "ALTER TABLE users ADD COLUMN membership_tier TEXT NOT NULL DEFAULT 'basic'",
   'ALTER TABLE users ADD COLUMN referral_code TEXT',
   'ALTER TABLE users ADD COLUMN referred_by INTEGER',
   'ALTER TABLE orders ADD COLUMN coupon_id INTEGER REFERENCES coupons(id)',

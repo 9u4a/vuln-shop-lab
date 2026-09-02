@@ -1,9 +1,11 @@
 package com.vulnlab.shop.controller;
 
 import com.vulnlab.shop.entity.Product;
+import com.vulnlab.shop.entity.RecentlyViewed;
 import com.vulnlab.shop.entity.Review;
 import com.vulnlab.shop.entity.User;
 import com.vulnlab.shop.repository.ProductLikeRepository;
+import com.vulnlab.shop.repository.RecentlyViewedRepository;
 import com.vulnlab.shop.repository.ReviewRepository;
 import com.vulnlab.shop.repository.UserRepository;
 import com.vulnlab.shop.service.ProductService;
@@ -38,13 +40,16 @@ public class ProductController {
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
     private final ProductLikeRepository likeRepository;
+    private final RecentlyViewedRepository recentlyViewedRepository;
 
     public ProductController(ProductService productService, ReviewRepository reviewRepository,
-                              UserRepository userRepository, ProductLikeRepository likeRepository) {
+                              UserRepository userRepository, ProductLikeRepository likeRepository,
+                              RecentlyViewedRepository recentlyViewedRepository) {
         this.productService = productService;
         this.reviewRepository = reviewRepository;
         this.userRepository = userRepository;
         this.likeRepository = likeRepository;
+        this.recentlyViewedRepository = recentlyViewedRepository;
     }
 
     @Operation(summary = "상품 목록·검색", description = "모든 파라미터 선택. 응답: { products: [...] } (sort 사용 시 sortKeys 동반 가능).")
@@ -124,6 +129,15 @@ public class ProductController {
         product.setLikeCount(likeRepository.countByProductId(product.getId()));
         User sessionUser = (User) session.getAttribute("user");
         product.setLiked(sessionUser != null && likeRepository.existsByUserIdAndProductId(sessionUser.getId(), product.getId()));
+        if (sessionUser != null) {
+            recentlyViewedRepository.findByUserIdAndProductId(sessionUser.getId(), product.getId())
+                    .ifPresent(recentlyViewedRepository::delete);
+            recentlyViewedRepository.save(new RecentlyViewed(sessionUser.getId(), product.getId()));
+            List<RecentlyViewed> all = recentlyViewedRepository.findByUserIdOrderByIdDesc(sessionUser.getId());
+            if (all.size() > 20) {
+                all.subList(20, all.size()).forEach(recentlyViewedRepository::delete);
+            }
+        }
         return ResponseEntity.ok(Map.of("product", product));
     }
 
