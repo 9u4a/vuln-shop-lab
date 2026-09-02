@@ -41,6 +41,16 @@ db.exec(`
     at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
+  CREATE TABLE IF NOT EXISTS gift_cards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT UNIQUE NOT NULL,
+    balance INTEGER NOT NULL DEFAULT 0,
+    initial_balance INTEGER NOT NULL DEFAULT 0,
+    active INTEGER NOT NULL DEFAULT 1,
+    expires_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
   CREATE TABLE IF NOT EXISTS products (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -352,6 +362,18 @@ for (let n = 4; n <= 60; n += 1) {
 
 // 1c. 데모 이메일 채우기 (비밀번호 찾기용) — username@vulnlab.local
 db.prepare("UPDATE users SET email = username || '@vulnlab.local' WHERE email IS NULL OR email = ''").run();
+
+// 1d. 데모 상품권(gift_cards) 시드
+const giftCardCount = db.prepare('SELECT COUNT(*) AS count FROM gift_cards').get().count;
+if (giftCardCount === 0) {
+  const insertGc = db.prepare(
+    'INSERT INTO gift_cards (code, balance, initial_balance, active, expires_at) VALUES (?, ?, ?, ?, ?)'
+  );
+  insertGc.run('GIFT-DEMO-10000', 10000, 10000, 1, null);
+  insertGc.run('GIFT-DEMO-30000', 30000, 30000, 1, null);
+  insertGc.run('GIFT-INACTIVE-5000', 5000, 5000, 0, null);
+  insertGc.run('GIFT-EXPIRED-5000', 5000, 5000, 1, '2020-01-01T00:00:00Z');
+}
 
 // 2. Seed Products (if missing)
 const productCount = db.prepare('SELECT COUNT(*) AS count FROM products').get().count;

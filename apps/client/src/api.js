@@ -51,6 +51,33 @@ export function issueApiToken(base) {
   return apiRequest(base, '/auth/token', { method: 'POST' });
 }
 
+export function redeemGiftCard(base, code) {
+  return apiRequest(base, '/giftcards/redeem', {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  });
+}
+
+export function lookupGiftCard(base, code) {
+  return apiRequest(base, `/giftcards/lookup/${encodeURIComponent(code)}`);
+}
+
+export function fetchGiftCardsManage(base) {
+  return apiRequest(base, '/giftcards/manage');
+}
+
+export function createGiftCard(base, payload) {
+  return apiRequest(base, '/giftcards', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export function updateGiftCard(base, id, payload) {
+  return apiRequest(base, `/giftcards/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+}
+
+export function deleteGiftCard(base, id) {
+  return apiRequest(base, `/giftcards/${id}`, { method: 'DELETE' });
+}
+
 export function fetchProducts(base, { q, category, sort, gender, color, material, minPrice, maxPrice, inStock } = {}) {
   const params = new URLSearchParams();
   if (q) params.set('q', q);

@@ -58,6 +58,7 @@ Insecure Design A04→**A06**.
 | [VULN-040](VULN-040-user-enumeration-forgot.md) | 비밀번호 찾기 사용자 열거 (존재/미존재 응답 차이) | both | A07 Auth Failures | Medium | 구현됨 |
 | [VULN-041](VULN-041-open-redirect-login.md) | 로그인 후 오픈 리다이렉트 (`?next=` 미검증) | client | A01 Broken Access Control | Medium | 구현됨 |
 | [VULN-042](VULN-042-jwt-weak-secret.md) | API 토큰(JWT) 알려진 시크릿으로 위조 | both | A07 Auth Failures | High | 구현됨 |
+| [VULN-043](VULN-043-gift-card-redeem-reuse.md) | 기프트카드 중복 등록(재사용) → 무한 적립 | both | A06 Insecure Design | High | 구현됨 |
 
 ## OWASP / CLAUDE.md 스코프 커버리지
 
@@ -81,6 +82,6 @@ Insecure Design A04→**A06**.
 | SSRF (2025부터 A01로 편입) | DONE | 004 (020 OOB로 재확인), 033 (응답 반환형) |
 | File Upload / Path Traversal | DONE | 011 (traversal), 018 (upload) |
 | Vulnerable dependencies (2025 A03 Software Supply Chain) | DONE | 021 |
-| Business logic / Insecure Design | DONE | 015, 027, 029, 030, 032, 036 |
+| Business logic / Insecure Design | DONE | 015, 027, 029, 030, 032, 036, 043 |
 | Race condition / 동시성 (TOCTOU) | DONE | 035 |
 | CSRF | DONE | 014 |

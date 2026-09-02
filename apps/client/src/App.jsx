@@ -49,6 +49,7 @@ import AdminFaq from './pages/admin/AdminFaq.jsx';
 import AdminNotices from './pages/admin/AdminNotices.jsx';
 import AdminEvents from './pages/admin/AdminEvents.jsx';
 import AdminCoupons from './pages/admin/AdminCoupons.jsx';
+import AdminGiftCards from './pages/admin/AdminGiftCards.jsx';
 import AdminReturns from './pages/admin/AdminReturns.jsx';
 import AdminRestock from './pages/admin/AdminRestock.jsx';
 import AdminReferrals from './pages/admin/AdminReferrals.jsx';
@@ -121,6 +122,7 @@ export default function App() {
                   <Route path="notices" element={<AdminNotices />} />
                   <Route path="events" element={<AdminEvents />} />
                   <Route path="coupons" element={<AdminCoupons />} />
+                  <Route path="gift-cards" element={<AdminGiftCards />} />
                   <Route path="returns" element={<AdminReturns />} />
                   <Route path="restock" element={<AdminRestock />} />
                   <Route path="referrals" element={<AdminReferrals />} />
