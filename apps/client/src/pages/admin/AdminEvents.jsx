@@ -62,6 +62,8 @@ export default function AdminEvents() {
   const [pendingId, setPendingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [page, setPage] = useState(1);
+  const [query, setQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('');
   const PAGE_SIZE = 10;
 
   function load() {
@@ -71,7 +73,13 @@ export default function AdminEvents() {
 
   useEffect(load, [backend.base]);
 
-  const paged = events.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const q = query.trim().toLowerCase();
+  const filtered = events.filter((ev) => {
+    if (activeFilter && String(ev.active ? 1 : 0) !== activeFilter) return false;
+    if (!q) return true;
+    return (ev.title || '').toLowerCase().includes(q) || (ev.linkUrl || '').toLowerCase().includes(q);
+  });
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   async function handleCreate(e) {
     e.preventDefault();
@@ -134,6 +142,17 @@ export default function AdminEvents() {
       <section className="card">
         <div className="admin-toolbar">
           <h2>이벤트 <span className="muted">({events.length})</span></h2>
+          <input
+            className="admin-search"
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+            placeholder="제목·링크 검색"
+          />
+          <select value={activeFilter} onChange={(e) => { setActiveFilter(e.target.value); setPage(1); }}>
+            <option value="">전체</option>
+            <option value="1">활성</option>
+            <option value="0">비활성</option>
+          </select>
           <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}>
             + 이벤트 추가
           </button>
@@ -163,7 +182,7 @@ export default function AdminEvents() {
           ))}
         </div>
 
-        <Pagination page={page} pageSize={PAGE_SIZE} total={events.length} onChange={setPage} />
+        <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onChange={setPage} />
       </section>
 
       <Modal open={showForm} title="이벤트 추가" onClose={() => setShowForm(false)} wide>

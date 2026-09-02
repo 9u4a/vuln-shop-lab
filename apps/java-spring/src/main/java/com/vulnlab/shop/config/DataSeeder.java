@@ -39,6 +39,7 @@ public class DataSeeder implements CommandLineRunner {
     private final ShipmentRepository shipmentRepository;
     private final UserCouponRepository userCouponRepository;
     private final GiftCardRepository giftCardRepository;
+    private final GiftCardProductRepository giftCardProductRepository;
     private final TrackingEventRepository trackingEventRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -50,7 +51,8 @@ public class DataSeeder implements CommandLineRunner {
                       QuestionRepository questionRepository, LoginLogRepository loginLogRepository,
                       PointTransactionRepository pointTransactionRepository,
                       ShipmentRepository shipmentRepository, UserCouponRepository userCouponRepository,
-                      GiftCardRepository giftCardRepository, TrackingEventRepository trackingEventRepository) {
+                      GiftCardRepository giftCardRepository, GiftCardProductRepository giftCardProductRepository,
+                      TrackingEventRepository trackingEventRepository) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.faqRepository = faqRepository;
@@ -67,6 +69,7 @@ public class DataSeeder implements CommandLineRunner {
         this.shipmentRepository = shipmentRepository;
         this.userCouponRepository = userCouponRepository;
         this.giftCardRepository = giftCardRepository;
+        this.giftCardProductRepository = giftCardProductRepository;
         this.trackingEventRepository = trackingEventRepository;
     }
 
@@ -214,6 +217,11 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void seedGiftCards() {
+        if (giftCardProductRepository.count() == 0) {
+            giftCardProductRepository.save(new GiftCardProduct("1만원권", 10000, true));
+            giftCardProductRepository.save(new GiftCardProduct("5만원권", 50000, true));
+            giftCardProductRepository.save(new GiftCardProduct("10만원권", 100000, true));
+        }
         if (giftCardRepository.count() > 0) {
             return;
         }

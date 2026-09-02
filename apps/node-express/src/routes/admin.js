@@ -3,6 +3,7 @@ const db = require('../db');
 const { requireAdmin, requireSystemAdmin } = require('../middleware/auth');
 const { upload } = require('../uploads');
 const { TIERS } = require('../tiers');
+const { notify } = require('../notify');
 
 const router = express.Router();
 
@@ -206,7 +207,7 @@ router.put('/orders/:id/status', requireAdmin, (req, res) => {
 
 // 송장 등록 — 택배사를 지정하면 순차 송장번호를 발번한다.
 router.put('/orders/:id/shipment', requireAdmin, (req, res) => {
-  const order = db.prepare('SELECT id FROM orders WHERE id = ?').get(req.params.id);
+  const order = db.prepare('SELECT id, user_id FROM orders WHERE id = ?').get(req.params.id);
   if (!order) return res.status(404).json({ error: '주문을 찾을 수 없습니다.' });
   const carrier = (req.body.carrier || '').trim() || 'CJ대한통운';
   const status = req.body.status || 'shipped';
@@ -223,6 +224,11 @@ router.put('/orders/:id/shipment', requireAdmin, (req, res) => {
   db.prepare(
     'INSERT INTO tracking_events (tracking_no, status, description, location) VALUES (?, ?, ?, ?)'
   ).run(row.tracking_no, row.status, EVENT_DESC[row.status] || row.status, row.carrier);
+  if (row.status === 'shipped') {
+    notify(order.user_id, 'shipment', '배송이 시작되었습니다', `주문 #${order.id} 상품이 발송되었습니다.`, `/orders/${order.id}`);
+  } else if (row.status === 'delivered') {
+    notify(order.user_id, 'shipment', '배송이 완료되었습니다', `주문 #${order.id} 상품이 배송 완료되었습니다.`, `/orders/${order.id}`);
+  }
   res.json({ carrier: row.carrier, trackingNo: row.tracking_no, status: row.status });
 });
 

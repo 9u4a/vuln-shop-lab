@@ -66,3 +66,6 @@
 | 58 | 포인트 선물하기 | feature/order-cart-admin-refinements | 047 | 마이페이지 포인트 이체(아이디/이메일 수신자), 발신 계정 IDOR |
 | 59 | 배송 추적 타임라인 | feature/order-cart-admin-refinements | 037 | tracking_events 테이블·이벤트 타임라인(주문상세·배송조회·공유), VULN-037 유지 |
 | — | 주문/장바구니/관리자 UI 정비 | feature/order-cart-admin-refinements | 038,010,011,016,019,012 | 주문목록 카드화(현황·문의·반품), 영수증 내용 충실화, 공유토큰 인코딩 강화, 장바구니 배송지 프리셋·공유 UI, 관리자 검색·오버플로우 정리 (기존 취약점 싱크 유지) |
+| 60 | 상품권 발급·구매 재구성 | feature/giftcard-search-qna-notify | 048,043 | 관리자 액면가 정의 → 사용자 구매 → 유추가능 코드 발급, 내 상품권, redeem 유지 |
+| 61 | 내 Q&A + 답변·배송 알림 | feature/giftcard-search-qna-notify | — | 마이페이지 내 문의 목록·답변여부, Q&A 답변/배송 shipped·delivered 알림 |
+| — | 관리자 전체 검색·필터 / 장바구니 정렬 | feature/giftcard-search-qna-notify | — | 주문·상품·FAQ·공지·이벤트·쿠폰·상품권·반품·재입고 검색+필터, 장바구니 공유 정렬·포인트 한 줄 |

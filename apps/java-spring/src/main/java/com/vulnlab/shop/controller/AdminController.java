@@ -10,8 +10,10 @@ import com.vulnlab.shop.repository.OrderItemRepository;
 import com.vulnlab.shop.entity.LoginLog;
 import com.vulnlab.shop.repository.LoginLogRepository;
 import com.vulnlab.shop.repository.OrderRepository;
+import com.vulnlab.shop.entity.Notification;
 import com.vulnlab.shop.entity.Shipment;
 import com.vulnlab.shop.entity.TrackingEvent;
+import com.vulnlab.shop.repository.NotificationRepository;
 import com.vulnlab.shop.repository.ShipmentRepository;
 import com.vulnlab.shop.repository.TrackingEventRepository;
 import com.vulnlab.shop.entity.StoreSetting;
@@ -46,6 +48,7 @@ public class AdminController {
     private final StoreSettingRepository storeSettingRepository;
     private final ShipmentRepository shipmentRepository;
     private final TrackingEventRepository trackingEventRepository;
+    private final NotificationRepository notificationRepository;
 
     private static final String WEBHOOK_KEY = "notification_webhook_url";
 
@@ -53,7 +56,8 @@ public class AdminController {
                             OrderRepository orderRepository, OrderItemRepository orderItemRepository,
                             FaqRepository faqRepository, NoticeRepository noticeRepository,
                             LoginLogRepository loginLogRepository, StoreSettingRepository storeSettingRepository,
-                            ShipmentRepository shipmentRepository, TrackingEventRepository trackingEventRepository) {
+                            ShipmentRepository shipmentRepository, TrackingEventRepository trackingEventRepository,
+                            NotificationRepository notificationRepository) {
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
@@ -64,6 +68,7 @@ public class AdminController {
         this.storeSettingRepository = storeSettingRepository;
         this.shipmentRepository = shipmentRepository;
         this.trackingEventRepository = trackingEventRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     private ResponseEntity<?> requireAdmin(HttpSession session) {
@@ -298,7 +303,8 @@ public class AdminController {
     public ResponseEntity<?> setShipment(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
         ResponseEntity<?> denied = requireAdmin(session);
         if (denied != null) return denied;
-        if (orderRepository.findById(id).isEmpty()) {
+        Order order = orderRepository.findById(id).orElse(null);
+        if (order == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "주문을 찾을 수 없습니다."));
         }
         String carrier = body.getOrDefault("carrier", "").isBlank() ? "CJ대한통운" : body.get("carrier").trim();
@@ -320,6 +326,13 @@ public class AdminController {
             default -> s.getStatus();
         };
         trackingEventRepository.save(new TrackingEvent(s.getTrackingNo(), s.getStatus(), desc, s.getCarrier(), java.time.LocalDateTime.now()));
+        if ("shipped".equals(s.getStatus())) {
+            notificationRepository.save(new Notification(order.getUserId(), "shipment", "배송이 시작되었습니다",
+                    "주문 #" + order.getId() + " 상품이 발송되었습니다.", "/orders/" + order.getId()));
+        } else if ("delivered".equals(s.getStatus())) {
+            notificationRepository.save(new Notification(order.getUserId(), "shipment", "배송이 완료되었습니다",
+                    "주문 #" + order.getId() + " 상품이 배송 완료되었습니다.", "/orders/" + order.getId()));
+        }
         return ResponseEntity.ok(Map.of("carrier", s.getCarrier(), "trackingNo", s.getTrackingNo(), "status", s.getStatus()));
     }
 

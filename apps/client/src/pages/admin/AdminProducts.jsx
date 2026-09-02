@@ -149,6 +149,8 @@ export default function AdminProducts() {
   const [detail, setDetail] = useState(null); // 상세/수정 대상 상품
   const [editForm, setEditForm] = useState(emptyProduct);
   const [page, setPage] = useState(1);
+  const [query, setQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const PAGE_SIZE = 10;
   const uploadRef = useRef(null);
 
@@ -159,7 +161,14 @@ export default function AdminProducts() {
 
   useEffect(load, [backend.base]);
 
-  const paged = products.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const q = query.trim().toLowerCase();
+  const filtered = products.filter((p) => {
+    if (categoryFilter && (p.category || '') !== categoryFilter) return false;
+    if (!q) return true;
+    return ['name', 'brand', 'sku', 'category'].some((k) => (p[k] || '').toLowerCase().includes(q));
+  });
+  const categories = [...new Set(products.map((p) => p.category).filter(Boolean))];
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   async function handleCreateProduct(e) {
     e.preventDefault();
@@ -225,6 +234,16 @@ export default function AdminProducts() {
       <section className="card">
         <div className="admin-toolbar">
           <h2>상품 <span className="muted">({products.length})</span></h2>
+          <input
+            className="admin-search"
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+            placeholder="이름·브랜드·SKU·카테고리 검색"
+          />
+          <select value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}>
+            <option value="">전체 카테고리</option>
+            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
           <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}>
             + 상품 추가
           </button>
@@ -256,7 +275,7 @@ export default function AdminProducts() {
             </tbody>
           </table>
         </div>
-        <Pagination page={page} pageSize={PAGE_SIZE} total={products.length} onChange={setPage} />
+        <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onChange={setPage} />
       </section>
 
       <Modal open={showForm} title="상품 추가" onClose={() => setShowForm(false)} wide>

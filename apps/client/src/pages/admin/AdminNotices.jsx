@@ -19,6 +19,7 @@ export default function AdminNotices() {
   const [pendingId, setPendingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [page, setPage] = useState(1);
+  const [query, setQuery] = useState('');
 
   function load() {
     setError(null);
@@ -27,7 +28,11 @@ export default function AdminNotices() {
 
   useEffect(load, [backend.base]);
 
-  const paged = notices.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? notices.filter((n) => (n.title || '').toLowerCase().includes(q) || (n.body || '').toLowerCase().includes(q))
+    : notices;
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   async function handleCreate(e) {
     e.preventDefault();
@@ -70,6 +75,12 @@ export default function AdminNotices() {
     <section className="card">
       <div className="admin-toolbar">
         <h2>공지사항 <span className="muted">({notices.length})</span></h2>
+        <input
+          className="admin-search"
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+          placeholder="제목·내용 검색"
+        />
         <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}>
           + 공지사항 추가
         </button>
@@ -104,7 +115,7 @@ export default function AdminNotices() {
         ))}
       </div>
 
-      <Pagination page={page} pageSize={PAGE_SIZE} total={notices.length} onChange={setPage} />
+      <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onChange={setPage} />
 
       <Modal open={editingId != null} title="공지사항 수정" onClose={() => setEditingId(null)} wide>
         <form onSubmit={handleSaveEdit} style={{ maxWidth: 'none' }}>

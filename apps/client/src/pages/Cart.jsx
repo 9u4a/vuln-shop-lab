@@ -345,7 +345,7 @@ export default function Cart() {
             )}
 
             {pointsBalance != null && (
-              <label className="summary-box__row" style={{ alignItems: 'center' }}>
+              <label className="summary-box__row summary-box__row--inline">
                 <span>포인트 사용 <small className="muted">(보유 {formatCurrency(pointsBalance)}P)</small></span>
                 <input
                   type="number"

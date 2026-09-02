@@ -23,6 +23,8 @@ export default function AdminOrders() {
   const [saveStatus, setSaveStatus] = useState(null);
   const [carrierDraft, setCarrierDraft] = useState('CJ대한통운');
   const [shipMsg, setShipMsg] = useState(null);
+  const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   function load() {
     setError(null);
@@ -37,7 +39,13 @@ export default function AdminOrders() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backend.base, searchParams]);
 
-  const paged = orders.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const q = query.trim().toLowerCase();
+  const filtered = orders.filter((o) => {
+    if (statusFilter && o.status !== statusFilter) return false;
+    if (!q) return true;
+    return String(o.id).includes(q) || (o.username || '').toLowerCase().includes(q) || (o.status || '').toLowerCase().includes(q);
+  });
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   async function open(id) {
     setOpenId(id);
@@ -87,7 +95,19 @@ export default function AdminOrders() {
 
   return (
     <section className="card">
-      <h2>주문 <span className="muted">({orders.length})</span></h2>
+      <div className="admin-toolbar">
+        <h2>주문 <span className="muted">({orders.length})</span></h2>
+        <input
+          className="admin-search"
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+          placeholder="주문번호·주문자·상태 검색"
+        />
+        <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
+          <option value="">전체 상태</option>
+          {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </div>
       {error && <p className="error">{error}</p>}
       {orders.length === 0 && <p className="muted">아직 주문이 없습니다.</p>}
 
@@ -110,7 +130,7 @@ export default function AdminOrders() {
         </table>
       </div>
 
-      <Pagination page={page} pageSize={PAGE_SIZE} total={orders.length} onChange={setPage} />
+      <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onChange={setPage} />
 
       <Modal open={openId != null} title="주문 상세" onClose={closeModal} wide>
         {detailLoading && <p className="muted">불러오는 중...</p>}

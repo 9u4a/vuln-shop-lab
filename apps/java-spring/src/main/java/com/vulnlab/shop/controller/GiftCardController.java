@@ -1,11 +1,16 @@
 package com.vulnlab.shop.controller;
 
 import com.vulnlab.shop.entity.GiftCard;
+import com.vulnlab.shop.entity.GiftCardProduct;
+import com.vulnlab.shop.entity.Notification;
 import com.vulnlab.shop.entity.PointTransaction;
 import com.vulnlab.shop.entity.User;
+import com.vulnlab.shop.repository.GiftCardProductRepository;
 import com.vulnlab.shop.repository.GiftCardRepository;
+import com.vulnlab.shop.repository.NotificationRepository;
 import com.vulnlab.shop.repository.PointTransactionRepository;
 import com.vulnlab.shop.repository.UserRepository;
+import com.vulnlab.shop.security.GiftCodes;
 import com.vulnlab.shop.security.Roles;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
@@ -24,14 +29,21 @@ import java.util.Map;
 public class GiftCardController {
 
     private final GiftCardRepository giftCardRepository;
+    private final GiftCardProductRepository giftCardProductRepository;
     private final UserRepository userRepository;
     private final PointTransactionRepository pointTransactionRepository;
+    private final NotificationRepository notificationRepository;
 
-    public GiftCardController(GiftCardRepository giftCardRepository, UserRepository userRepository,
-                              PointTransactionRepository pointTransactionRepository) {
+    public GiftCardController(GiftCardRepository giftCardRepository,
+                              GiftCardProductRepository giftCardProductRepository,
+                              UserRepository userRepository,
+                              PointTransactionRepository pointTransactionRepository,
+                              NotificationRepository notificationRepository) {
         this.giftCardRepository = giftCardRepository;
+        this.giftCardProductRepository = giftCardProductRepository;
         this.userRepository = userRepository;
         this.pointTransactionRepository = pointTransactionRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     private ResponseEntity<?> requireAdmin(HttpSession session) {
@@ -85,7 +97,100 @@ public class GiftCardController {
         return ResponseEntity.ok(Map.of("ok", true, "credited", amount));
     }
 
-    // 관리자 — 상품권 발행/관리.
+    // 구매 가능한 상품권 액면가 목록.
+    @GetMapping("/products")
+    public ResponseEntity<?> products(HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그인이 필요합니다."));
+        }
+        return ResponseEntity.ok(Map.of("products", giftCardProductRepository.findByActiveTrueOrderByAmountAsc()));
+    }
+
+    // 상품권 구매 — 액면가를 골라 구매하면 코드를 발급해 본인 소유로 등록한다.
+    @PostMapping("/purchase")
+    public ResponseEntity<?> purchase(@RequestBody Map<String, Object> body, HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그인이 필요합니다."));
+        }
+        GiftCardProduct product = body.get("productId") == null ? null
+                : giftCardProductRepository.findById(Long.valueOf(String.valueOf(body.get("productId")))).orElse(null);
+        if (product == null || !product.isActive()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "상품권을 찾을 수 없습니다."));
+        }
+        GiftCard c = new GiftCard();
+        c.setCode("pending-" + System.nanoTime());
+        c.setBalance(product.getAmount());
+        c.setInitialBalance(product.getAmount());
+        c.setActive(true);
+        c.setOwnerId(user.getId());
+        c.setProductId(product.getId());
+        giftCardRepository.save(c);
+        c.setCode(GiftCodes.of(c.getId(), product.getAmount()));
+        giftCardRepository.save(c);
+
+        notificationRepository.save(new Notification(user.getId(), "giftcard", "상품권이 발급되었습니다",
+                product.getName() + " 상품권을 구매했습니다.", "/mypage/rewards"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("giftCard", c));
+    }
+
+    // 내 상품권 — 구매(발급)한 상품권 목록.
+    @GetMapping("/mine")
+    public ResponseEntity<?> mine(HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그인이 필요합니다."));
+        }
+        return ResponseEntity.ok(Map.of("giftCards", giftCardRepository.findByOwnerIdOrderByIdDesc(user.getId())));
+    }
+
+    // 관리자 — 상품권 액면가 관리.
+    @GetMapping("/products/manage")
+    public ResponseEntity<?> productsManage(HttpSession session) {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        List<GiftCardProduct> products = new ArrayList<>(giftCardProductRepository.findAll());
+        products.sort((a, b) -> b.getId().compareTo(a.getId()));
+        return ResponseEntity.ok(Map.of("products", products));
+    }
+
+    @PostMapping("/products")
+    public ResponseEntity<?> createProduct(@RequestBody Map<String, Object> body, HttpSession session) {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        String name = str(body.get("name")).trim();
+        if (name.isBlank() || body.get("amount") == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "이름과 금액은 필수입니다."));
+        }
+        boolean active = body.get("active") == null || Boolean.parseBoolean(String.valueOf(body.get("active")));
+        GiftCardProduct p = giftCardProductRepository.save(new GiftCardProduct(name, intOf(body.get("amount")), active));
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("product", p));
+    }
+
+    @PutMapping("/products/{id}")
+    public ResponseEntity<?> updateProduct(@PathVariable Long id, @RequestBody Map<String, Object> body, HttpSession session) {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        GiftCardProduct p = giftCardProductRepository.findById(id).orElse(null);
+        if (p == null) return ResponseEntity.notFound().build();
+        if (body.get("name") != null) p.setName(str(body.get("name")).trim());
+        if (body.get("amount") != null) p.setAmount(intOf(body.get("amount")));
+        if (body.get("active") != null) p.setActive(Boolean.parseBoolean(String.valueOf(body.get("active"))));
+        giftCardProductRepository.save(p);
+        return ResponseEntity.ok(Map.of("product", p));
+    }
+
+    @DeleteMapping("/products/{id}")
+    public ResponseEntity<?> deleteProduct(@PathVariable Long id, HttpSession session) {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        if (!giftCardProductRepository.existsById(id)) return ResponseEntity.notFound().build();
+        giftCardProductRepository.deleteById(id);
+        return ResponseEntity.ok(Map.of("ok", true));
+    }
+
+    // 관리자 — 발행된 상품권 카드 관리(기존).
     @GetMapping("/manage")
     public ResponseEntity<?> manage(HttpSession session) {
         ResponseEntity<?> denied = requireAdmin(session);

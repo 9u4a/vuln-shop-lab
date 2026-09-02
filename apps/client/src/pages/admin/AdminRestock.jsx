@@ -11,6 +11,8 @@ export default function AdminRestock() {
   const [error, setError] = useState(null);
   const [status, setStatus] = useState(null);
   const [page, setPage] = useState(1);
+  const [query, setQuery] = useState('');
+  const [notifiedFilter, setNotifiedFilter] = useState('');
   const [hookUrl, setHookUrl] = useState('');
   const [hookResult, setHookResult] = useState(null);
   const [hookSaved, setHookSaved] = useState(null);
@@ -36,7 +38,13 @@ export default function AdminRestock() {
     }
   }
 
-  const paged = subs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const q = query.trim().toLowerCase();
+  const filtered = subs.filter((s) => {
+    if (notifiedFilter && String(s.notified ? 1 : 0) !== notifiedFilter) return false;
+    if (!q) return true;
+    return (s.productName || '').toLowerCase().includes(q) || (s.username || '').toLowerCase().includes(q);
+  });
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   async function handleNotify(productId, productName) {
     setStatus(null);
@@ -66,6 +74,17 @@ export default function AdminRestock() {
       <section className="card">
         <div className="admin-toolbar">
           <h2>재입고 알림 구독 <span className="muted">({subs.length})</span></h2>
+          <input
+            className="admin-search"
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+            placeholder="상품·회원 검색"
+          />
+          <select value={notifiedFilter} onChange={(e) => { setNotifiedFilter(e.target.value); setPage(1); }}>
+            <option value="">전체</option>
+            <option value="1">발송됨</option>
+            <option value="0">대기</option>
+          </select>
         </div>
         {error && <p className="error">{error}</p>}
         {status && <p className="status-ok">{status}</p>}
@@ -91,7 +110,7 @@ export default function AdminRestock() {
             </tbody>
           </table>
         </div>
-        <Pagination page={page} pageSize={PAGE_SIZE} total={subs.length} onChange={setPage} />
+        <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onChange={setPage} />
       </section>
 
       <section className="card">

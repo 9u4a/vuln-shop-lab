@@ -983,6 +983,16 @@ textarea { resize: vertical; min-height: 4.5rem; }
 /* 포인트 선물 폼 */
 .gift-form { display: flex; flex-direction: column; gap: var(--space-2); }
 
+/* 상품권 구매 */
+.giftcard-buy { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.giftcard-buy__item {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+  border: 1px solid var(--color-line); border-radius: var(--radius); padding: var(--space-3) var(--space-4);
+  flex: 1 1 200px;
+}
+.giftcard-buy__name { font-weight: 600; }
+.giftcard-code { font-family: ui-monospace, monospace; font-size: 0.8rem; overflow-wrap: anywhere; }
+
 .summary-box {
   position: sticky;
   top: calc(var(--header-h) + var(--space-6));
@@ -994,6 +1004,9 @@ textarea { resize: vertical; min-height: 4.5rem; }
   gap: var(--space-3);
 }
 .summary-box__row { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--color-text-muted); }
+.summary-box__row--inline { flex-wrap: nowrap; align-items: center; gap: var(--space-2); }
+.summary-box__row--inline > span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.summary-box__row--inline > input { flex: 0 0 auto; }
 .summary-box__row--total {
   border-top: 1px solid var(--color-line);
   padding-top: var(--space-3);
@@ -1156,8 +1169,8 @@ textarea { resize: vertical; min-height: 4.5rem; }
 .cart-share__col { display: flex; flex-direction: column; gap: var(--space-2); }
 .cart-share__legend { font-size: 0.78rem; color: var(--color-muted); font-weight: 600; }
 .cart-share__row { display: flex; gap: var(--space-2); align-items: center; flex-wrap: nowrap; }
-.cart-share__row input { flex: 1; min-width: 0; }
-.cart-share__row button { flex: 0 0 auto; }
+.cart-share__row input { flex: 1; min-width: 0; height: 38px; }
+.cart-share__row button { flex: 0 0 auto; min-width: 76px; height: 38px; white-space: nowrap; }
 .cart-share__code { font-family: ui-monospace, monospace; font-size: 0.8rem; }
 @media (max-width: 640px) {
   .cart-share__grid { grid-template-columns: 1fr; }

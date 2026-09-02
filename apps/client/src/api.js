@@ -78,6 +78,38 @@ export function deleteGiftCard(base, id) {
   return apiRequest(base, `/giftcards/${id}`, { method: 'DELETE' });
 }
 
+export function fetchGiftCardProducts(base) {
+  return apiRequest(base, '/giftcards/products');
+}
+
+export function purchaseGiftCard(base, productId) {
+  return apiRequest(base, '/giftcards/purchase', { method: 'POST', body: JSON.stringify({ productId }) });
+}
+
+export function fetchMyGiftCards(base) {
+  return apiRequest(base, '/giftcards/mine');
+}
+
+export function fetchGiftCardProductsManage(base) {
+  return apiRequest(base, '/giftcards/products/manage');
+}
+
+export function createGiftCardProduct(base, payload) {
+  return apiRequest(base, '/giftcards/products', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export function updateGiftCardProduct(base, id, payload) {
+  return apiRequest(base, `/giftcards/products/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+}
+
+export function deleteGiftCardProduct(base, id) {
+  return apiRequest(base, `/giftcards/products/${id}`, { method: 'DELETE' });
+}
+
+export function fetchMyQuestions(base) {
+  return apiRequest(base, '/qna/mine');
+}
+
 export function fetchRecentlyViewed(base) {
   return apiRequest(base, '/recently-viewed');
 }

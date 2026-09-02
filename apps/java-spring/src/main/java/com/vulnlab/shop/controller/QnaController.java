@@ -1,7 +1,9 @@
 package com.vulnlab.shop.controller;
 
+import com.vulnlab.shop.entity.Notification;
 import com.vulnlab.shop.entity.Question;
 import com.vulnlab.shop.entity.User;
+import com.vulnlab.shop.repository.NotificationRepository;
 import com.vulnlab.shop.repository.QuestionRepository;
 import com.vulnlab.shop.security.Roles;
 import jakarta.servlet.http.HttpSession;
@@ -23,9 +25,11 @@ import java.util.Map;
 public class QnaController {
 
     private final QuestionRepository questionRepository;
+    private final NotificationRepository notificationRepository;
 
-    public QnaController(QuestionRepository questionRepository) {
+    public QnaController(QuestionRepository questionRepository, NotificationRepository notificationRepository) {
         this.questionRepository = questionRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     private Map<String, Object> toListItem(Question q) {
@@ -73,6 +77,19 @@ public class QnaController {
                 "total", result.getTotalElements(),
                 "page", page,
                 "pageSize", pageable.getPageSize());
+    }
+
+    @GetMapping("/mine")
+    public ResponseEntity<?> mine(HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그인이 필요합니다."));
+        }
+        java.util.List<Map<String, Object>> questions = new java.util.ArrayList<>();
+        for (Question item : questionRepository.findByUserIdOrderByIdDesc(user.getId())) {
+            questions.add(toListItem(item));
+        }
+        return ResponseEntity.ok(Map.of("questions", questions));
     }
 
     @GetMapping("/{id}")
@@ -128,6 +145,8 @@ public class QnaController {
         q.setAnsweredBy(user.getUsername());
         q.setAnsweredAt(LocalDateTime.now());
         questionRepository.save(q);
+        notificationRepository.save(new Notification(q.getUserId(), "qna", "문의에 답변이 등록되었습니다",
+                "\"" + q.getTitle() + "\" 문의에 답변이 달렸습니다.", "/qna/" + q.getId()));
         return ResponseEntity.ok(Map.of("question", toDetail(q)));
     }
 
