@@ -8,6 +8,9 @@ import com.vulnlab.shop.security.Roles;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.Optional;
 
 @Service
@@ -26,7 +29,7 @@ public class AuthService {
         return userRepository.findByUsername(username).isPresent();
     }
 
-    public User signup(String username, String rawPassword, String name, String phone,
+    public User signup(String username, String rawPassword, String name, String phone, String email,
                         String postcode, String address, String addressDetail, String referralCode) {
         User user = new User();
         user.setUsername(username);
@@ -34,6 +37,7 @@ public class AuthService {
         user.setRole(userRepository.count() == 0 ? Roles.SYSTEM_ADMIN : Roles.USER);
         user.setName(name);
         user.setPhone(phone);
+        user.setEmail(email);
         user.setPostcode(postcode);
         user.setAddress(address);
         user.setAddressDetail(addressDetail);
@@ -65,5 +69,29 @@ public class AuthService {
 
     public boolean passwordMatches(User user, String rawPassword) {
         return passwordEncoder.matches(rawPassword, user.getPasswordHash());
+    }
+
+    public Optional<User> findByAccount(String account) {
+        return userRepository.findByUsername(account)
+                .or(() -> userRepository.findByEmail(account));
+    }
+
+    public String issueResetToken(User user) {
+        String token = Base64.getEncoder().encodeToString(String.valueOf(user.getId()).getBytes(StandardCharsets.UTF_8));
+        user.setResetToken(token);
+        user.setResetTokenExpires(LocalDateTime.now().plusHours(1));
+        userRepository.save(user);
+        return token;
+    }
+
+    public Optional<User> findByResetToken(String token) {
+        return userRepository.findByResetToken(token);
+    }
+
+    public void resetPassword(User user, String newPassword) {
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setResetToken(null);
+        user.setResetTokenExpires(null);
+        userRepository.save(user);
     }
 }

@@ -19,6 +19,14 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
+    private String email;
+
+    @Column(name = "reset_token")
+    private String resetToken;
+
+    @Column(name = "reset_token_expires")
+    private LocalDateTime resetTokenExpires;
+
     @Column(nullable = false)
     private String role = "user";
 
@@ -65,6 +73,17 @@ public class User {
     @JsonIgnore
     public String getPasswordHash() { return passwordHash; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    @JsonIgnore
+    public String getResetToken() { return resetToken; }
+    public void setResetToken(String resetToken) { this.resetToken = resetToken; }
+
+    @JsonIgnore
+    public LocalDateTime getResetTokenExpires() { return resetTokenExpires; }
+    public void setResetTokenExpires(LocalDateTime resetTokenExpires) { this.resetTokenExpires = resetTokenExpires; }
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }

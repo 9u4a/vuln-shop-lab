@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useBackend } from '../BackendContext.jsx';
 import { useSession } from '../SessionContext.jsx';
 import { useToast } from '../ToastContext.jsx';
@@ -14,6 +14,8 @@ export default function Login() {
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -24,7 +26,12 @@ export default function Login() {
       const data = await login(backend.base, username, password);
       setUser(data.user);
       showToast(`${data.user.username}님 접속하였습니다.`);
-      navigate('/');
+      const next = searchParams.get('next') || location.state?.from?.pathname || '/';
+      if (/^https?:\/\//i.test(next)) {
+        window.location.href = next;
+      } else {
+        navigate(next);
+      }
     } catch (err) {
       setError(err.message);
       setBusy(false);
@@ -46,6 +53,7 @@ export default function Login() {
           </label>
           <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? '로그인 중...' : '로그인'}</button>
         </form>
+        <p className="muted"><Link to="/forgot-password">비밀번호를 잊으셨나요?</Link></p>
         <p className="muted">계정이 없으신가요? <Link to="/signup">회원가입</Link></p>
       </section>
     </div>

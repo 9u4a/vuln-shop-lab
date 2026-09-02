@@ -55,3 +55,6 @@
 | 47 | 주문 공유 링크 | feature/order-lifecycle-batch | 038 | 토큰 기반 비회원 주문·배송 조회 페이지 |
 | 48 | 장바구니 공유 | feature/cart-share | 012 | 공유 코드 내보내기/가져오기, java 역직렬화(VULN-012)를 자연스러운 기능으로 재구성 |
 | 49 | 주문 알림 웹훅 | feature/order-webhook-notify | 004 | 주문 접수 시 등록 URL로 웹훅 발송, VULN-004 SSRF를 생성 시점 발화로 재구성(재현 가능) |
+| 50 | 비밀번호 재설정 | feature/auth-token-batch | 039,040 | 비밀번호 찾기/재설정 플로우, email·토큰 컬럼 신규, 약한 토큰·사용자 열거 |
+| 51 | 로그인 후 원위치 복귀 | feature/auth-token-batch | 041 | 로그인 성공 후 `?next=`/`state.from` 경로 복귀, 검증 부재로 오픈 리다이렉트 |
+| 52 | API 토큰(JWT) | feature/auth-token-batch | 042 | 외부 연동용 Bearer 토큰 발급/검증, 알려진 기본 시크릿으로 위조 |

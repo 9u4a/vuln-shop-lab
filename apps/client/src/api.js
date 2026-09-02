@@ -33,6 +33,24 @@ export function logout(base) {
   return apiRequest(base, '/auth/logout', { method: 'POST' });
 }
 
+export function forgotPassword(base, account) {
+  return apiRequest(base, '/auth/forgot', {
+    method: 'POST',
+    body: JSON.stringify({ account }),
+  });
+}
+
+export function resetPassword(base, token, newPassword) {
+  return apiRequest(base, '/auth/reset', {
+    method: 'POST',
+    body: JSON.stringify({ token, newPassword }),
+  });
+}
+
+export function issueApiToken(base) {
+  return apiRequest(base, '/auth/token', { method: 'POST' });
+}
+
 export function fetchProducts(base, { q, category, sort, gender, color, material, minPrice, maxPrice, inStock } = {}) {
   const params = new URLSearchParams();
   if (q) params.set('q', q);

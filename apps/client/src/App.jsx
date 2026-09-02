@@ -12,12 +12,15 @@ import RequireRole from './RequireRole.jsx';
 import Home from './pages/Home.jsx';
 import Login from './pages/Login.jsx';
 import Signup from './pages/Signup.jsx';
+import ForgotPassword from './pages/ForgotPassword.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
 import Products from './pages/Products.jsx';
 import ProductDetail from './pages/ProductDetail.jsx';
 import MyPageLayout from './pages/mypage/MyPageLayout.jsx';
 import MyPageProfile from './pages/mypage/MyPageProfile.jsx';
 import MyPageLikes from './pages/mypage/MyPageLikes.jsx';
 import MyPageRewards from './pages/mypage/MyPageRewards.jsx';
+import MyPageApiToken from './pages/mypage/MyPageApiToken.jsx';
 import MyPagePassword from './pages/mypage/MyPagePassword.jsx';
 import Cart from './pages/Cart.jsx';
 import CheckoutResult from './pages/CheckoutResult.jsx';
@@ -71,6 +74,8 @@ export default function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/products/:id" element={<ProductDetail />} />
                 <Route path="/faq" element={<Faq />} />
@@ -92,6 +97,7 @@ export default function App() {
                   <Route index element={<MyPageProfile />} />
                   <Route path="likes" element={<MyPageLikes />} />
                   <Route path="rewards" element={<MyPageRewards />} />
+                  <Route path="api-token" element={<MyPageApiToken />} />
                   <Route path="password" element={<MyPagePassword />} />
                 </Route>
                 <Route path="/orders" element={<RequireAuth><Orders /></RequireAuth>} />
