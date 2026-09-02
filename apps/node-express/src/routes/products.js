@@ -107,6 +107,14 @@ router.get('/:id', (req, res) => {
   const liked = req.session.user
     ? !!db.prepare('SELECT id FROM product_likes WHERE user_id = ? AND product_id = ?').get(req.session.user.id, product.id)
     : false;
+  if (req.session.user) {
+    const uid = req.session.user.id;
+    db.prepare('DELETE FROM recently_viewed WHERE user_id = ? AND product_id = ?').run(uid, product.id);
+    db.prepare('INSERT INTO recently_viewed (user_id, product_id) VALUES (?, ?)').run(uid, product.id);
+    db.prepare(
+      'DELETE FROM recently_viewed WHERE user_id = ? AND id NOT IN (SELECT id FROM recently_viewed WHERE user_id = ? ORDER BY id DESC LIMIT 20)'
+    ).run(uid, uid);
+  }
   res.json({ product: toProduct({ ...product, review_count: reviewCount, like_count: likeCount, liked: liked ? 1 : 0 }) });
 });
 

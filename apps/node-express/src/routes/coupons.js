@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../db');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
+const { notify } = require('../notify');
 
 const router = express.Router();
 
@@ -92,6 +93,7 @@ router.post('/:id/claim', requireAuth, (req, res) => {
   const result = db
     .prepare('INSERT INTO user_coupons (user_id, coupon_id) VALUES (?, ?)')
     .run(req.session.user.id, coupon.id);
+  notify(req.session.user.id, 'coupon', '쿠폰이 발급되었습니다', `${coupon.title} 쿠폰을 받았습니다.`, '/mypage/rewards');
   res.status(201).json({ userCouponId: result.lastInsertRowid, coupon: toCoupon(coupon) });
 });
 

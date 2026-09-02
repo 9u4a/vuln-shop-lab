@@ -5,6 +5,7 @@ import { useCart } from '../CartContext.jsx';
 import { useSession } from '../SessionContext.jsx';
 import { NAV_LINKS, ACCOUNT_LINKS, visibleLinks } from './navLinks.js';
 import SiteDrawer from './SiteDrawer.jsx';
+import NotificationBell from './NotificationBell.jsx';
 
 export default function SiteHeader() {
   const { backends, backendKey, selectBackend } = useBackend();
@@ -52,7 +53,12 @@ export default function SiteHeader() {
           <span className="site-header__util-spacer" />
           {user ? (
             <>
-              <span>{user.username}님</span>
+              <span>
+                {user.username}님
+                {user.membershipTier && user.membershipTier !== 'basic' && (
+                  <span className="badge" style={{ marginLeft: 'var(--space-1)', textTransform: 'uppercase' }}>{user.membershipTier}</span>
+                )}
+              </span>
               {accountLinks.map((l) => (
                 <Link key={l.to} to={l.to} className="link-plain">{l.label}</Link>
               ))}
@@ -122,6 +128,7 @@ export default function SiteHeader() {
         </form>
 
         <div className="site-header__actions">
+          <NotificationBell />
           <Link to="/cart" className="icon-link" aria-label="장바구니">
             <span className="icon-link__glyph">🛒</span>
             {cartCount > 0 && <span className="count-badge">{cartCount}</span>}

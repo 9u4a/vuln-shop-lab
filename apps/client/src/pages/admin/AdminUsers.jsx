@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackend } from '../../BackendContext.jsx';
 import { useSession } from '../../SessionContext.jsx';
-import { fetchAdminUsers, fetchAdminUser, updateUserRole, toggleUserActive, updateAdminUser } from '../../api.js';
+import { fetchAdminUsers, fetchAdminUser, updateUserRole, updateUserTier, toggleUserActive, updateAdminUser } from '../../api.js';
 import { formatCurrency } from '../../format.js';
 import StatusChip from '../../components/StatusChip.jsx';
 import Modal from '../../components/Modal.jsx';
 import Pagination from '../../components/Pagination.jsx';
 
 const ROLES = ['user', 'admin', 'system_admin'];
+const TIERS = ['basic', 'silver', 'gold', 'vip'];
 const PAGE_SIZE = 10;
 const emptyEdit = { name: '', phone: '', postcode: '', address: '', addressDetail: '', bio: '' };
 
@@ -73,6 +74,14 @@ export default function AdminUsers() {
     } catch (err) { setError(err.message); }
   }
 
+  async function handleTierChange(userId, membershipTier) {
+    try {
+      await updateUserTier(backend.base, userId, membershipTier);
+      load();
+      if (openId === userId) setDetail((d) => ({ ...d, user: { ...d.user, membershipTier } }));
+    } catch (err) { setError(err.message); }
+  }
+
   async function handleSaveProfile(e) {
     e.preventDefault();
     setSaveStatus(null);
@@ -134,6 +143,12 @@ export default function AdminUsers() {
                     {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
                   </select>
                 ) : <span className="badge">{detail.user.role}</span>}
+              </div>
+              <div>
+                <p className="muted">회원 등급</p>
+                <select value={detail.user.membershipTier || 'basic'} onChange={(e) => handleTierChange(detail.user.id, e.target.value)}>
+                  {TIERS.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
               </div>
               <div>
                 <p className="muted">상태</p>

@@ -10,6 +10,7 @@ import { CATEGORY_LABELS } from '../data/categories.js';
 import LikeButton from '../components/LikeButton.jsx';
 import { ADMIN_ROLES } from '../components/navLinks.js';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
+import RecentlyViewedStrip from '../components/RecentlyViewedStrip.jsx';
 
 function Stars({ value }) {
   const n = Math.max(0, Math.min(5, Math.round(Number(value) || 0)));
@@ -323,6 +324,8 @@ export default function ProductDetail() {
           </p>
         )}
       </section>
+
+      <RecentlyViewedStrip excludeId={product.id} />
 
       <ConfirmDialog
         open={!!pendingReview}

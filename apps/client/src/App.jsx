@@ -19,6 +19,7 @@ import ProductDetail from './pages/ProductDetail.jsx';
 import MyPageLayout from './pages/mypage/MyPageLayout.jsx';
 import MyPageProfile from './pages/mypage/MyPageProfile.jsx';
 import MyPageLikes from './pages/mypage/MyPageLikes.jsx';
+import MyPageAddresses from './pages/mypage/MyPageAddresses.jsx';
 import MyPageRewards from './pages/mypage/MyPageRewards.jsx';
 import MyPageApiToken from './pages/mypage/MyPageApiToken.jsx';
 import MyPagePassword from './pages/mypage/MyPagePassword.jsx';
@@ -97,6 +98,7 @@ export default function App() {
                 <Route path="/mypage" element={<RequireAuth><MyPageLayout /></RequireAuth>}>
                   <Route index element={<MyPageProfile />} />
                   <Route path="likes" element={<MyPageLikes />} />
+                  <Route path="addresses" element={<MyPageAddresses />} />
                   <Route path="rewards" element={<MyPageRewards />} />
                   <Route path="api-token" element={<MyPageApiToken />} />
                   <Route path="password" element={<MyPagePassword />} />

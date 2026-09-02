@@ -17,6 +17,7 @@ import com.vulnlab.shop.repository.ProductRepository;
 import com.vulnlab.shop.repository.StoreSettingRepository;
 import com.vulnlab.shop.repository.UserRepository;
 import com.vulnlab.shop.security.Roles;
+import com.vulnlab.shop.security.Tiers;
 import com.vulnlab.shop.storage.Uploads;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
@@ -153,6 +154,21 @@ public class AdminController {
         target.setRole(role);
         userRepository.save(target);
         return ResponseEntity.ok(Map.of("ok", true));
+    }
+
+    @PutMapping("/users/{id}/tier")
+    public ResponseEntity<?> updateTier(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
+        ResponseEntity<?> denied = requireAdmin(session);
+        if (denied != null) return denied;
+        String tier = body.get("membershipTier");
+        if (!Tiers.isValid(tier)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "등급은 basic, silver, gold, vip 중 하나여야 합니다."));
+        }
+        User target = userRepository.findById(id).orElse(null);
+        if (target == null) return ResponseEntity.notFound().build();
+        target.setMembershipTier(tier);
+        userRepository.save(target);
+        return ResponseEntity.ok(Map.of("ok", true, "membershipTier", tier));
     }
 
     @PutMapping("/users/{id}/active")

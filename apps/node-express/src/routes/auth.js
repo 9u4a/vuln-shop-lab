@@ -61,7 +61,7 @@ router.post('/login', async (req, res) => {
     return res.status(403).json({ error: '비활성화된 계정입니다. 관리자에게 문의하세요.' });
   }
   record(user.id, 1);
-  req.session.user = { id: user.id, username: user.username, role: user.role };
+  req.session.user = { id: user.id, username: user.username, role: user.role, membershipTier: user.membership_tier };
   res.json({ user: req.session.user });
 });
 

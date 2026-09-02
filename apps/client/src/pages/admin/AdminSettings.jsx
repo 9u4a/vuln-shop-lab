@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useBackend } from '../../BackendContext.jsx';
 import { useSession } from '../../SessionContext.jsx';
-import { fetchAdminStats } from '../../api.js';
+import { fetchAdminStats, broadcastNotification } from '../../api.js';
 
 const STAT_LABELS = {
   users: '사용자',
@@ -16,6 +16,20 @@ export default function AdminSettings() {
   const { user } = useSession();
   const [counts, setCounts] = useState(null);
   const [error, setError] = useState(null);
+  const [notif, setNotif] = useState({ title: '', body: '', link: '' });
+  const [notifMsg, setNotifMsg] = useState(null);
+
+  async function handleBroadcast(e) {
+    e.preventDefault();
+    setNotifMsg(null);
+    try {
+      const res = await broadcastNotification(backend.base, notif);
+      setNotif({ title: '', body: '', link: '' });
+      setNotifMsg(`${res.sent}명에게 알림을 발송했습니다.`);
+    } catch (err) {
+      setNotifMsg(err.message);
+    }
+  }
 
   useEffect(() => {
     setCounts(null);
@@ -43,6 +57,24 @@ export default function AdminSettings() {
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="card">
+        <h2>전체 알림 발송</h2>
+        <p className="muted">모든 회원에게 인앱 알림(종 아이콘)을 보냅니다.</p>
+        <form onSubmit={handleBroadcast}>
+          <label>제목
+            <input value={notif.title} onChange={(e) => setNotif((n) => ({ ...n, title: e.target.value }))} required />
+          </label>
+          <label>내용
+            <textarea value={notif.body} onChange={(e) => setNotif((n) => ({ ...n, body: e.target.value }))} rows="2" />
+          </label>
+          <label>링크 (선택)
+            <input value={notif.link} onChange={(e) => setNotif((n) => ({ ...n, link: e.target.value }))} placeholder="/events" />
+          </label>
+          <button type="submit" className="btn btn-primary">발송</button>
+        </form>
+        {notifMsg && <p className="status-ok">{notifMsg}</p>}
       </section>
 
       <section className="card">

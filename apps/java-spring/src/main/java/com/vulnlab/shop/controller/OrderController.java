@@ -6,11 +6,14 @@ import com.vulnlab.shop.entity.OrderItem;
 import com.vulnlab.shop.entity.PointTransaction;
 import com.vulnlab.shop.entity.Product;
 import com.vulnlab.shop.entity.Shipment;
+import com.vulnlab.shop.entity.Notification;
 import com.vulnlab.shop.entity.User;
+import com.vulnlab.shop.security.Tiers;
 import com.vulnlab.shop.entity.UserCoupon;
 import com.vulnlab.shop.repository.CartItemRepository;
 import com.vulnlab.shop.repository.CartRepository;
 import com.vulnlab.shop.repository.CouponRepository;
+import com.vulnlab.shop.repository.NotificationRepository;
 import com.vulnlab.shop.repository.OrderItemRepository;
 import com.vulnlab.shop.repository.OrderRepository;
 import com.vulnlab.shop.repository.PointTransactionRepository;
@@ -65,6 +68,7 @@ public class OrderController {
     private final CartItemRepository cartItemRepository;
     private final UserCouponRepository userCouponRepository;
     private final CouponRepository couponRepository;
+    private final NotificationRepository notificationRepository;
 
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(5))
@@ -75,7 +79,7 @@ public class OrderController {
                             PointTransactionRepository pointTransactionRepository,
                             ShipmentRepository shipmentRepository, CartRepository cartRepository,
                             CartItemRepository cartItemRepository, UserCouponRepository userCouponRepository,
-                            CouponRepository couponRepository) {
+                            CouponRepository couponRepository, NotificationRepository notificationRepository) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.productRepository = productRepository;
@@ -86,6 +90,7 @@ public class OrderController {
         this.cartItemRepository = cartItemRepository;
         this.userCouponRepository = userCouponRepository;
         this.couponRepository = couponRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     private static String shareToken(Long orderId) {
@@ -244,6 +249,11 @@ public class OrderController {
             couponId = (Long) applied.get("couponId");
         }
 
+        // 회원 등급 할인 — 등급별 정률
+        User buyer = userRepository.findById(user.getId()).orElse(user);
+        long tierDiscount = (long) Math.floor(itemsTotal.doubleValue() * Tiers.rate(buyer.getMembershipTier()));
+        discount = discount.add(BigDecimal.valueOf(tierDiscount));
+
         int pointsUsed = body.get("pointsUsed") == null ? 0
                 : Integer.parseInt(String.valueOf(body.get("pointsUsed")));
         BigDecimal total = itemsTotal.subtract(discount).subtract(BigDecimal.valueOf(pointsUsed));
@@ -279,6 +289,9 @@ public class OrderController {
         int earned = itemsTotal.multiply(BigDecimal.valueOf(5)).divide(BigDecimal.valueOf(100)).intValue();
 
         // 장바구니 비우기는 결제 확인(confirm) 성공 시점으로 미룬다 — 결제 미완료로 빠져나오면 유지.
+
+        notificationRepository.save(new Notification(user.getId(), "order", "주문이 접수되었습니다",
+                "주문 #" + order.getId() + "이(가) 접수되었습니다.", "/orders/" + order.getId()));
 
         // 주문 접수 알림 웹훅 — 등록된 URL로 즉시 발송(VULN-004).
         fireWebhook(order.getWebhookUrl(), order, "order.created", "pending");
@@ -401,6 +414,9 @@ public class OrderController {
         }
         // 결제 확정 시점에 서버 장바구니 비우기
         cartRepository.findByUserId(order.getUserId()).ifPresent(c -> cartItemRepository.deleteByCartId(c.getId()));
+
+        notificationRepository.save(new Notification(order.getUserId(), "order", "결제가 완료되었습니다",
+                "주문 #" + order.getId() + " 결제가 완료되었습니다.", "/orders/" + order.getId()));
 
         fireWebhook(order.getWebhookUrl(), order, "order.paid", "paid");
 

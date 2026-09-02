@@ -3,6 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 const TABS = [
   { to: '', label: '프로필', end: true },
   { to: 'likes', label: '찜한 상품' },
+  { to: 'addresses', label: '배송지 관리' },
   { to: 'rewards', label: '포인트·추천' },
   { to: 'api-token', label: 'API 토큰' },
   { to: 'password', label: '비밀번호 변경' },

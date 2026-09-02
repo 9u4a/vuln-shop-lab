@@ -59,3 +59,7 @@
 | 51 | 로그인 후 원위치 복귀 | feature/auth-token-batch | 041 | 로그인 성공 후 `?next=`/`state.from` 경로 복귀, 검증 부재로 오픈 리다이렉트 |
 | 52 | API 토큰(JWT) | feature/auth-token-batch | 042 | 외부 연동용 Bearer 토큰 발급/검증, 알려진 기본 시크릿으로 위조 |
 | 53 | 기프트카드/상품권 | feature/gift-card | 043 | 관리자 상품권 발행 + 마이페이지 등록(적립금 전환), 중복 등록 재사용 |
+| 54 | 배송지 주소록 | feature/ux-completeness | 044 | 다중 배송지 저장·기본배송지·체크아웃 선택, 수정/삭제 IDOR |
+| 55 | 회원 등급/멤버십 | feature/ux-completeness | 045 | 등급별 할인·헤더 뱃지·관리자 지정, 프로필 수정 통한 자가 승급 |
+| 56 | 최근 본 상품 | feature/ux-completeness | — | 상품 조회 기록(LRU 20)·상세 하단 스트립 |
+| 57 | 인앱 알림센터 | feature/ux-completeness | 046 | 헤더 종 알림·주문/쿠폰 발신·관리자 브로드캐스트, 알림 본문 저장형 XSS |

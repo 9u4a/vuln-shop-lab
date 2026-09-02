@@ -78,6 +78,46 @@ export function deleteGiftCard(base, id) {
   return apiRequest(base, `/giftcards/${id}`, { method: 'DELETE' });
 }
 
+export function fetchRecentlyViewed(base) {
+  return apiRequest(base, '/recently-viewed');
+}
+
+export function fetchNotifications(base) {
+  return apiRequest(base, '/notifications');
+}
+
+export function fetchUnreadNotificationCount(base) {
+  return apiRequest(base, '/notifications/unread-count');
+}
+
+export function markNotificationRead(base, id) {
+  return apiRequest(base, `/notifications/${id}/read`, { method: 'POST' });
+}
+
+export function markAllNotificationsRead(base) {
+  return apiRequest(base, '/notifications/read-all', { method: 'POST' });
+}
+
+export function broadcastNotification(base, payload) {
+  return apiRequest(base, '/notifications/broadcast', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export function fetchAddresses(base) {
+  return apiRequest(base, '/shipping-addresses');
+}
+
+export function createAddress(base, payload) {
+  return apiRequest(base, '/shipping-addresses', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export function updateAddress(base, id, payload) {
+  return apiRequest(base, `/shipping-addresses/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+}
+
+export function deleteAddress(base, id) {
+  return apiRequest(base, `/shipping-addresses/${id}`, { method: 'DELETE' });
+}
+
 export function fetchProducts(base, { q, category, sort, gender, color, material, minPrice, maxPrice, inStock } = {}) {
   const params = new URLSearchParams();
   if (q) params.set('q', q);
@@ -254,6 +294,13 @@ export function updateUserRole(base, userId, role) {
   return apiRequest(base, `/admin/users/${userId}/role`, {
     method: 'PUT',
     body: JSON.stringify({ role }),
+  });
+}
+
+export function updateUserTier(base, userId, membershipTier) {
+  return apiRequest(base, `/admin/users/${userId}/tier`, {
+    method: 'PUT',
+    body: JSON.stringify({ membershipTier }),
   });
 }
 

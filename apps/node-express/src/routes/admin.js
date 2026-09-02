@@ -2,6 +2,7 @@ const express = require('express');
 const db = require('../db');
 const { requireAdmin, requireSystemAdmin } = require('../middleware/auth');
 const { upload } = require('../uploads');
+const { TIERS } = require('../tiers');
 
 const router = express.Router();
 
@@ -17,8 +18,8 @@ router.get('/stats', requireAdmin, (req, res) => {
 });
 
 router.get('/users', requireAdmin, (req, res) => {
-  const rows = db.prepare('SELECT id, username, role, bio, avatar_url, active, created_at FROM users ORDER BY id').all();
-  res.json({ users: rows.map((u) => ({ ...u, active: u.active !== 0 })) });
+  const rows = db.prepare('SELECT id, username, role, membership_tier, bio, avatar_url, active, created_at FROM users ORDER BY id').all();
+  res.json({ users: rows.map((u) => ({ ...u, membershipTier: u.membership_tier, active: u.active !== 0 })) });
 });
 
 router.put('/users/:id/active', requireAdmin, (req, res) => {
@@ -59,7 +60,7 @@ router.get('/login-logs', requireAdmin, (req, res) => {
 router.get('/users/:id', requireAdmin, (req, res) => {
   const u = db
     .prepare(
-      `SELECT id, username, role, bio, avatar_url, name, phone, postcode, address, address_detail, active, created_at
+      `SELECT id, username, role, membership_tier, bio, avatar_url, name, phone, postcode, address, address_detail, active, created_at
        FROM users WHERE id = ?`
     )
     .get(req.params.id);
@@ -72,6 +73,7 @@ router.get('/users/:id', requireAdmin, (req, res) => {
       id: u.id,
       username: u.username,
       role: u.role,
+      membershipTier: u.membership_tier,
       bio: u.bio,
       avatarUrl: u.avatar_url,
       name: u.name,
@@ -118,6 +120,16 @@ router.put('/users/:id/role', requireSystemAdmin, (req, res) => {
   const result = db.prepare('UPDATE users SET role = ? WHERE id = ?').run(role, req.params.id);
   if (result.changes === 0) return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
   res.json({ ok: true });
+});
+
+router.put('/users/:id/tier', requireAdmin, (req, res) => {
+  const { membershipTier } = req.body;
+  if (!TIERS.includes(membershipTier)) {
+    return res.status(400).json({ error: `등급은 ${TIERS.join(', ')} 중 하나여야 합니다.` });
+  }
+  const result = db.prepare('UPDATE users SET membership_tier = ? WHERE id = ?').run(membershipTier, req.params.id);
+  if (result.changes === 0) return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
+  res.json({ ok: true, membershipTier });
 });
 
 router.get('/orders', requireAdmin, (req, res) => {

@@ -55,6 +55,10 @@ public class User {
     @ColumnDefault("0")
     private int points = 0;
 
+    @Column(name = "membership_tier", nullable = false)
+    @ColumnDefault("'basic'")
+    private String membershipTier = "basic";
+
     @Column(name = "referral_code")
     private String referralCode;
 
@@ -114,6 +118,9 @@ public class User {
 
     public int getPoints() { return points; }
     public void setPoints(int points) { this.points = points; }
+
+    public String getMembershipTier() { return membershipTier; }
+    public void setMembershipTier(String membershipTier) { this.membershipTier = membershipTier; }
 
     public String getReferralCode() { return referralCode; }
     public void setReferralCode(String referralCode) { this.referralCode = referralCode; }

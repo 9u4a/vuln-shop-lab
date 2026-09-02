@@ -6,6 +6,8 @@ const path = require('path');
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { insertActivity } = require('../mongo');
+const { tierRate } = require('../tiers');
+const { notify } = require('../notify');
 
 const router = express.Router();
 
@@ -186,6 +188,11 @@ router.post('/', requireAuth, async (req, res) => {
     couponId = applied.couponId;
   }
 
+  // 회원 등급 할인 — 등급별 정률
+  const buyer = db.prepare('SELECT membership_tier FROM users WHERE id = ?').get(req.session.user.id);
+  const tierDiscount = Math.floor(itemsTotal * tierRate(buyer.membership_tier));
+  discount += tierDiscount;
+
   const usePoints = Number(pointsUsed) || 0;
   const total = itemsTotal - discount - usePoints;
 
@@ -224,6 +231,8 @@ router.post('/', requireAuth, async (req, res) => {
   const earned = Math.floor(itemsTotal * 0.05);
 
   // 장바구니 비우기는 결제 확인(POST /:id/confirm) 성공 시점으로 미룬다 — 결제 미완료로 빠져나오면 유지.
+
+  notify(req.session.user.id, 'order', '주문이 접수되었습니다', `주문 #${orderId}이(가) 접수되었습니다.`, `/orders/${orderId}`);
 
   // 주문 접수 알림 웹훅 — 등록된 URL로 즉시 발송(비동기, 실패 무시). URL 검증 없음(VULN-004).
   fireWebhook(webhookUrl, {
@@ -302,6 +311,8 @@ router.post('/:id/confirm', requireAuth, async (req, res) => {
   // 결제 확정 시점에 서버 장바구니 비우기
   const paidCart = db.prepare('SELECT id FROM carts WHERE user_id = ?').get(order.user_id);
   if (paidCart) db.prepare('DELETE FROM cart_items WHERE cart_id = ?').run(paidCart.id);
+
+  notify(order.user_id, 'order', '결제가 완료되었습니다', `주문 #${order.id} 결제가 완료되었습니다.`, `/orders/${order.id}`);
 
   const updated = db.prepare('SELECT * FROM orders WHERE id = ?').get(order.id);
   fireWebhook(order.webhook_url, {
