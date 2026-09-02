@@ -942,6 +942,47 @@ textarea { resize: vertical; min-height: 4.5rem; }
 .order-row__id { font-weight: 700; font-size: 0.95rem; }
 .order-row__amount { margin-left: auto; font-weight: 700; font-variant-numeric: tabular-nums; }
 
+/* 주문 내역 카드형 목록 */
+.order-cards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.order-card {
+  border: 1px solid var(--color-line); border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  display: flex; flex-direction: column; gap: var(--space-2);
+  background: var(--color-surface);
+}
+.order-card__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.order-card__title { font-weight: 700; font-size: 0.98rem; overflow-wrap: anywhere; }
+.order-card__meta { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); font-size: 0.85rem; }
+.order-card__amount { font-weight: 700; font-variant-numeric: tabular-nums; }
+.order-card__actions { display: flex; gap: var(--space-2); flex-wrap: wrap; border-top: 1px solid var(--color-line); padding-top: var(--space-3); }
+
+/* 카드 헤더 행(제목 + 우측 액션) */
+.card__header-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.card__header-row h2 { margin: 0; }
+
+/* 배송 추적 타임라인 */
+.track__head { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-4); }
+.track__carrier { font-size: 0.88rem; color: var(--color-muted); overflow-wrap: anywhere; }
+.track__list { list-style: none; margin: 0; padding: 0; }
+.track__item { position: relative; padding: 0 0 var(--space-4) var(--space-6); border-left: 2px solid var(--color-line); }
+.track__item:last-child { border-left-color: transparent; padding-bottom: 0; }
+.track__dot { position: absolute; left: -7px; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--color-line); border: 2px solid var(--color-surface); }
+.track__item--current .track__dot { background: var(--color-accent); }
+.track__row { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.track__when { font-size: 0.78rem; color: var(--color-muted); }
+.track__desc { font-size: 0.9rem; font-weight: 600; margin-top: 2px; }
+.track__loc { font-size: 0.8rem; }
+
+/* 영수증 영역 */
+.receipt-form { display: flex; flex-direction: column; gap: var(--space-2); }
+.receipt-actions { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-3); }
+.receipt-actions__download { display: flex; gap: var(--space-2); align-items: center; flex: 1 1 220px; }
+.receipt-actions__download input { flex: 1; min-width: 0; font-family: ui-monospace, monospace; font-size: 0.8rem; }
+.receipt-view { background: var(--color-subtle); padding: var(--space-4); border-radius: var(--radius); overflow-x: auto; margin-top: var(--space-3); font-size: 0.82rem; }
+
+/* 포인트 선물 폼 */
+.gift-form { display: flex; flex-direction: column; gap: var(--space-2); }
+
 .summary-box {
   position: sticky;
   top: calc(var(--header-h) + var(--space-6));
@@ -1088,16 +1129,39 @@ textarea { resize: vertical; min-height: 4.5rem; }
 .coupon-card__action { display: flex; align-items: center; padding: var(--space-3); }
 
 /* 장바구니 배송지 입력 */
-.ship-fields { display: flex; flex-direction: column; gap: var(--space-2); width: 100%; }
+.ship-fields { display: flex; flex-direction: column; gap: var(--space-3); width: 100%; }
 .ship-fields > input { width: 100%; }
+.ship-fields__group { display: flex; flex-direction: column; gap: var(--space-2); }
+.ship-fields__legend { font-size: 0.78rem; color: var(--color-muted); font-weight: 600; }
 .ship-fields__row { display: flex; gap: var(--space-2); width: 100%; }
 .ship-fields__row input { flex: 1; min-width: 0; }
 .ship-fields__row input.ship-fields__postcode { flex: 0 0 96px; }
 
+/* 저장 배송지 프리셋 칩 */
+.ship-presets { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.ship-preset {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-line); border-radius: var(--radius);
+  background: var(--color-surface); cursor: pointer; text-align: left;
+  min-width: 96px;
+}
+.ship-preset:hover { border-color: var(--color-accent); }
+.ship-preset--active { border-color: var(--color-accent); background: var(--color-subtle); }
+.ship-preset__label { font-size: 0.72rem; color: var(--color-muted); font-weight: 600; }
+.ship-preset__name { font-size: 0.85rem; font-weight: 600; }
+
 /* 장바구니 공유 */
-.cart-share__row { display: flex; gap: var(--space-2); align-items: center; margin-top: var(--space-3); flex-wrap: wrap; }
+.cart-share__grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-top: var(--space-3); }
+.cart-share__col { display: flex; flex-direction: column; gap: var(--space-2); }
+.cart-share__legend { font-size: 0.78rem; color: var(--color-muted); font-weight: 600; }
+.cart-share__row { display: flex; gap: var(--space-2); align-items: center; flex-wrap: nowrap; }
 .cart-share__row input { flex: 1; min-width: 0; }
+.cart-share__row button { flex: 0 0 auto; }
 .cart-share__code { font-family: ui-monospace, monospace; font-size: 0.8rem; }
+@media (max-width: 640px) {
+  .cart-share__grid { grid-template-columns: 1fr; }
+}
 
 /* 장바구니 쿠폰 선택 */
 .coupon-applied { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); width: 100%; }
@@ -1328,8 +1392,15 @@ textarea { resize: vertical; min-height: 4.5rem; }
 .restock-box { margin-top: var(--space-4); padding: var(--space-4); border: 1px solid var(--color-line); border-radius: var(--radius); background: var(--color-subtle); display: flex; flex-direction: column; gap: var(--space-2); }
 .restock-box p { margin: 0; }
 .confirm-actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
-.admin-modal__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin-bottom: var(--space-4); }
+.admin-modal__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-3); margin-bottom: var(--space-4); }
 .admin-modal__grid p { margin: 0; }
+.admin-modal__grid select { max-width: 100%; }
+.admin-modal__status { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+.admin-modal__status .btn { align-self: flex-start; }
+/* 상세 모달 긴 문자열 줄바꿈(토스 주문 ID·주소 등) */
+.admin-detail-dl dd { margin: 0 0 var(--space-2); overflow-wrap: anywhere; word-break: break-all; }
+.admin-detail-dl dt { font-size: 0.78rem; color: var(--color-muted); font-weight: 600; }
+.admin-detail-ship { overflow-wrap: anywhere; }
 .order-status-edit { display: flex; align-items: flex-end; gap: var(--space-3); flex-wrap: wrap; margin: var(--space-3) 0 var(--space-4); }
 .order-status-edit label { display: inline-flex; flex-direction: column; gap: var(--space-1); }
 .line-item__stock-warn { color: var(--color-danger); font-size: 0.78rem; font-weight: 500; }

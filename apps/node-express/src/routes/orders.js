@@ -8,12 +8,9 @@ const { requireAuth } = require('../middleware/auth');
 const { insertActivity } = require('../mongo');
 const { tierRate } = require('../tiers');
 const { notify } = require('../notify');
+const { orderShareToken: shareToken } = require('../share-token');
 
 const router = express.Router();
-
-function shareToken(orderId) {
-  return Buffer.from(String(orderId)).toString('base64');
-}
 
 const TOSS_SECRET_KEY = process.env.TOSS_SECRET_KEY;
 const TOSS_CONFIRM_URL = 'https://api.tosspayments.com/v1/payments/confirm';
@@ -43,12 +40,28 @@ function toOrder(row) {
   };
 }
 
+function shipmentEvents(trackingNo) {
+  if (!trackingNo) return [];
+  return db
+    .prepare(
+      'SELECT status, description, location, occurred_at FROM tracking_events WHERE tracking_no = ? ORDER BY occurred_at, id'
+    )
+    .all(trackingNo)
+    .map((e) => ({
+      status: e.status,
+      description: e.description,
+      location: e.location,
+      occurredAt: e.occurred_at,
+    }));
+}
+
 function toShipment(row) {
   if (!row) return null;
   return {
     carrier: row.carrier,
     trackingNo: row.tracking_no,
     status: row.status,
+    events: shipmentEvents(row.tracking_no),
   };
 }
 
@@ -106,7 +119,21 @@ router.get('/', requireAuth, (req, res) => {
   const rows = db
     .prepare('SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC')
     .all(req.session.user.id);
-  res.json({ orders: rows.map(toOrder) });
+  const orders = rows.map((row) => {
+    const items = db
+      .prepare(
+        `SELECT p.name FROM order_items oi JOIN products p ON p.id = oi.product_id WHERE oi.order_id = ? ORDER BY oi.id`
+      )
+      .all(row.id);
+    const shipment = db.prepare('SELECT status FROM shipments WHERE order_id = ?').get(row.id);
+    return {
+      ...toOrder(row),
+      itemSummary: items[0] ? items[0].name : null,
+      itemCount: items.length,
+      shipmentStatus: shipment ? shipment.status : null,
+    };
+  });
+  res.json({ orders });
 });
 
 router.get('/:id', requireAuth, (req, res) => {
@@ -334,8 +361,24 @@ router.post('/:id/receipt', requireAuth, (req, res) => {
   const filename = `receipt_${order.id}.txt`;
   const filePath = path.join(receiptsDir, filename);
   const note = req.body.note || user.bio || '';
+  const items = orderItems(order.id);
 
-  const cmd = `echo "영수증 - 주문번호: ${order.toss_order_id} / 수령인: ${user.name} / 메모: ${note}" > "${filePath}"`;
+  const lines = [
+    '======== VULN SHOP 영수증 ========',
+    `주문번호: ${order.toss_order_id}`,
+    `주문일자: ${order.created_at}`,
+    `수령인: ${user.name}`,
+    `배송지: (${order.ship_postcode || ''}) ${order.ship_address || ''} ${order.ship_address_detail || ''}`,
+    '----------------------------------',
+    ...items.map((i) => `${i.productName} (${i.optionValue || '-'}) x${i.quantity}    ${i.unitPrice * i.quantity}원`),
+    '----------------------------------',
+    `할인금액: ${order.discount_amount || 0}원`,
+    `결제금액: ${order.total_amount}원`,
+    `메모: ${note}`,
+    '==================================',
+  ].join('\n');
+
+  const cmd = `echo "${lines}" > "${filePath}"`;
   exec(cmd, (err) => {
     if (err) return res.status(500).json({ error: '영수증 생성에 실패했습니다.' });
     res.status(201).json({ filename });
@@ -349,14 +392,38 @@ router.get('/:id/receipt/print', requireAuth, (req, res) => {
   }
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.session.user.id);
   const note = req.query.note || '';
+  const items = orderItems(order.id);
+  const rows = items
+    .map(
+      (i) =>
+        `<tr><td>${i.productName}</td><td>${i.optionValue || '-'}</td><td style="text-align:right">${i.quantity}</td><td style="text-align:right">${(i.unitPrice * i.quantity).toLocaleString()}원</td></tr>`
+    )
+    .join('');
   res.type('html').send(
-    `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>영수증</title></head>
+    `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>영수증</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 520px; margin: 32px auto; color: #1a1a1a; }
+  h1 { font-size: 20px; border-bottom: 2px solid #1a1a1a; padding-bottom: 8px; }
+  .meta { color: #555; font-size: 13px; line-height: 1.7; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  th, td { padding: 6px 4px; border-bottom: 1px solid #eee; text-align: left; }
+  .total { text-align: right; font-size: 16px; font-weight: 700; margin-top: 8px; }
+</style></head>
 <body>
-<h1>영수증</h1>
-<p>주문번호: ${order.toss_order_id}</p>
-<p>수령인: ${user.name}</p>
-<p>결제금액: ${order.total_amount}</p>
-<p>메모: ${note}</p>
+<h1>VULN SHOP 영수증</h1>
+<div class="meta">
+  <div>주문번호: ${order.toss_order_id}</div>
+  <div>주문일자: ${order.created_at}</div>
+  <div>수령인: ${user.name}</div>
+  <div>배송지: (${order.ship_postcode || ''}) ${order.ship_address || ''} ${order.ship_address_detail || ''}</div>
+</div>
+<table>
+  <thead><tr><th>상품</th><th>옵션</th><th style="text-align:right">수량</th><th style="text-align:right">금액</th></tr></thead>
+  <tbody>${rows}</tbody>
+</table>
+<div class="meta">할인금액: ${(order.discount_amount || 0).toLocaleString()}원</div>
+<div class="total">결제금액: ${order.total_amount.toLocaleString()}원</div>
+<p class="meta">메모: ${note}</p>
 </body></html>`
   );
 });

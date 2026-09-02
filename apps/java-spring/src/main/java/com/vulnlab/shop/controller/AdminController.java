@@ -11,7 +11,9 @@ import com.vulnlab.shop.entity.LoginLog;
 import com.vulnlab.shop.repository.LoginLogRepository;
 import com.vulnlab.shop.repository.OrderRepository;
 import com.vulnlab.shop.entity.Shipment;
+import com.vulnlab.shop.entity.TrackingEvent;
 import com.vulnlab.shop.repository.ShipmentRepository;
+import com.vulnlab.shop.repository.TrackingEventRepository;
 import com.vulnlab.shop.entity.StoreSetting;
 import com.vulnlab.shop.repository.ProductRepository;
 import com.vulnlab.shop.repository.StoreSettingRepository;
@@ -43,6 +45,7 @@ public class AdminController {
     private final LoginLogRepository loginLogRepository;
     private final StoreSettingRepository storeSettingRepository;
     private final ShipmentRepository shipmentRepository;
+    private final TrackingEventRepository trackingEventRepository;
 
     private static final String WEBHOOK_KEY = "notification_webhook_url";
 
@@ -50,7 +53,7 @@ public class AdminController {
                             OrderRepository orderRepository, OrderItemRepository orderItemRepository,
                             FaqRepository faqRepository, NoticeRepository noticeRepository,
                             LoginLogRepository loginLogRepository, StoreSettingRepository storeSettingRepository,
-                            ShipmentRepository shipmentRepository) {
+                            ShipmentRepository shipmentRepository, TrackingEventRepository trackingEventRepository) {
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
@@ -60,6 +63,7 @@ public class AdminController {
         this.loginLogRepository = loginLogRepository;
         this.storeSettingRepository = storeSettingRepository;
         this.shipmentRepository = shipmentRepository;
+        this.trackingEventRepository = trackingEventRepository;
     }
 
     private ResponseEntity<?> requireAdmin(HttpSession session) {
@@ -309,6 +313,13 @@ public class AdminController {
             s.setStatus(status);
             shipmentRepository.save(s);
         }
+        String desc = switch (s.getStatus()) {
+            case "preparing" -> "상품 준비 중";
+            case "shipped" -> "배송 출발";
+            case "delivered" -> "배송 완료";
+            default -> s.getStatus();
+        };
+        trackingEventRepository.save(new TrackingEvent(s.getTrackingNo(), s.getStatus(), desc, s.getCarrier(), java.time.LocalDateTime.now()));
         return ResponseEntity.ok(Map.of("carrier", s.getCarrier(), "trackingNo", s.getTrackingNo(), "status", s.getStatus()));
     }
 

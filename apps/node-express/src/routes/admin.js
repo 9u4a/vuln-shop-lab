@@ -18,7 +18,7 @@ router.get('/stats', requireAdmin, (req, res) => {
 });
 
 router.get('/users', requireAdmin, (req, res) => {
-  const rows = db.prepare('SELECT id, username, role, membership_tier, bio, avatar_url, active, created_at FROM users ORDER BY id').all();
+  const rows = db.prepare('SELECT id, username, name, role, membership_tier, bio, avatar_url, active, created_at FROM users ORDER BY id').all();
   res.json({ users: rows.map((u) => ({ ...u, membershipTier: u.membership_tier, active: u.active !== 0 })) });
 });
 
@@ -219,6 +219,10 @@ router.put('/orders/:id/shipment', requireAdmin, (req, res) => {
     db.prepare('UPDATE shipments SET carrier = ?, status = ? WHERE id = ?').run(carrier, status, shipment.id);
   }
   const row = db.prepare('SELECT carrier, tracking_no, status FROM shipments WHERE id = ?').get(shipment.id);
+  const EVENT_DESC = { preparing: '상품 준비 중', shipped: '배송 출발', delivered: '배송 완료' };
+  db.prepare(
+    'INSERT INTO tracking_events (tracking_no, status, description, location) VALUES (?, ?, ?, ?)'
+  ).run(row.tracking_no, row.status, EVENT_DESC[row.status] || row.status, row.carrier);
   res.json({ carrier: row.carrier, trackingNo: row.tracking_no, status: row.status });
 });
 

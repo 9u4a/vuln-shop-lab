@@ -116,7 +116,7 @@ export default function AdminOrders() {
         {detailLoading && <p className="muted">불러오는 중...</p>}
         {detail && (
           <>
-            <dl>
+            <dl className="admin-detail-dl">
               <dt>주문번호</dt><dd>#{detail.order.id}</dd>
               <dt>Toss 주문 ID</dt><dd>{detail.order.tossOrderId || '-'}</dd>
               <dt>주문자</dt><dd>{detail.order.username}</dd>
@@ -147,7 +147,7 @@ export default function AdminOrders() {
             </div>
 
             {detail.order.shipping && (
-              <p className="muted">
+              <p className="muted admin-detail-ship">
                 배송지: {detail.order.shipping.name} · {detail.order.shipping.phone} · ({detail.order.shipping.postcode}) {detail.order.shipping.address} {detail.order.shipping.addressDetail || ''}
               </p>
             )}

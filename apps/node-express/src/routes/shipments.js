@@ -16,6 +16,12 @@ router.get('/track', (req, res) => {
     )
     .get(no);
   if (!row) return res.status(404).json({ error: '배송 정보를 찾을 수 없습니다.' });
+  const events = db
+    .prepare(
+      'SELECT status, description, location, occurred_at FROM tracking_events WHERE tracking_no = ? ORDER BY occurred_at, id'
+    )
+    .all(row.tracking_no)
+    .map((e) => ({ status: e.status, description: e.description, location: e.location, occurredAt: e.occurred_at }));
   res.json({
     carrier: row.carrier,
     trackingNo: row.tracking_no,
@@ -26,6 +32,7 @@ router.get('/track', (req, res) => {
     shipPostcode: row.ship_postcode,
     shipAddress: row.ship_address,
     shipAddressDetail: row.ship_address_detail,
+    events,
   });
 });
 

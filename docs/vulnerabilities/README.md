@@ -62,6 +62,7 @@ Insecure Design A04→**A06**.
 | [VULN-044](VULN-044-address-idor.md) | 배송지 주소록 IDOR (수정/삭제 소유권 미검증) | both | A01 Broken Access Control | Medium | 구현됨 |
 | [VULN-045](VULN-045-membership-tier-mass-assignment.md) | 회원 등급 자가 승급 (프로필 대량 할당) | both | A01 Broken Access Control | High | 구현됨 |
 | [VULN-046](VULN-046-notification-stored-xss.md) | 인앱 알림 저장형 XSS (관리자 브로드캐스트) | both + client | A05 Injection (XSS) | High | 구현됨 |
+| [VULN-047](VULN-047-point-gift-source-idor.md) | 포인트 선물 발신 계정 IDOR (차감 대상 미검증) | both | A01 Broken Access Control | High | 구현됨 |
 
 ## OWASP / CLAUDE.md 스코프 커버리지
 
@@ -77,7 +78,7 @@ Insecure Design A04→**A06**.
 | XSS — Stored | DONE | 008, 018, 023, 025, 028, 046 |
 | XSS — Reflected | DONE | 016 |
 | XSS — DOM | DONE | 017 |
-| IDOR / Broken Access Control | DONE | 003, 009, 011, 013, 014, 024, 026, 031, 037, 044, 045 |
+| IDOR / Broken Access Control | DONE | 003, 009, 011, 013, 014, 024, 026, 031, 037, 044, 045, 047 |
 | Security Misconfiguration | DONE | 007, 018, 020, 025, 034 |
 | Cryptographic Failures (A04) | DONE | 038, 039 |
 | Insecure Deserialization (Java) | DONE | 012 |
