@@ -54,6 +54,10 @@ Insecure Design A04→**A06**.
 | [VULN-036](VULN-036-coupon-redemption-reuse.md) | 쿠폰 사용(redemption) 재사용 (used 미확인) | both | A06 Insecure Design | Medium | 구현됨 |
 | [VULN-037](VULN-037-shipment-tracking-idor.md) | 배송 조회 IDOR (순차 송장번호 + 무인증) → 구매자 PII | both | A01 Broken Access Control | High | 구현됨 |
 | [VULN-038](VULN-038-predictable-order-share-token.md) | 예측 가능한 주문 공유 토큰 (`base64(orderId)`) | both | A04 Cryptographic Failures | High | 구현됨 |
+| [VULN-039](VULN-039-weak-reset-token.md) | 비밀번호 재설정 토큰 예측 가능·무만료 (`base64(userId)`) | both | A04 Cryptographic Failures | High | 구현됨 |
+| [VULN-040](VULN-040-user-enumeration-forgot.md) | 비밀번호 찾기 사용자 열거 (존재/미존재 응답 차이) | both | A07 Auth Failures | Medium | 구현됨 |
+| [VULN-041](VULN-041-open-redirect-login.md) | 로그인 후 오픈 리다이렉트 (`?next=` 미검증) | client | A01 Broken Access Control | Medium | 구현됨 |
+| [VULN-042](VULN-042-jwt-weak-secret.md) | API 토큰(JWT) 알려진 시크릿으로 위조 | both | A07 Auth Failures | High | 구현됨 |
 
 ## OWASP / CLAUDE.md 스코프 커버리지
 
@@ -63,13 +67,15 @@ Insecure Design A04→**A06**.
 | Injection — OS Command | DONE | 010 (node), 019 (java) |
 | Injection — SpEL/OGNL (Spring) | DONE | 002 |
 | Injection — NoSQL (Express) | DONE (Mongo 컨테이너) | 022 |
-| Broken Authentication / Session Management | DONE | 006 |
+| Broken Authentication / Session Management | DONE | 006, 040, 042 |
+| 비밀번호 재설정 · 토큰 위조 (인증/토큰) | DONE | 039(재설정 토큰), 042(JWT 위조) |
+| Open Redirect (Unvalidated Redirect) | DONE | 041 |
 | XSS — Stored | DONE | 008, 018, 023, 025, 028 |
 | XSS — Reflected | DONE | 016 |
 | XSS — DOM | DONE | 017 |
 | IDOR / Broken Access Control | DONE | 003, 009, 011, 013, 014, 024, 026, 031, 037 |
 | Security Misconfiguration | DONE | 007, 018, 020, 025, 034 |
-| Cryptographic Failures (A04) | DONE | 038 |
+| Cryptographic Failures (A04) | DONE | 038, 039 |
 | Insecure Deserialization (Java) | DONE | 012 |
 | XXE | DONE | 020 |
 | SSRF (2025부터 A01로 편입) | DONE | 004 (020 OOB로 재확인), 033 (응답 반환형) |

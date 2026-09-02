@@ -9,6 +9,7 @@ const emptyForm = {
   password: '',
   name: '',
   phone: '',
+  email: '',
   postcode: '',
   address: '',
   addressDetail: '',
@@ -74,6 +75,9 @@ export default function Signup() {
           </label>
           <label>전화번호
             <input value={form.phone} onChange={update('phone')} placeholder="010-1234-5678" required />
+          </label>
+          <label>이메일
+            <input type="email" value={form.email} onChange={update('email')} placeholder="비밀번호 찾기에 사용 (선택)" />
           </label>
           <label>우편번호
             <div className="address-row">

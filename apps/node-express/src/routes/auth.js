@@ -1,11 +1,15 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const db = require('../db');
+const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-jwt-secret-please-change-0001';
+
 router.post('/signup', async (req, res) => {
-  const { username, password, name, phone, postcode, address, addressDetail, referralCode } = req.body;
+  const { username, password, name, phone, email, postcode, address, addressDetail, referralCode } = req.body;
   if (!username || !password || !name || !phone || !postcode || !address) {
     return res.status(400).json({ error: '아이디, 비밀번호, 이름, 전화번호, 주소는 필수입니다.' });
   }
@@ -18,9 +22,9 @@ router.post('/signup', async (req, res) => {
   const role = userCount === 0 ? 'system_admin' : 'user';
   const referralCodeForUser = `REF${username.toUpperCase()}`;
   const result = db.prepare(
-    `INSERT INTO users (username, password_hash, role, name, phone, postcode, address, address_detail, referral_code)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(username, passwordHash, role, name, phone, postcode, address, addressDetail || null, referralCodeForUser);
+    `INSERT INTO users (username, password_hash, role, name, phone, email, postcode, address, address_detail, referral_code)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(username, passwordHash, role, name, phone, email || null, postcode, address, addressDetail || null, referralCodeForUser);
   const newUserId = result.lastInsertRowid;
 
   if (referralCode) {
@@ -63,6 +67,64 @@ router.post('/login', async (req, res) => {
 
 router.post('/logout', (req, res) => {
   req.session.destroy(() => res.json({ ok: true }));
+});
+
+router.post('/forgot', (req, res) => {
+  const { account } = req.body;
+  if (!account) {
+    return res.status(400).json({ error: '아이디 또는 이메일을 입력해주세요.' });
+  }
+  const user = db
+    .prepare('SELECT * FROM users WHERE username = ? OR email = ?')
+    .get(account, account);
+  if (!user) {
+    return res.status(404).json({ error: '가입된 계정을 찾을 수 없습니다.' });
+  }
+  const resetToken = Buffer.from(String(user.id)).toString('base64');
+  const expires = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+  db.prepare('UPDATE users SET reset_token = ?, reset_token_expires = ? WHERE id = ?').run(
+    resetToken,
+    expires,
+    user.id
+  );
+  res.json({ ok: true, message: '비밀번호 재설정 링크를 발송했습니다.', resetToken });
+});
+
+router.post('/reset', async (req, res) => {
+  const { token, newPassword } = req.body;
+  if (!token || !newPassword || newPassword.length < 8) {
+    return res.status(400).json({ error: '토큰과 새 비밀번호(최소 8자)를 입력해주세요.' });
+  }
+  const user = db.prepare('SELECT * FROM users WHERE reset_token = ?').get(token);
+  if (!user) {
+    return res.status(400).json({ error: '유효하지 않은 토큰입니다.' });
+  }
+  const newHash = await bcrypt.hash(newPassword, 10);
+  db.prepare('UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?').run(
+    newHash,
+    user.id
+  );
+  res.json({ ok: true });
+});
+
+router.post('/token', requireAuth, (req, res) => {
+  const { id, username, role } = req.session.user;
+  const token = jwt.sign({ sub: String(id), username, role }, JWT_SECRET, { expiresIn: '7d' });
+  res.json({ token, tokenType: 'Bearer' });
+});
+
+router.get('/whoami', (req, res) => {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+  if (!token) {
+    return res.status(401).json({ error: 'Bearer 토큰이 필요합니다.' });
+  }
+  try {
+    const claims = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256', 'none'] });
+    res.json({ id: claims.sub, username: claims.username, role: claims.role });
+  } catch (err) {
+    res.status(401).json({ error: '유효하지 않은 토큰입니다.' });
+  }
 });
 
 module.exports = router;

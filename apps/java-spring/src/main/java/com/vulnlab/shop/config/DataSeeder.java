@@ -274,6 +274,9 @@ public class DataSeeder implements CommandLineRunner {
         user.setRole(role);
         user.setName(name);
         user.setPhone(phone);
+        if (user.getEmail() == null || user.getEmail().isBlank()) {
+            user.setEmail(username + "@vulnlab.local");
+        }
         user.setBio(bio);
         user.setPostcode(postcode);
         user.setAddress(address);

@@ -14,6 +14,9 @@ db.exec(`
     username TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'user',
+    email TEXT,
+    reset_token TEXT,
+    reset_token_expires TEXT,
     bio TEXT,
     avatar_url TEXT,
     name TEXT,
@@ -216,6 +219,9 @@ db.exec(`
 `);
 
 for (const stmt of [
+  'ALTER TABLE users ADD COLUMN email TEXT',
+  'ALTER TABLE users ADD COLUMN reset_token TEXT',
+  'ALTER TABLE users ADD COLUMN reset_token_expires TEXT',
   'ALTER TABLE users ADD COLUMN bio TEXT',
   'ALTER TABLE users ADD COLUMN avatar_url TEXT',
   'ALTER TABLE users ADD COLUMN name TEXT',
@@ -343,6 +349,9 @@ for (let n = 4; n <= 60; n += 1) {
     `${100 + (n % 900)}호`
   );
 }
+
+// 1c. 데모 이메일 채우기 (비밀번호 찾기용) — username@vulnlab.local
+db.prepare("UPDATE users SET email = username || '@vulnlab.local' WHERE email IS NULL OR email = ''").run();
 
 // 2. Seed Products (if missing)
 const productCount = db.prepare('SELECT COUNT(*) AS count FROM products').get().count;
