@@ -38,6 +38,7 @@ public class DataSeeder implements CommandLineRunner {
     private final PointTransactionRepository pointTransactionRepository;
     private final ShipmentRepository shipmentRepository;
     private final UserCouponRepository userCouponRepository;
+    private final GiftCardRepository giftCardRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public DataSeeder(ProductRepository productRepository, UserRepository userRepository,
@@ -47,7 +48,8 @@ public class DataSeeder implements CommandLineRunner {
                       ProductLikeRepository productLikeRepository, CouponRepository couponRepository,
                       QuestionRepository questionRepository, LoginLogRepository loginLogRepository,
                       PointTransactionRepository pointTransactionRepository,
-                      ShipmentRepository shipmentRepository, UserCouponRepository userCouponRepository) {
+                      ShipmentRepository shipmentRepository, UserCouponRepository userCouponRepository,
+                      GiftCardRepository giftCardRepository) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.faqRepository = faqRepository;
@@ -63,6 +65,7 @@ public class DataSeeder implements CommandLineRunner {
         this.pointTransactionRepository = pointTransactionRepository;
         this.shipmentRepository = shipmentRepository;
         this.userCouponRepository = userCouponRepository;
+        this.giftCardRepository = giftCardRepository;
     }
 
     // 결정적 순환 선택 헬퍼 + 대량 더미 생성용 공용 데이터
@@ -89,6 +92,7 @@ public class DataSeeder implements CommandLineRunner {
         seedOrders();
         seedLikes();
         seedCoupons();
+        seedGiftCards();
         seedLoginLogs();
         seedRewards();
         seedShippingAndSharing();
@@ -179,6 +183,26 @@ public class DataSeeder implements CommandLineRunner {
             if (n % 9 == 0) c.setActive(false);
             couponRepository.save(c);
         }
+    }
+
+    private void seedGiftCards() {
+        if (giftCardRepository.count() > 0) {
+            return;
+        }
+        giftCardRepository.save(giftCard("GIFT-DEMO-10000", 10000, true, null));
+        giftCardRepository.save(giftCard("GIFT-DEMO-30000", 30000, true, null));
+        giftCardRepository.save(giftCard("GIFT-INACTIVE-5000", 5000, false, null));
+        giftCardRepository.save(giftCard("GIFT-EXPIRED-5000", 5000, true, "2020-01-01T00:00:00Z"));
+    }
+
+    private GiftCard giftCard(String code, int balance, boolean active, String expiresAt) {
+        GiftCard c = new GiftCard();
+        c.setCode(code);
+        c.setBalance(balance);
+        c.setInitialBalance(balance);
+        c.setActive(active);
+        c.setExpiresAt(expiresAt);
+        return c;
     }
 
     private Coupon coupon(String code, String title, String description, String discountType,

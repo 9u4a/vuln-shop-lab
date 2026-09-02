@@ -11,6 +11,7 @@ const TABS = [
   { to: 'notices', label: '공지사항' },
   { to: 'events', label: '이벤트' },
   { to: 'coupons', label: '쿠폰' },
+  { to: 'gift-cards', label: '상품권' },
   { to: 'returns', label: '반품/환불' },
   { to: 'restock', label: '재입고 알림' },
   { to: 'referrals', label: '추천인' },

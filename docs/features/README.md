@@ -58,3 +58,4 @@
 | 50 | 비밀번호 재설정 | feature/auth-token-batch | 039,040 | 비밀번호 찾기/재설정 플로우, email·토큰 컬럼 신규, 약한 토큰·사용자 열거 |
 | 51 | 로그인 후 원위치 복귀 | feature/auth-token-batch | 041 | 로그인 성공 후 `?next=`/`state.from` 경로 복귀, 검증 부재로 오픈 리다이렉트 |
 | 52 | API 토큰(JWT) | feature/auth-token-batch | 042 | 외부 연동용 Bearer 토큰 발급/검증, 알려진 기본 시크릿으로 위조 |
+| 53 | 기프트카드/상품권 | feature/gift-card | 043 | 관리자 상품권 발행 + 마이페이지 등록(적립금 전환), 중복 등록 재사용 |

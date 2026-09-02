@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useBackend } from '../../BackendContext.jsx';
-import { fetchPoints, fetchReferral, applyReferral } from '../../api.js';
+import { fetchPoints, fetchReferral, applyReferral, redeemGiftCard } from '../../api.js';
 import { formatCurrency } from '../../format.js';
 
 export default function MyPageRewards() {
@@ -10,6 +10,8 @@ export default function MyPageRewards() {
   const [code, setCode] = useState('');
   const [msg, setMsg] = useState(null);
   const [error, setError] = useState(null);
+  const [giftCode, setGiftCode] = useState('');
+  const [giftMsg, setGiftMsg] = useState(null);
 
   function load() {
     setError(null);
@@ -29,6 +31,19 @@ export default function MyPageRewards() {
       load();
     } catch (err) {
       setMsg(err.message);
+    }
+  }
+
+  async function handleRedeem(e) {
+    e.preventDefault();
+    setGiftMsg(null);
+    try {
+      const res = await redeemGiftCard(backend.base, giftCode);
+      setGiftCode('');
+      setGiftMsg(`상품권 잔액 ${formatCurrency(res.credited)}P가 적립금으로 등록되었습니다.`);
+      load();
+    } catch (err) {
+      setGiftMsg(err.message);
     }
   }
 
@@ -57,6 +72,18 @@ export default function MyPageRewards() {
         ) : (
           <p className="muted">적립 내역이 없습니다.</p>
         )}
+      </section>
+
+      <section className="card">
+        <h2>상품권 등록</h2>
+        <p className="muted">보유하신 상품권 코드를 등록하면 잔액이 적립금으로 전환됩니다. (예: GIFT-DEMO-10000)</p>
+        <form onSubmit={handleRedeem}>
+          <label>상품권 코드
+            <input value={giftCode} onChange={(e) => setGiftCode(e.target.value)} placeholder="상품권 코드 입력" />
+          </label>
+          <button type="submit" className="btn btn-primary">등록</button>
+        </form>
+        {giftMsg && <p className="status-ok">{giftMsg}</p>}
       </section>
 
       <section className="card">
