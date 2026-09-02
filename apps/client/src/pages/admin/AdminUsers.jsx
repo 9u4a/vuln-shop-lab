@@ -19,6 +19,7 @@ export default function AdminUsers() {
   const isSystemAdmin = user?.role === 'system_admin';
   const [users, setUsers] = useState([]);
   const [error, setError] = useState(null);
+  const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [openId, setOpenId] = useState(null);
   const [detail, setDetail] = useState(null);
@@ -34,7 +35,15 @@ export default function AdminUsers() {
   useEffect(load, [backend.base]);
   useEffect(() => { setOpenId(null); setDetail(null); setPage(1); }, [backend.base]);
 
-  const paged = users.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? users.filter((u) =>
+        String(u.id) === q ||
+        (u.username || '').toLowerCase().includes(q) ||
+        (u.name || '').toLowerCase().includes(q) ||
+        (u.role || '').toLowerCase().includes(q))
+    : users;
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   async function openDetail(id) {
     setOpenId(id);
@@ -101,6 +110,16 @@ export default function AdminUsers() {
       {error && <p className="error">{error}</p>}
       <p className="muted">행을 눌러 상세 정보를 보고 프로필을 수정할 수 있습니다.{!isSystemAdmin && ' 권한 변경은 시스템 관리자만 가능합니다.'}</p>
 
+      <div className="admin-toolbar">
+        <input
+          className="admin-search"
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+          placeholder="아이디·이름·권한 검색"
+        />
+        {q && <span className="muted">{filtered.length}명</span>}
+      </div>
+
       <div className="admin-table__wrap">
         <table className="admin-table">
           <thead>
@@ -125,7 +144,7 @@ export default function AdminUsers() {
         </table>
       </div>
 
-      <Pagination page={page} pageSize={PAGE_SIZE} total={users.length} onChange={setPage} />
+      <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onChange={setPage} />
 
       <Modal open={openId != null} title="사용자 상세" onClose={closeModal} wide>
         {detailLoading && <p className="muted">불러오는 중...</p>}
@@ -150,12 +169,12 @@ export default function AdminUsers() {
                   {TIERS.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
-              <div>
+              <div className="admin-modal__status">
                 <p className="muted">상태</p>
                 <span className={detail.user.active === false ? 'badge badge-danger' : 'badge badge-ok'}>
                   {detail.user.active === false ? '비활성' : '활성'}
                 </span>
-                <button type="button" className="btn btn-ghost btn-sm" style={{ marginLeft: 'var(--space-2)' }}
+                <button type="button" className="btn btn-ghost btn-sm"
                   onClick={() => handleToggleActive(detail.user.id, detail.user.active === false)}>
                   {detail.user.active === false ? '활성화' : '비활성화'}
                 </button>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useBackend } from '../../BackendContext.jsx';
-import { fetchPoints, fetchReferral, applyReferral, redeemGiftCard } from '../../api.js';
+import { fetchPoints, fetchReferral, applyReferral, redeemGiftCard, giftPoints } from '../../api.js';
 import { formatCurrency } from '../../format.js';
 
 export default function MyPageRewards() {
@@ -12,6 +12,9 @@ export default function MyPageRewards() {
   const [error, setError] = useState(null);
   const [giftCode, setGiftCode] = useState('');
   const [giftMsg, setGiftMsg] = useState(null);
+  const [giftTo, setGiftTo] = useState('');
+  const [giftAmount, setGiftAmount] = useState('');
+  const [sendMsg, setSendMsg] = useState(null);
 
   function load() {
     setError(null);
@@ -31,6 +34,20 @@ export default function MyPageRewards() {
       load();
     } catch (err) {
       setMsg(err.message);
+    }
+  }
+
+  async function handleGift(e) {
+    e.preventDefault();
+    setSendMsg(null);
+    try {
+      const res = await giftPoints(backend.base, giftTo.trim(), Number(giftAmount));
+      setGiftTo('');
+      setGiftAmount('');
+      setSendMsg(`${res.to}님에게 ${formatCurrency(res.sent)}P를 선물했습니다.`);
+      load();
+    } catch (err) {
+      setSendMsg(err.message);
     }
   }
 
@@ -72,6 +89,21 @@ export default function MyPageRewards() {
         ) : (
           <p className="muted">적립 내역이 없습니다.</p>
         )}
+      </section>
+
+      <section className="card">
+        <h2>포인트 선물하기</h2>
+        <p className="muted">받는 분의 아이디 또는 이메일로 보유 포인트를 선물할 수 있습니다.</p>
+        <form onSubmit={handleGift} className="gift-form">
+          <label>받는 분
+            <input value={giftTo} onChange={(e) => setGiftTo(e.target.value)} placeholder="아이디 또는 이메일" />
+          </label>
+          <label>선물할 포인트
+            <input type="number" min="1" value={giftAmount} onChange={(e) => setGiftAmount(e.target.value)} placeholder="0" />
+          </label>
+          <button type="submit" className="btn btn-primary" disabled={!giftTo.trim() || !(Number(giftAmount) > 0)}>선물 보내기</button>
+        </form>
+        {sendMsg && <p className="status-ok">{sendMsg}</p>}
       </section>
 
       <section className="card">

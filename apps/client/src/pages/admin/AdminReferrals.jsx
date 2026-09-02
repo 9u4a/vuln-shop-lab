@@ -11,18 +11,33 @@ export default function AdminReferrals() {
   const [rows, setRows] = useState([]);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     setError(null);
     fetchAdminReferrals(backend.base).then((d) => setRows(d.referrals)).catch((e) => setError(e.message));
   }, [backend.base]);
 
-  const paged = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? rows.filter((r) =>
+        (r.username || '').toLowerCase().includes(q) ||
+        (r.referralCode || '').toLowerCase().includes(q) ||
+        (r.referredByUsername || '').toLowerCase().includes(q))
+    : rows;
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <section className="card">
       <div className="admin-toolbar">
         <h2>추천인 내역 <span className="muted">({rows.length})</span></h2>
+        <input
+          className="admin-search"
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+          placeholder="회원·추천코드·추천인 검색"
+        />
+        {q && <span className="muted">{filtered.length}건</span>}
       </div>
       {error && <p className="error">{error}</p>}
       <div className="admin-table__wrap">
@@ -46,7 +61,7 @@ export default function AdminReferrals() {
           </tbody>
         </table>
       </div>
-      <Pagination page={page} pageSize={PAGE_SIZE} total={rows.length} onChange={setPage} />
+      <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onChange={setPage} />
     </section>
   );
 }

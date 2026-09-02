@@ -4,6 +4,7 @@ import { useBackend } from '../BackendContext.jsx';
 import { fetchSharedOrder } from '../api.js';
 import { formatCurrency } from '../format.js';
 import StatusChip from '../components/StatusChip.jsx';
+import ShipmentTimeline from '../components/ShipmentTimeline.jsx';
 
 export default function SharedOrder() {
   const { backend } = useBackend();
@@ -53,18 +54,20 @@ export default function SharedOrder() {
         </div>
       </section>
 
-      {(order.shipping || shipment) && (
+      {order.shipping && (
         <section className="card">
-          <h2>배송</h2>
-          {order.shipping && (
-            <p className="muted" style={{ whiteSpace: 'pre-line' }}>
-              {order.shipping.name} · {order.shipping.phone}
-              {'\n'}({order.shipping.postcode}) {order.shipping.address} {order.shipping.addressDetail || ''}
-            </p>
-          )}
-          {shipment && (
-            <p><StatusChip status={shipment.status} /> {shipment.carrier} · 송장번호 {shipment.trackingNo}</p>
-          )}
+          <h2>배송지</h2>
+          <p className="muted" style={{ whiteSpace: 'pre-line' }}>
+            {order.shipping.name} · {order.shipping.phone}
+            {'\n'}({order.shipping.postcode}) {order.shipping.address} {order.shipping.addressDetail || ''}
+          </p>
+        </section>
+      )}
+
+      {shipment && (
+        <section className="card">
+          <h2>배송 조회</h2>
+          <ShipmentTimeline shipment={shipment} />
         </section>
       )}
 

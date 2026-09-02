@@ -539,6 +539,13 @@ export function fetchPoints(base) {
   return apiRequest(base, '/points');
 }
 
+export function giftPoints(base, toUsername, amount) {
+  return apiRequest(base, '/points/gift', {
+    method: 'POST',
+    body: JSON.stringify({ toUsername, amount }),
+  });
+}
+
 export function fetchReturns(base) {
   return apiRequest(base, '/returns/mine');
 }

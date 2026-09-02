@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useBackend } from '../BackendContext.jsx';
 import { useSession } from '../SessionContext.jsx';
 import { fetchQuestions, createQuestion } from '../api.js';
@@ -10,6 +10,7 @@ const PAGE_SIZE = 8;
 export default function Qna() {
   const { backend } = useBackend();
   const { user } = useSession();
+  const location = useLocation();
   const [questions, setQuestions] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -34,6 +35,20 @@ export default function Qna() {
   }
 
   useEffect(load, [backend.base, page, query]);
+
+  // 주문 상세/목록의 "문의" 버튼에서 넘어온 경우 폼을 열고 내용을 채운다(비공개 기본).
+  useEffect(() => {
+    const prefill = location.state?.prefill;
+    if (user && location.state?.openForm) {
+      setShowForm(true);
+      if (prefill) {
+        setTitle(prefill.title || '');
+        setBody(prefill.body || '');
+        setSecret(!!prefill.secret);
+      }
+      window.history.replaceState({}, '');
+    }
+  }, [user, location.state]);
 
   function handleSearchSubmit(e) {
     e.preventDefault();

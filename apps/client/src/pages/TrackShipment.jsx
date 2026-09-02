@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useBackend } from '../BackendContext.jsx';
 import { trackShipment } from '../api.js';
-import StatusChip from '../components/StatusChip.jsx';
+import ShipmentTimeline from '../components/ShipmentTimeline.jsx';
 
 export default function TrackShipment() {
   const { backend } = useBackend();
@@ -37,8 +37,8 @@ export default function TrackShipment() {
 
       {result && (
         <section className="card">
-          <p><StatusChip status={result.status} /> {result.carrier} · 송장번호 {result.trackingNo}</p>
-          <table className="specs-table">
+          <ShipmentTimeline shipment={result} />
+          <table className="specs-table" style={{ marginTop: 'var(--space-4)' }}>
             <tbody>
               <tr><th>받는 분</th><td>{result.shipName}</td></tr>
               <tr><th>연락처</th><td>{result.shipPhone}</td></tr>

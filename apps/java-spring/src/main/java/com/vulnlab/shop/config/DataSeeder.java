@@ -3,6 +3,7 @@ package com.vulnlab.shop.config;
 import com.vulnlab.shop.entity.*;
 import com.vulnlab.shop.repository.*;
 import com.vulnlab.shop.security.Roles;
+import com.vulnlab.shop.security.ShareTokens;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -14,7 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,6 +39,7 @@ public class DataSeeder implements CommandLineRunner {
     private final ShipmentRepository shipmentRepository;
     private final UserCouponRepository userCouponRepository;
     private final GiftCardRepository giftCardRepository;
+    private final TrackingEventRepository trackingEventRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public DataSeeder(ProductRepository productRepository, UserRepository userRepository,
@@ -49,7 +50,7 @@ public class DataSeeder implements CommandLineRunner {
                       QuestionRepository questionRepository, LoginLogRepository loginLogRepository,
                       PointTransactionRepository pointTransactionRepository,
                       ShipmentRepository shipmentRepository, UserCouponRepository userCouponRepository,
-                      GiftCardRepository giftCardRepository) {
+                      GiftCardRepository giftCardRepository, TrackingEventRepository trackingEventRepository) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.faqRepository = faqRepository;
@@ -66,6 +67,7 @@ public class DataSeeder implements CommandLineRunner {
         this.shipmentRepository = shipmentRepository;
         this.userCouponRepository = userCouponRepository;
         this.giftCardRepository = giftCardRepository;
+        this.trackingEventRepository = trackingEventRepository;
     }
 
     // 결정적 순환 선택 헬퍼 + 대량 더미 생성용 공용 데이터
@@ -102,8 +104,9 @@ public class DataSeeder implements CommandLineRunner {
     private void seedShippingAndSharing() {
         for (Order o : orderRepository.findAll()) {
             boolean dirty = false;
-            if (o.getShareToken() == null) {
-                o.setShareToken(Base64.getEncoder().encodeToString(String.valueOf(o.getId()).getBytes()));
+            String token = ShareTokens.of(o.getId());
+            if (!token.equals(o.getShareToken())) {
+                o.setShareToken(token);
                 dirty = true;
             }
             if (o.getShipName() == null) {
@@ -132,6 +135,15 @@ public class DataSeeder implements CommandLineRunner {
             }
         }
 
+        // 배송 추적 이벤트 시드(멱등 — 최초 1회, 기존 배송건 기준)
+        if (trackingEventRepository.count() == 0) {
+            for (Shipment s : shipmentRepository.findAll()) {
+                if (s.getTrackingNo() != null) {
+                    seedTrackingEvents(s.getTrackingNo(), s.getStatus());
+                }
+            }
+        }
+
         // user1에게 미사용 WELCOME5000 쿠폰 지급 — VULN-036 재현용
         Long user1Id = userRepository.findByUsername("user1").map(User::getId).orElse(null);
         Long welcomeId = couponRepository.findByCode("WELCOME5000").stream().findFirst().map(Coupon::getId).orElse(null);
@@ -141,6 +153,22 @@ public class DataSeeder implements CommandLineRunner {
             if (!owned) {
                 userCouponRepository.save(new UserCoupon(user1Id, welcomeId));
             }
+        }
+    }
+
+    private void seedTrackingEvents(String trackingNo, String status) {
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        record Step(String status, String description, String location, long hoursAgo) {}
+        List<Step> all = List.of(
+                new Step("preparing", "상품 집화 완료", "서울 강남 물류센터", 72),
+                new Step("shipped", "간선 상차", "옥천 HUB", 48),
+                new Step("shipped", "배송 출발", "수취인 지역 대리점", 24),
+                new Step("delivered", "배송 완료 (문 앞)", "수취인 주소", 6));
+        int count = "delivered".equals(status) ? 4 : "shipped".equals(status) ? 3 : 1;
+        for (int i = 0; i < count; i++) {
+            Step step = all.get(i);
+            trackingEventRepository.save(new TrackingEvent(trackingNo, step.status(), step.description(),
+                    step.location(), now.minusHours(step.hoursAgo())));
         }
     }
 

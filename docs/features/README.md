@@ -63,3 +63,6 @@
 | 55 | 회원 등급/멤버십 | feature/ux-completeness | 045 | 등급별 할인·헤더 뱃지·관리자 지정, 프로필 수정 통한 자가 승급 |
 | 56 | 최근 본 상품 | feature/ux-completeness | — | 상품 조회 기록(LRU 20)·상세 하단 스트립 |
 | 57 | 인앱 알림센터 | feature/ux-completeness | 046 | 헤더 종 알림·주문/쿠폰 발신·관리자 브로드캐스트, 알림 본문 저장형 XSS |
+| 58 | 포인트 선물하기 | feature/order-cart-admin-refinements | 047 | 마이페이지 포인트 이체(아이디/이메일 수신자), 발신 계정 IDOR |
+| 59 | 배송 추적 타임라인 | feature/order-cart-admin-refinements | 037 | tracking_events 테이블·이벤트 타임라인(주문상세·배송조회·공유), VULN-037 유지 |
+| — | 주문/장바구니/관리자 UI 정비 | feature/order-cart-admin-refinements | 038,010,011,016,019,012 | 주문목록 카드화(현황·문의·반품), 영수증 내용 충실화, 공유토큰 인코딩 강화, 장바구니 배송지 프리셋·공유 UI, 관리자 검색·오버플로우 정리 (기존 취약점 싱크 유지) |

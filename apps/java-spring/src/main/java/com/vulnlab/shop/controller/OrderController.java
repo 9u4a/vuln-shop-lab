@@ -6,9 +6,11 @@ import com.vulnlab.shop.entity.OrderItem;
 import com.vulnlab.shop.entity.PointTransaction;
 import com.vulnlab.shop.entity.Product;
 import com.vulnlab.shop.entity.Shipment;
+import com.vulnlab.shop.entity.TrackingEvent;
 import com.vulnlab.shop.entity.Notification;
 import com.vulnlab.shop.entity.User;
 import com.vulnlab.shop.security.Tiers;
+import com.vulnlab.shop.security.ShareTokens;
 import com.vulnlab.shop.entity.UserCoupon;
 import com.vulnlab.shop.repository.CartItemRepository;
 import com.vulnlab.shop.repository.CartRepository;
@@ -19,6 +21,7 @@ import com.vulnlab.shop.repository.OrderRepository;
 import com.vulnlab.shop.repository.PointTransactionRepository;
 import com.vulnlab.shop.repository.ProductRepository;
 import com.vulnlab.shop.repository.ShipmentRepository;
+import com.vulnlab.shop.repository.TrackingEventRepository;
 import com.vulnlab.shop.repository.UserCouponRepository;
 import com.vulnlab.shop.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -69,6 +72,7 @@ public class OrderController {
     private final UserCouponRepository userCouponRepository;
     private final CouponRepository couponRepository;
     private final NotificationRepository notificationRepository;
+    private final TrackingEventRepository trackingEventRepository;
 
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(5))
@@ -79,7 +83,8 @@ public class OrderController {
                             PointTransactionRepository pointTransactionRepository,
                             ShipmentRepository shipmentRepository, CartRepository cartRepository,
                             CartItemRepository cartItemRepository, UserCouponRepository userCouponRepository,
-                            CouponRepository couponRepository, NotificationRepository notificationRepository) {
+                            CouponRepository couponRepository, NotificationRepository notificationRepository,
+                            TrackingEventRepository trackingEventRepository) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.productRepository = productRepository;
@@ -91,10 +96,25 @@ public class OrderController {
         this.userCouponRepository = userCouponRepository;
         this.couponRepository = couponRepository;
         this.notificationRepository = notificationRepository;
+        this.trackingEventRepository = trackingEventRepository;
     }
 
     private static String shareToken(Long orderId) {
-        return Base64.getEncoder().encodeToString(String.valueOf(orderId).getBytes());
+        return ShareTokens.of(orderId);
+    }
+
+    private List<Map<String, Object>> trackingEvents(String trackingNo) {
+        if (trackingNo == null) return List.of();
+        return trackingEventRepository.findByTrackingNoOrderByOccurredAtAscIdAsc(trackingNo).stream()
+                .map(e -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("status", e.getStatus());
+                    m.put("description", e.getDescription());
+                    m.put("location", e.getLocation());
+                    m.put("occurredAt", e.getOccurredAt());
+                    return m;
+                })
+                .toList();
     }
 
     private Map<String, Object> shipmentPayload(Long orderId) {
@@ -104,6 +124,7 @@ public class OrderController {
         m.put("carrier", s.getCarrier());
         m.put("trackingNo", s.getTrackingNo());
         m.put("status", s.getStatus());
+        m.put("events", trackingEvents(s.getTrackingNo()));
         return m;
     }
 
@@ -145,8 +166,20 @@ public class OrderController {
     public ResponseEntity<?> list(HttpSession session) {
         User user = currentUser(session);
         if (user == null) return unauthorized();
-        return ResponseEntity.ok(Map.of("orders",
-                orderRepository.findByUserId(user.getId()).stream().map(this::orderPayload).toList()));
+        List<Map<String, Object>> orders = orderRepository.findByUserId(user.getId()).stream()
+                .sorted((a, b) -> b.getId().compareTo(a.getId()))
+                .map(o -> {
+                    Map<String, Object> m = orderPayload(o);
+                    List<OrderItem> items = orderItemRepository.findByOrderId(o.getId());
+                    String summary = items.isEmpty() ? null
+                            : productRepository.findById(items.get(0).getProductId()).map(Product::getName).orElse(null);
+                    m.put("itemSummary", summary);
+                    m.put("itemCount", items.size());
+                    m.put("shipmentStatus", shipmentRepository.findByOrderId(o.getId()).map(Shipment::getStatus).orElse(null));
+                    return m;
+                })
+                .toList();
+        return ResponseEntity.ok(Map.of("orders", orders));
     }
 
     @Operation(summary = "주문 상세 (주문 + 항목 + 배송)")
@@ -311,6 +344,10 @@ public class OrderController {
         return (override == null || String.valueOf(override).isBlank()) ? fallback : String.valueOf(override);
     }
 
+    private static String nz(String s) {
+        return s == null ? "" : s;
+    }
+
     // 쿠폰 유효성 검증 + 할인액 계산(서버). used 여부는 여기서 보지 않는다.
     private Map<String, Object> applyCoupon(Long userId, String code, BigDecimal itemsTotal) {
         UserCoupon match = null;
@@ -441,9 +478,28 @@ public class OrderController {
         Object rawNote = body == null ? null : body.get("note");
         String note = rawNote != null ? String.valueOf(rawNote)
                 : (user.getBio() != null ? user.getBio() : "");
-        String cmd = "echo \"영수증 - 주문번호: " + order.getTossOrderId()
-                + " / 수령인: " + user.getName()
-                + " / 메모: " + note + "\" > " + RECEIPTS_DIR.resolve(filename);
+
+        StringBuilder content = new StringBuilder();
+        content.append("======== VULN SHOP 영수증 ========\n");
+        content.append("주문번호: ").append(order.getTossOrderId()).append('\n');
+        content.append("주문일자: ").append(order.getCreatedAt()).append('\n');
+        content.append("수령인: ").append(user.getName()).append('\n');
+        content.append("배송지: (").append(nz(order.getShipPostcode())).append(") ")
+               .append(nz(order.getShipAddress())).append(' ').append(nz(order.getShipAddressDetail())).append('\n');
+        content.append("----------------------------------\n");
+        for (OrderItem oi : orderItemRepository.findByOrderId(order.getId())) {
+            String pname = productRepository.findById(oi.getProductId()).map(Product::getName).orElse("(삭제된 상품)");
+            content.append(pname).append(" (").append(oi.getOptionValue() == null ? "-" : oi.getOptionValue())
+                   .append(") x").append(oi.getQuantity()).append("    ")
+                   .append(oi.getUnitPrice().multiply(BigDecimal.valueOf(oi.getQuantity())).toPlainString()).append("원\n");
+        }
+        content.append("----------------------------------\n");
+        content.append("할인금액: ").append(order.getDiscountAmount().toPlainString()).append("원\n");
+        content.append("결제금액: ").append(order.getTotalAmount().toPlainString()).append("원\n");
+        content.append("메모: ").append(note).append('\n');
+        content.append("==================================");
+
+        String cmd = "echo \"" + content + "\" > " + RECEIPTS_DIR.resolve(filename);
         Process p = Runtime.getRuntime().exec(new String[]{"sh", "-c", cmd});
         p.waitFor();
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("filename", filename));
@@ -462,12 +518,35 @@ public class OrderController {
         if (order == null || !order.getUserId().equals(user.getId())) {
             return ResponseEntity.notFound().build();
         }
-        String html = "<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><title>영수증</title></head>"
-                + "<body><h1>영수증</h1>"
-                + "<p>주문번호: " + order.getTossOrderId() + "</p>"
-                + "<p>수령인: " + user.getName() + "</p>"
-                + "<p>결제금액: " + order.getTotalAmount().toPlainString() + "</p>"
-                + "<p>메모: " + (note == null ? "" : note) + "</p>"
+        StringBuilder rows = new StringBuilder();
+        for (OrderItem oi : orderItemRepository.findByOrderId(order.getId())) {
+            String pname = productRepository.findById(oi.getProductId()).map(Product::getName).orElse("(삭제된 상품)");
+            rows.append("<tr><td>").append(pname).append("</td><td>")
+                .append(oi.getOptionValue() == null ? "-" : oi.getOptionValue())
+                .append("</td><td style=\"text-align:right\">").append(oi.getQuantity())
+                .append("</td><td style=\"text-align:right\">")
+                .append(oi.getUnitPrice().multiply(BigDecimal.valueOf(oi.getQuantity())).toPlainString())
+                .append("원</td></tr>");
+        }
+        String html = "<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><title>영수증</title>"
+                + "<style>body{font-family:system-ui,sans-serif;max-width:520px;margin:32px auto;color:#1a1a1a}"
+                + "h1{font-size:20px;border-bottom:2px solid #1a1a1a;padding-bottom:8px}"
+                + ".meta{color:#555;font-size:13px;line-height:1.7}"
+                + "table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px}"
+                + "th,td{padding:6px 4px;border-bottom:1px solid #eee;text-align:left}"
+                + ".total{text-align:right;font-size:16px;font-weight:700;margin-top:8px}</style></head>"
+                + "<body><h1>VULN SHOP 영수증</h1>"
+                + "<div class=\"meta\">"
+                + "<div>주문번호: " + order.getTossOrderId() + "</div>"
+                + "<div>주문일자: " + order.getCreatedAt() + "</div>"
+                + "<div>수령인: " + user.getName() + "</div>"
+                + "<div>배송지: (" + nz(order.getShipPostcode()) + ") " + nz(order.getShipAddress()) + " " + nz(order.getShipAddressDetail()) + "</div>"
+                + "</div>"
+                + "<table><thead><tr><th>상품</th><th>옵션</th><th style=\"text-align:right\">수량</th><th style=\"text-align:right\">금액</th></tr></thead>"
+                + "<tbody>" + rows + "</tbody></table>"
+                + "<div class=\"meta\">할인금액: " + order.getDiscountAmount().toPlainString() + "원</div>"
+                + "<div class=\"total\">결제금액: " + order.getTotalAmount().toPlainString() + "원</div>"
+                + "<p class=\"meta\">메모: " + (note == null ? "" : note) + "</p>"
                 + "</body></html>";
         return ResponseEntity.ok().contentType(MediaType.TEXT_HTML).body(html);
     }

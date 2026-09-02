@@ -8,6 +8,7 @@ import { createOrder, shareCart, importSharedCart, fetchPoints, previewCoupon, f
 import { formatCurrency } from '../format.js';
 import EmptyState from '../components/EmptyState.jsx';
 import CouponPickerModal from '../components/CouponPickerModal.jsx';
+import AddressSearchModal from '../components/AddressSearchModal.jsx';
 
 const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY;
 
@@ -32,6 +33,8 @@ export default function Cart() {
   const [webhookUrl, setWebhookUrl] = useState('');
   const [shipping, setShipping] = useState({ name: '', phone: '', postcode: '', address: '', addressDetail: '' });
   const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedAddrId, setSelectedAddrId] = useState(null);
+  const [addrModalOpen, setAddrModalOpen] = useState(false);
 
   useEffect(() => {
     fetchPoints(backend.base).then((d) => setPointsBalance(d.balance)).catch(() => setPointsBalance(null));
@@ -87,7 +90,10 @@ export default function Cart() {
     return () => { cancelled = true; };
   }, [backend.base, couponCode, total]);
 
-  const setShip = (field) => (e) => setShipping((s) => ({ ...s, [field]: e.target.value }));
+  const setShip = (field) => (e) => {
+    setSelectedAddrId(null);
+    setShipping((s) => ({ ...s, [field]: e.target.value }));
+  };
 
   async function handleShareCart() {
     setError(null);
@@ -270,32 +276,42 @@ export default function Cart() {
 
           <div className="summary-box">
             {user && (
-              <div className="summary-box__row" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: 'var(--space-2)' }}>
+              <div className="summary-box__row" style={{ alignItems: 'stretch', flexDirection: 'column', gap: 'var(--space-2)' }}>
                 <span>배송지</span>
                 <div className="ship-fields">
                   {savedAddresses.length > 0 && (
-                    <select
-                      defaultValue=""
-                      onChange={(e) => applySavedAddress(e.target.value)}
-                      style={{ width: '100%' }}
-                    >
-                      <option value="" disabled>저장된 배송지 선택</option>
+                    <div className="ship-presets">
                       {savedAddresses.map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.label ? `[${a.label}] ` : ''}{a.name} · {a.address}{a.isDefault ? ' (기본)' : ''}
-                        </option>
+                        <button
+                          type="button"
+                          key={a.id}
+                          className={`ship-preset${selectedAddrId === a.id ? ' ship-preset--active' : ''}`}
+                          onClick={() => { applySavedAddress(a.id); setSelectedAddrId(a.id); }}
+                        >
+                          <span className="ship-preset__label">{a.label || '배송지'}{a.isDefault ? ' · 기본' : ''}</span>
+                          <span className="ship-preset__name">{a.name}</span>
+                        </button>
                       ))}
-                    </select>
+                    </div>
                   )}
-                  <div className="ship-fields__row">
-                    <input value={shipping.name} onChange={setShip('name')} placeholder="받는 분" />
-                    <input value={shipping.phone} onChange={setShip('phone')} placeholder="연락처" />
+
+                  <div className="ship-fields__group">
+                    <span className="ship-fields__legend">받는 분 · 연락처</span>
+                    <div className="ship-fields__row">
+                      <input value={shipping.name} onChange={setShip('name')} placeholder="받는 분" />
+                      <input value={shipping.phone} onChange={setShip('phone')} placeholder="연락처" />
+                    </div>
                   </div>
-                  <div className="ship-fields__row">
-                    <input className="ship-fields__postcode" value={shipping.postcode} onChange={setShip('postcode')} placeholder="우편번호" />
+
+                  <div className="ship-fields__group">
+                    <span className="ship-fields__legend">배송지 주소</span>
+                    <div className="ship-fields__row">
+                      <input className="ship-fields__postcode" value={shipping.postcode} onChange={setShip('postcode')} placeholder="우편번호" />
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAddrModalOpen(true)}>주소 검색</button>
+                    </div>
                     <input value={shipping.address} onChange={setShip('address')} placeholder="주소" />
+                    <input value={shipping.addressDetail} onChange={setShip('addressDetail')} placeholder="상세주소" />
                   </div>
-                  <input value={shipping.addressDetail} onChange={setShip('addressDetail')} placeholder="상세주소" />
                 </div>
               </div>
             )}
@@ -378,34 +394,52 @@ export default function Cart() {
       />
 
       {user && (
-        <section className="card cart-share" style={{ marginTop: 'var(--space-10)' }}>
+        <section className="card cart-share">
           <h2>장바구니 공유</h2>
-          <p className="muted">공유 코드를 만들어 친구에게 보내거나, 받은 코드로 장바구니를 그대로 담아보세요.</p>
+          <p className="muted">공유 코드를 만들어 보내거나, 받은 코드로 장바구니를 그대로 담아보세요.</p>
 
-          <div className="cart-share__row">
-            <button type="button" className="btn btn-ghost btn-sm" onClick={handleShareCart}>공유 코드 만들기</button>
-            {shareCode && (
-              <input
-                className="cart-share__code"
-                value={shareCode}
-                readOnly
-                onFocus={(e) => e.target.select()}
-                aria-label="공유 코드"
-              />
-            )}
+          <div className="cart-share__grid">
+            <div className="cart-share__col">
+              <span className="cart-share__legend">공유 코드 만들기</span>
+              <div className="cart-share__row">
+                <input
+                  className="cart-share__code"
+                  value={shareCode}
+                  readOnly
+                  onFocus={(e) => e.target.select()}
+                  placeholder="만들기를 누르면 코드가 표시됩니다"
+                  aria-label="공유 코드"
+                />
+                <button type="button" className="btn btn-ghost btn-sm" onClick={handleShareCart}>만들기</button>
+              </div>
+            </div>
+
+            <div className="cart-share__col">
+              <span className="cart-share__legend">받은 코드 가져오기</span>
+              <form className="cart-share__row" onSubmit={handleImportShared}>
+                <input
+                  value={importCode}
+                  onChange={(e) => setImportCode(e.target.value)}
+                  placeholder="공유 코드 붙여넣기"
+                  aria-label="공유 코드 가져오기"
+                />
+                <button type="submit" className="btn btn-primary btn-sm" disabled={!importCode.trim()}>가져오기</button>
+              </form>
+            </div>
           </div>
-
-          <form className="cart-share__row" onSubmit={handleImportShared}>
-            <input
-              value={importCode}
-              onChange={(e) => setImportCode(e.target.value)}
-              placeholder="공유 코드 붙여넣기"
-              aria-label="공유 코드 가져오기"
-            />
-            <button type="submit" className="btn btn-primary btn-sm" disabled={!importCode.trim()}>가져오기</button>
-          </form>
           {shareMsg && <p className="status-ok">{shareMsg}</p>}
         </section>
+      )}
+
+      {addrModalOpen && (
+        <AddressSearchModal
+          onSelect={(a) => {
+            setSelectedAddrId(null);
+            setShipping((s) => ({ ...s, postcode: a.zonecode, address: a.address }));
+            setAddrModalOpen(false);
+          }}
+          onClose={() => setAddrModalOpen(false)}
+        />
       )}
     </div>
   );

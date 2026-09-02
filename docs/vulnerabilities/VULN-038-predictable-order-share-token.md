@@ -6,23 +6,29 @@
 
 ## 위치
 
-주문 공유 링크의 토큰이 `base64(String(orderId))` 다 — 난수가 전혀 들어가지 않는다.
-디코드하면 주문 번호가 그대로 나오고(가역), 임의의 주문 번호를 인코딩하면 유효한 링크가 된다(위조).
-공유 조회 엔드포인트는 무인증이므로 토큰을 맞히기만 하면 어떤 주문이든 열람된다.
+주문 공유 링크의 토큰이 `base64url(urlencode("oid=" + orderId))` 다 — 난수가 전혀 들어가지 않는다.
+URL 인코딩을 한 번 더 씌워 겉보기만 복잡할 뿐, 스킴을 알면 임의 주문 번호로 유효 토큰을 만들 수 있고(위조)
+역산도 된다(가역). 공유 조회 엔드포인트는 무인증이므로 토큰을 맞히기만 하면 어떤 주문이든 열람된다.
 
-- node: `apps/node-express/src/routes/orders.js` — `shareToken(orderId) = Buffer.from(String(orderId)).toString('base64')`,
-  `GET /shared/:token` 은 `requireAuth` 없이 `share_token` 으로 주문·항목·배송을 반환.
-- java: `.../controller/OrderController.java` — `shareToken(id) = Base64.getEncoder().encodeToString(String.valueOf(id).getBytes())`,
-  `GET /api/orders/shared/{token}` 은 `currentUser` 게이트 없음.
+- node: `apps/node-express/src/share-token.js` — `orderShareToken(id) = Buffer.from(encodeURIComponent('oid=' + id)).toString('base64url')`.
+  `orders.js`의 `GET /shared/:token` 은 `requireAuth` 없이 저장된 `share_token` 문자열 매칭으로 반환(디코드 안 함).
+- java: `.../security/ShareTokens.java` — `of(id) = base64url( urlencode("oid=" + id) )`(패딩 없음).
+  `OrderController.GET /api/orders/shared/{token}` 은 `currentUser` 게이트 없음.
+- 인코딩 지점은 node `share-token.js`(+`db.js` 백필), java `ShareTokens`(+`DataSeeder` 백필) 한 곳으로 통일.
 
 ## 트리거 방법
 
 ```
-# 토큰 = base64(주문번호):  base64("1")="MQ==",  base64("2")="Mg==",  base64("42")="NDI="
-for t in MQ== Mg== Mw== NDI=; do curl -s /api/{stack}/orders/shared/$t; done
-→ 각 주문의 항목·결제금액·배송지·배송상태가 로그인 없이 반환됨
-
-python3 -c "import base64; print(base64.b64decode('NDI='))"   # b'42' — 토큰을 그대로 되돌릴 수 있음
+# 토큰 = base64url(urlencode("oid="+id)).  "oid=1" → urlencode "oid%3D1" → base64url "b2lkJTNEMQ"
+python3 - <<'PY'
+import base64, urllib.parse
+for i in [1,2,3,42]:
+    s = urllib.parse.quote("oid="+str(i), safe="")
+    t = base64.urlsafe_b64encode(s.encode()).decode().rstrip("=")
+    print(i, t)
+PY
+for t in <위 토큰들>; do curl -s /api/{stack}/orders/shared/$t; done
+→ 각 주문의 항목·결제금액·배송지·배송상태가 로그인 없이 반환됨(역산도 동일 방식으로 가능)
 ```
 
 ## 영향
@@ -35,8 +41,9 @@ python3 -c "import base64; print(base64.b64decode('NDI='))"   # b'42' — 토큰
 
 ## 증거 (재현 확인)
 
-2026-09-01, 클린 재시드 후 로컬 재현(양 스택 동일): `GET /api/node/orders/shared/MQ==` (토큰 = base64("1"))
-→ 주문 #1(user1 소유)의 항목·배송지·송장 전체 반환. 생성된 주문의 `shareToken` 도 `base64(id)` 로 확인.
+2026-09-01, 클린 재시드 후 로컬 재현(양 스택 동일, 구 스킴 `base64("1")=MQ==`): 주문 #1 전체 반환.
+2026-09-02, 인코딩을 `base64url(urlencode("oid="+id))`로 강화한 뒤에도 성질 동일 — 스킴을 알면 토큰
+`b2lkJTNEMQ`(=`oid=1`) 등으로 임의 주문 열람 가능(위조·역산 유지). Phase 2에서 `:8090` 재확인 예정.
 
 ## 조치 상태: 미조치 (의도된 취약점)
 

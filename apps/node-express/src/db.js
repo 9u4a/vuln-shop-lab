@@ -259,6 +259,15 @@ db.exec(`
     status TEXT NOT NULL DEFAULT 'preparing',
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
+
+  CREATE TABLE IF NOT EXISTS tracking_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tracking_no TEXT NOT NULL,
+    status TEXT,
+    description TEXT,
+    location TEXT,
+    occurred_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
 `);
 
 for (const stmt of [
@@ -848,11 +857,11 @@ if (ptxCount === 0) {
 }
 
 // 10. Backfill order share tokens + shipping snapshot (deterministic, idempotent)
-const ordersMissingToken = db.prepare('SELECT id FROM orders WHERE share_token IS NULL').all();
-if (ordersMissingToken.length) {
+const { orderShareToken } = require('./share-token');
+{
   const setToken = db.prepare('UPDATE orders SET share_token = ? WHERE id = ?');
-  for (const o of ordersMissingToken) {
-    setToken.run(Buffer.from(String(o.id)).toString('base64'), o.id);
+  for (const o of db.prepare('SELECT id FROM orders').all()) {
+    setToken.run(orderShareToken(o.id), o.id);
   }
 }
 const ordersMissingShip = db.prepare(
@@ -882,6 +891,27 @@ if (shipmentCount === 0) {
     const r = insertShipment.run(o.id, 'CJ대한통운', SHIP_STATUS[idx % SHIP_STATUS.length]);
     setTracking.run(String(1000000000 + r.lastInsertRowid), r.lastInsertRowid);
   });
+}
+
+// 11b. Seed tracking events for existing shipments (idempotent — 최초 1회, 배송 상태 기준)
+const trackingEventCount = db.prepare('SELECT COUNT(*) AS count FROM tracking_events').get().count;
+if (trackingEventCount === 0) {
+  const insertEvent = db.prepare(
+    "INSERT INTO tracking_events (tracking_no, status, description, location, occurred_at) VALUES (?, ?, ?, ?, datetime('now', ?))"
+  );
+  const EVENT_STEPS = [
+    { status: 'preparing', description: '상품 집화 완료', location: '서울 강남 물류센터', off: '-3 days' },
+    { status: 'shipped', description: '간선 상차', location: '옥천 HUB', off: '-2 days' },
+    { status: 'shipped', description: '배송 출발', location: '수취인 지역 대리점', off: '-1 days' },
+    { status: 'delivered', description: '배송 완료 (문 앞)', location: '수취인 주소', off: '-6 hours' },
+  ];
+  const stepsFor = (status) =>
+    status === 'delivered' ? EVENT_STEPS : status === 'shipped' ? EVENT_STEPS.slice(0, 3) : EVENT_STEPS.slice(0, 1);
+  for (const s of db.prepare('SELECT tracking_no, status FROM shipments WHERE tracking_no IS NOT NULL').all()) {
+    for (const step of stepsFor(s.status)) {
+      insertEvent.run(s.tracking_no, step.status, step.description, step.location, step.off);
+    }
+  }
 }
 
 // 12. Seed one claimed-but-unused coupon for user1 (WELCOME5000) — VULN-036 재현용

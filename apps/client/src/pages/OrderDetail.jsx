@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useBackend } from '../BackendContext.jsx';
 import { fetchOrder, generateReceipt, fetchReceipt, requestReturn } from '../api.js';
 import { formatCurrency } from '../format.js';
 import StatusChip from '../components/StatusChip.jsx';
+import ShipmentTimeline from '../components/ShipmentTimeline.jsx';
 
 export default function OrderDetail() {
   const { backend } = useBackend();
   const { id } = useParams();
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [note, setNote] = useState('');
@@ -26,6 +28,19 @@ export default function OrderDetail() {
     } catch (err) {
       setReturnMsg(err.message);
     }
+  }
+
+  function inquire() {
+    navigate('/qna', {
+      state: {
+        openForm: true,
+        prefill: {
+          title: `[주문 #${data.order.id}] 문의`,
+          body: `주문 #${data.order.id} 관련하여 문의드립니다.\n\n`,
+          secret: true,
+        },
+      },
+    });
   }
 
   useEffect(() => {
@@ -92,25 +107,20 @@ export default function OrderDetail() {
         </div>
       </section>
 
-      {(data.order.shipping || data.shipment) && (
+      {data.order.shipping && (
         <section className="card">
-          <h2>배송</h2>
-          {data.order.shipping && (
-            <p className="muted" style={{ whiteSpace: 'pre-line' }}>
-              {data.order.shipping.name} · {data.order.shipping.phone}
-              {'\n'}({data.order.shipping.postcode}) {data.order.shipping.address} {data.order.shipping.addressDetail || ''}
-            </p>
-          )}
-          {data.shipment ? (
-            <p>
-              <StatusChip status={data.shipment.status} />{' '}
-              {data.shipment.carrier} · 송장번호 <strong>{data.shipment.trackingNo}</strong>
-            </p>
-          ) : (
-            <p className="muted">아직 배송이 시작되지 않았습니다.</p>
-          )}
+          <h2>배송지</h2>
+          <p className="muted" style={{ whiteSpace: 'pre-line' }}>
+            {data.order.shipping.name} · {data.order.shipping.phone}
+            {'\n'}({data.order.shipping.postcode}) {data.order.shipping.address} {data.order.shipping.addressDetail || ''}
+          </p>
         </section>
       )}
+
+      <section className="card">
+        <h2>배송 조회</h2>
+        <ShipmentTimeline shipment={data.shipment} />
+      </section>
 
       {data.order.shareToken && (
         <section className="card">
@@ -126,9 +136,12 @@ export default function OrderDetail() {
       )}
 
       <section className="card">
-        <h2>반품/환불 요청</h2>
+        <div className="card__header-row">
+          <h2>반품/환불 · 문의</h2>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={inquire}>이 주문 문의하기</button>
+        </div>
         <form onSubmit={handleRequestReturn}>
-          <label>사유
+          <label>반품/환불 사유
             <input value={returnReason} onChange={(e) => setReturnReason(e.target.value)} placeholder="반품 사유를 입력하세요" />
           </label>
           <button type="submit" className="btn btn-ghost">반품/환불 요청</button>
@@ -139,28 +152,29 @@ export default function OrderDetail() {
       <section className="card">
         <h2>영수증</h2>
         {error && <p className="error">{error}</p>}
-        <form onSubmit={handleGenerateReceipt}>
-          <label>메모
-            <input value={note} onChange={(e) => setNote(e.target.value)} />
+        <form onSubmit={handleGenerateReceipt} className="receipt-form">
+          <label>메모 <small className="muted">(선택)</small>
+            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="영수증에 남길 메모" />
           </label>
           <button type="submit" className="btn btn-primary">영수증 생성</button>
         </form>
-        <p style={{ marginTop: 'var(--space-4)' }}>
-          <a
-            href={`${backend.base}/orders/${id}/receipt/print?note=${encodeURIComponent(note)}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            인쇄용 보기
-          </a>
-        </p>
-        <form onSubmit={handleDownloadReceipt}>
-          <label>파일명
-            <input value={filename} onChange={(e) => setFilename(e.target.value)} />
-          </label>
-          <button type="submit" className="btn btn-primary">영수증 다운로드</button>
-        </form>
-        {receipt && <pre style={{ background: 'var(--color-subtle)', padding: 'var(--space-4)', borderRadius: 'var(--radius)', overflowX: 'auto' }}>{receipt}</pre>}
+        {filename && (
+          <div className="receipt-actions">
+            <a
+              href={`${backend.base}/orders/${id}/receipt/print?note=${encodeURIComponent(note)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-ghost btn-sm"
+            >
+              인쇄용 보기
+            </a>
+            <form onSubmit={handleDownloadReceipt} className="receipt-actions__download">
+              <input value={filename} onChange={(e) => setFilename(e.target.value)} aria-label="파일명" />
+              <button type="submit" className="btn btn-ghost btn-sm">다운로드</button>
+            </form>
+          </div>
+        )}
+        {receipt && <pre className="receipt-view">{receipt}</pre>}
       </section>
     </div>
   );

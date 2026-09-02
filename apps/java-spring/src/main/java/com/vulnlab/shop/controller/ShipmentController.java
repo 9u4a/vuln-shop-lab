@@ -4,6 +4,7 @@ import com.vulnlab.shop.entity.Order;
 import com.vulnlab.shop.entity.Shipment;
 import com.vulnlab.shop.repository.OrderRepository;
 import com.vulnlab.shop.repository.ShipmentRepository;
+import com.vulnlab.shop.repository.TrackingEventRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,10 +22,13 @@ public class ShipmentController {
 
     private final ShipmentRepository shipmentRepository;
     private final OrderRepository orderRepository;
+    private final TrackingEventRepository trackingEventRepository;
 
-    public ShipmentController(ShipmentRepository shipmentRepository, OrderRepository orderRepository) {
+    public ShipmentController(ShipmentRepository shipmentRepository, OrderRepository orderRepository,
+                              TrackingEventRepository trackingEventRepository) {
         this.shipmentRepository = shipmentRepository;
         this.orderRepository = orderRepository;
+        this.trackingEventRepository = trackingEventRepository;
     }
 
     @Operation(summary = "배송 조회 (비회원)", description = "송장번호만으로 배송 상태와 배송지를 조회한다.")
@@ -50,6 +54,15 @@ public class ShipmentController {
             out.put("shipAddress", o.getShipAddress());
             out.put("shipAddressDetail", o.getShipAddressDetail());
         }
+        out.put("events", trackingEventRepository.findByTrackingNoOrderByOccurredAtAscIdAsc(s.getTrackingNo()).stream()
+                .map(e -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("status", e.getStatus());
+                    m.put("description", e.getDescription());
+                    m.put("location", e.getLocation());
+                    m.put("occurredAt", e.getOccurredAt());
+                    return m;
+                }).toList());
         return ResponseEntity.ok(out);
     }
 }
