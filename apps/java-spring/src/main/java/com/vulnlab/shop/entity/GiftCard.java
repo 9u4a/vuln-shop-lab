@@ -30,6 +30,12 @@ public class GiftCard {
     @Column(name = "expires_at")
     private String expiresAt;
 
+    @Column(name = "owner_id")
+    private Long ownerId;
+
+    @Column(name = "product_id")
+    private Long productId;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -50,6 +56,12 @@ public class GiftCard {
 
     public String getExpiresAt() { return expiresAt; }
     public void setExpiresAt(String expiresAt) { this.expiresAt = expiresAt; }
+
+    public Long getOwnerId() { return ownerId; }
+    public void setOwnerId(Long ownerId) { this.ownerId = ownerId; }
+
+    public Long getProductId() { return productId; }
+    public void setProductId(Long productId) { this.productId = productId; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

@@ -63,6 +63,7 @@ Insecure Design A04→**A06**.
 | [VULN-045](VULN-045-membership-tier-mass-assignment.md) | 회원 등급 자가 승급 (프로필 대량 할당) | both | A01 Broken Access Control | High | 구현됨 |
 | [VULN-046](VULN-046-notification-stored-xss.md) | 인앱 알림 저장형 XSS (관리자 브로드캐스트) | both + client | A05 Injection (XSS) | High | 구현됨 |
 | [VULN-047](VULN-047-point-gift-source-idor.md) | 포인트 선물 발신 계정 IDOR (차감 대상 미검증) | both | A01 Broken Access Control | High | 구현됨 |
+| [VULN-048](VULN-048-predictable-giftcard-code.md) | 예측 가능한 상품권 코드 (구매 발급 코드 위조·열거) | both | A04 Cryptographic Failures | High | 구현됨 |
 
 ## OWASP / CLAUDE.md 스코프 커버리지
 
@@ -80,7 +81,7 @@ Insecure Design A04→**A06**.
 | XSS — DOM | DONE | 017 |
 | IDOR / Broken Access Control | DONE | 003, 009, 011, 013, 014, 024, 026, 031, 037, 044, 045, 047 |
 | Security Misconfiguration | DONE | 007, 018, 020, 025, 034 |
-| Cryptographic Failures (A04) | DONE | 038, 039 |
+| Cryptographic Failures (A04) | DONE | 038, 039, 048 |
 | Insecure Deserialization (Java) | DONE | 012 |
 | XXE | DONE | 020 |
 | SSRF (2025부터 A01로 편입) | DONE | 004 (020 OOB로 재확인), 033 (응답 반환형) |

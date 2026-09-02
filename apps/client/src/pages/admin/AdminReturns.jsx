@@ -13,6 +13,8 @@ export default function AdminReturns() {
   const [error, setError] = useState(null);
   const [status, setStatus] = useState(null);
   const [page, setPage] = useState(1);
+  const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   function load() {
     setError(null);
@@ -21,7 +23,13 @@ export default function AdminReturns() {
 
   useEffect(load, [backend.base]);
 
-  const paged = returns.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const q = query.trim().toLowerCase();
+  const filtered = returns.filter((r) => {
+    if (statusFilter && r.status !== statusFilter) return false;
+    if (!q) return true;
+    return (r.username || '').toLowerCase().includes(q) || String(r.orderId).includes(q) || (r.reason || '').toLowerCase().includes(q);
+  });
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   async function handleApprove(id) {
     setStatus(null);
@@ -47,6 +55,16 @@ export default function AdminReturns() {
     <section className="card">
       <div className="admin-toolbar">
         <h2>반품/환불 <span className="muted">({returns.length})</span></h2>
+        <input
+          className="admin-search"
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+          placeholder="회원·주문번호·사유 검색"
+        />
+        <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
+          <option value="">전체 상태</option>
+          {Object.entries(STATUS_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
       </div>
       {error && <p className="error">{error}</p>}
       {status && <p className="status-ok">{status}</p>}
@@ -78,7 +96,7 @@ export default function AdminReturns() {
           </tbody>
         </table>
       </div>
-      <Pagination page={page} pageSize={PAGE_SIZE} total={returns.length} onChange={setPage} />
+      <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onChange={setPage} />
     </section>
   );
 }

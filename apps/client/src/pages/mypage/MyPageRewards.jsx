@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useBackend } from '../../BackendContext.jsx';
-import { fetchPoints, fetchReferral, applyReferral, redeemGiftCard, giftPoints } from '../../api.js';
+import {
+  fetchPoints, fetchReferral, applyReferral, redeemGiftCard, giftPoints,
+  fetchGiftCardProducts, purchaseGiftCard, fetchMyGiftCards,
+} from '../../api.js';
 import { formatCurrency } from '../../format.js';
 
 export default function MyPageRewards() {
@@ -15,11 +18,38 @@ export default function MyPageRewards() {
   const [giftTo, setGiftTo] = useState('');
   const [giftAmount, setGiftAmount] = useState('');
   const [sendMsg, setSendMsg] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [myCards, setMyCards] = useState([]);
+  const [buyMsg, setBuyMsg] = useState(null);
 
   function load() {
     setError(null);
     fetchPoints(backend.base).then(setPoints).catch((e) => setError(e.message));
     fetchReferral(backend.base).then(setReferral).catch(() => setReferral(null));
+    fetchGiftCardProducts(backend.base).then((d) => setProducts(d.products || [])).catch(() => setProducts([]));
+    fetchMyGiftCards(backend.base).then((d) => setMyCards(d.giftCards || [])).catch(() => setMyCards([]));
+  }
+
+  async function handleBuy(product) {
+    setBuyMsg(null);
+    try {
+      const res = await purchaseGiftCard(backend.base, product.id);
+      setBuyMsg(`${product.name} 상품권을 구매했습니다. 코드: ${res.giftCard.code}`);
+      load();
+    } catch (err) {
+      setBuyMsg(err.message);
+    }
+  }
+
+  async function handleRedeemCard(cardCode) {
+    setGiftMsg(null);
+    try {
+      const res = await redeemGiftCard(backend.base, cardCode);
+      setGiftMsg(`상품권 잔액 ${formatCurrency(res.credited)}P가 적립금으로 등록되었습니다.`);
+      load();
+    } catch (err) {
+      setGiftMsg(err.message);
+    }
   }
 
   useEffect(load, [backend.base]);
@@ -105,6 +135,49 @@ export default function MyPageRewards() {
         </form>
         {sendMsg && <p className="status-ok">{sendMsg}</p>}
       </section>
+
+      <section className="card">
+        <h2>상품권 구매</h2>
+        <p className="muted">액면가를 선택해 상품권을 구매하면 코드가 발급됩니다.</p>
+        {products.length === 0 ? (
+          <p className="muted">구매 가능한 상품권이 없습니다.</p>
+        ) : (
+          <div className="giftcard-buy">
+            {products.map((p) => (
+              <div key={p.id} className="giftcard-buy__item">
+                <div>
+                  <div className="giftcard-buy__name">{p.name}</div>
+                  <div className="muted tnum">{formatCurrency(p.amount)}원</div>
+                </div>
+                <button type="button" className="btn btn-primary btn-sm" onClick={() => handleBuy(p)}>구매</button>
+              </div>
+            ))}
+          </div>
+        )}
+        {buyMsg && <p className="status-ok">{buyMsg}</p>}
+      </section>
+
+      {myCards.length > 0 && (
+        <section className="card">
+          <h2>내 상품권</h2>
+          <div className="admin-table__wrap">
+            <table className="admin-table">
+              <thead>
+                <tr><th>코드</th><th className="tnum">잔액</th><th></th></tr>
+              </thead>
+              <tbody>
+                {myCards.map((c) => (
+                  <tr key={c.id}>
+                    <td className="giftcard-code">{c.code}</td>
+                    <td className="tnum">{formatCurrency(c.balance)}원</td>
+                    <td><button type="button" className="btn btn-ghost btn-sm" onClick={() => handleRedeemCard(c.code)}>등록</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <section className="card">
         <h2>상품권 등록</h2>

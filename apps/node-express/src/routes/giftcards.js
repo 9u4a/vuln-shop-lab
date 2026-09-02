@@ -1,6 +1,8 @@
 const express = require('express');
 const db = require('../db');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
+const { notify } = require('../notify');
+const { giftCode } = require('../gift-code');
 
 const router = express.Router();
 
@@ -12,6 +14,16 @@ function toGiftCard(row) {
     initialBalance: row.initial_balance,
     active: !!row.active,
     expiresAt: row.expires_at,
+    createdAt: row.created_at,
+  };
+}
+
+function toProduct(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    amount: row.amount,
+    active: !!row.active,
     createdAt: row.created_at,
   };
 }
@@ -42,7 +54,79 @@ router.post('/redeem', requireAuth, (req, res) => {
   res.json({ ok: true, credited: amount });
 });
 
-// 관리자 — 상품권 발행/관리.
+// 구매 가능한 상품권 액면가 목록.
+router.get('/products', requireAuth, (req, res) => {
+  const rows = db.prepare('SELECT * FROM gift_card_products WHERE active = 1 ORDER BY amount').all();
+  res.json({ products: rows.map(toProduct) });
+});
+
+// 상품권 구매 — 액면가를 골라 구매하면 코드를 발급해 본인 소유로 등록한다.
+router.post('/purchase', requireAuth, (req, res) => {
+  const product = db
+    .prepare('SELECT * FROM gift_card_products WHERE id = ? AND active = 1')
+    .get(req.body.productId);
+  if (!product) return res.status(404).json({ error: '상품권을 찾을 수 없습니다.' });
+
+  const tmpCode = `pending-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+  const result = db
+    .prepare(
+      'INSERT INTO gift_cards (code, balance, initial_balance, active, owner_id, product_id) VALUES (?, ?, ?, 1, ?, ?)'
+    )
+    .run(tmpCode, product.amount, product.amount, req.session.user.id, product.id);
+  const id = result.lastInsertRowid;
+  const code = giftCode(id, product.amount);
+  db.prepare('UPDATE gift_cards SET code = ? WHERE id = ?').run(code, id);
+
+  notify(req.session.user.id, 'giftcard', '상품권이 발급되었습니다', `${product.name} 상품권을 구매했습니다.`, '/mypage/rewards');
+  const row = db.prepare('SELECT * FROM gift_cards WHERE id = ?').get(id);
+  res.status(201).json({ giftCard: toGiftCard(row) });
+});
+
+// 내 상품권 — 구매(발급)한 상품권 목록.
+router.get('/mine', requireAuth, (req, res) => {
+  const rows = db
+    .prepare('SELECT * FROM gift_cards WHERE owner_id = ? ORDER BY id DESC')
+    .all(req.session.user.id);
+  res.json({ giftCards: rows.map(toGiftCard) });
+});
+
+// 관리자 — 상품권 액면가 관리.
+router.get('/products/manage', requireAdmin, (req, res) => {
+  const rows = db.prepare('SELECT * FROM gift_card_products ORDER BY id DESC').all();
+  res.json({ products: rows.map(toProduct) });
+});
+
+router.post('/products', requireAdmin, (req, res) => {
+  const { name, amount, active } = req.body;
+  if (!name || amount == null) return res.status(400).json({ error: '이름과 금액은 필수입니다.' });
+  const result = db
+    .prepare('INSERT INTO gift_card_products (name, amount, active) VALUES (?, ?, ?)')
+    .run(String(name).trim(), Number(amount) || 0, active === false ? 0 : 1);
+  const row = db.prepare('SELECT * FROM gift_card_products WHERE id = ?').get(result.lastInsertRowid);
+  res.status(201).json({ product: toProduct(row) });
+});
+
+router.put('/products/:id', requireAdmin, (req, res) => {
+  const existing = db.prepare('SELECT * FROM gift_card_products WHERE id = ?').get(req.params.id);
+  if (!existing) return res.status(404).json({ error: '상품권을 찾을 수 없습니다.' });
+  const { name, amount, active } = req.body;
+  db.prepare('UPDATE gift_card_products SET name = ?, amount = ?, active = ? WHERE id = ?').run(
+    name != null ? String(name).trim() : existing.name,
+    amount != null ? Number(amount) : existing.amount,
+    active != null ? (active ? 1 : 0) : existing.active,
+    existing.id
+  );
+  const row = db.prepare('SELECT * FROM gift_card_products WHERE id = ?').get(existing.id);
+  res.json({ product: toProduct(row) });
+});
+
+router.delete('/products/:id', requireAdmin, (req, res) => {
+  const result = db.prepare('DELETE FROM gift_card_products WHERE id = ?').run(req.params.id);
+  if (result.changes === 0) return res.status(404).json({ error: '상품권을 찾을 수 없습니다.' });
+  res.json({ ok: true });
+});
+
+// 관리자 — 발행된 상품권 카드 관리(기존).
 router.get('/manage', requireAdmin, (req, res) => {
   const rows = db.prepare('SELECT * FROM gift_cards ORDER BY id DESC').all();
   res.json({ giftCards: rows.map(toGiftCard) });

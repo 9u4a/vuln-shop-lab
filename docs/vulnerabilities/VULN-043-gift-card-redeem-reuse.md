@@ -42,3 +42,6 @@ POST /api/{node,java}/giftcards/redeem   {"code":"GIFT-DEMO-10000"}   (로그인
 
 정상 구현: 등록을 원자적 트랜잭션으로 처리해 카드를 1회용으로 소멸(잔액 0·`redeemed_by`/`redeemed_at` 기록),
 이미 등록된 카드 재등록 거부, 코드에 충분한 엔트로피 부여.
+
+참고: 기능 60(상품권 구매 재구성)에서 "코드 추측/유출 → 타인 카드 소진" 위협이 [[VULN-048-predictable-giftcard-code]]
+(구매 발급 코드가 키리스 결정적 변환)로 실제 실현되었다. 등록(redeem) 핸들러의 재사용·소유권 미검증은 그대로 유지.

@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../db');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
+const { notify } = require('../notify');
 
 const router = express.Router();
 
@@ -49,6 +50,14 @@ router.get('/', (req, res) => {
   res.json({ questions: rows.map(toListItem), total, page, pageSize });
 });
 
+// 내 문의 — 로그인 사용자가 등록한 문의 목록(답변여부 포함).
+router.get('/mine', requireAuth, (req, res) => {
+  const rows = db
+    .prepare('SELECT * FROM questions WHERE user_id = ? ORDER BY id DESC')
+    .all(req.session.user.id);
+  res.json({ questions: rows.map(toListItem) });
+});
+
 router.get('/:id', (req, res) => {
   const row = db.prepare('SELECT * FROM questions WHERE id = ?').get(req.params.id);
   if (!row) return res.status(404).json({ error: '문의를 찾을 수 없습니다.' });
@@ -76,6 +85,7 @@ router.put('/:id/answer', requireAdmin, (req, res) => {
   if (!answer) return res.status(400).json({ error: '답변 내용은 필수입니다.' });
   db.prepare("UPDATE questions SET answer = ?, answered_by = ?, answered_at = datetime('now') WHERE id = ?")
     .run(answer, req.session.user.username, existing.id);
+  notify(existing.user_id, 'qna', '문의에 답변이 등록되었습니다', `"${existing.title}" 문의에 답변이 달렸습니다.`, `/qna/${existing.id}`);
   const row = db.prepare('SELECT * FROM questions WHERE id = ?').get(existing.id);
   res.json({ question: toDetail(row) });
 });

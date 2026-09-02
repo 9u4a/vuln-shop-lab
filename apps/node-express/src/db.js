@@ -52,6 +52,14 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
+  CREATE TABLE IF NOT EXISTS gift_card_products (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    amount INTEGER NOT NULL DEFAULT 0,
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
   CREATE TABLE IF NOT EXISTS recently_viewed (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
@@ -309,6 +317,8 @@ for (const stmt of [
   'ALTER TABLE orders ADD COLUMN ship_address_detail TEXT',
   'ALTER TABLE orders ADD COLUMN share_token TEXT',
   'ALTER TABLE orders ADD COLUMN points_used INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE gift_cards ADD COLUMN owner_id INTEGER',
+  'ALTER TABLE gift_cards ADD COLUMN product_id INTEGER',
 ]) {
   try {
     db.exec(stmt);
@@ -416,6 +426,15 @@ if (giftCardCount === 0) {
   insertGc.run('GIFT-DEMO-30000', 30000, 30000, 1, null);
   insertGc.run('GIFT-INACTIVE-5000', 5000, 5000, 0, null);
   insertGc.run('GIFT-EXPIRED-5000', 5000, 5000, 1, '2020-01-01T00:00:00Z');
+}
+
+// 1e. 상품권 액면가(gift_card_products) 시드
+const giftProductCount = db.prepare('SELECT COUNT(*) AS count FROM gift_card_products').get().count;
+if (giftProductCount === 0) {
+  const insertGp = db.prepare('INSERT INTO gift_card_products (name, amount, active) VALUES (?, ?, ?)');
+  insertGp.run('1만원권', 10000, 1);
+  insertGp.run('5만원권', 50000, 1);
+  insertGp.run('10만원권', 100000, 1);
 }
 
 // 2. Seed Products (if missing)

@@ -18,6 +18,7 @@ export default function AdminFaq() {
   const [pendingId, setPendingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [page, setPage] = useState(1);
+  const [query, setQuery] = useState('');
 
   function load() {
     setError(null);
@@ -26,7 +27,11 @@ export default function AdminFaq() {
 
   useEffect(load, [backend.base]);
 
-  const paged = faqs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? faqs.filter((f) => (f.question || '').toLowerCase().includes(q) || (f.answer || '').toLowerCase().includes(q))
+    : faqs;
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   async function handleCreate(e) {
     e.preventDefault();
@@ -69,6 +74,12 @@ export default function AdminFaq() {
     <section className="card">
       <div className="admin-toolbar">
         <h2>FAQ <span className="muted">({faqs.length})</span></h2>
+        <input
+          className="admin-search"
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+          placeholder="질문·답변 검색"
+        />
         <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}>
           + FAQ 추가
         </button>
@@ -102,7 +113,7 @@ export default function AdminFaq() {
         ))}
       </div>
 
-      <Pagination page={page} pageSize={PAGE_SIZE} total={faqs.length} onChange={setPage} />
+      <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onChange={setPage} />
 
       <Modal open={editingId != null} title="FAQ 수정" onClose={() => setEditingId(null)}>
         <form onSubmit={handleSaveEdit} style={{ maxWidth: 'none' }}>
